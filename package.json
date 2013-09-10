@@ -1,0 +1,25 @@
+{
+  "author": "Pryv SA <tech@pryv.com>",
+  "name": "pryv-node.js",
+  "description": "Pryv Javascript Library",
+  "version": "0.0.1",
+  "private": true,
+  "homepage": "http://w.pryv.com",
+  "repository": {
+    "type": "git",
+    "url": "ssh://git@github.com:pryv/pryv-js.git"
+  },
+  "engines": {
+  },
+  "dependencies": { },
+  "devDependencies": {
+    "grunt-contrib-uglify": "~0.2.0",
+    "grunt-contrib-jshint": "~0.4.3",
+    "grunt-contrib-watch": "~0.4.0",
+    "grunt": "~0.4.1",
+    "grunt-browserify": "~1.0.0",
+    "grunt-shell": "~0.2.2",
+    "grunt-cli": "~0.1.8"
+  },
+  "optionalDependencies": {}
+}
