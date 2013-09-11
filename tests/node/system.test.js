@@ -1,28 +1,46 @@
 /*global require, describe, it */
-var System = require('../../src/pryv').System;
+var System = require('../../src/pryv').System,
+    should = require('should'),
+    nock =   require('nock');
 
 
 describe('System', function () {
   var testPack = {
     type : 'GET',
-    host : '',
+    host : 'test.com',
     port : 443,
-    path : '',
+    path : '/aPath',
     headers : '',
     payload : '',
-    success : function () {},
-    error : function ()  {},
+    success : function () { return true; },
+    error : function ()  { return false; },
     info : '',
     async : true,
     expectedStatus : '',
     ssl : true
   };
+  var validData = {
+    id: 'abc-123',
+    firstName: 'John',
+    lastName: 'Doe',
+    email: 'mail@example.com'
+  };
 
-  describe('ioConnect()', function () {
-    it('', function () {
-      var test = 1;
-      test.should.eql(1);
+  describe('request()', function () {
+    it('should return valid data', function (done) {
+      this.timeout(0);
+      nock('https://' + testPack.host)
+        .get(testPack.path)
+        .reply(200, validData);
+      testPack.success = function (data, request) {
+        data.should.eql(validData);
+        request.code.should.eql(200);
+        done();
+      };
+      System.request(testPack);
     });
+
+
   });
 });
 
