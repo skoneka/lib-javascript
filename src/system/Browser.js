@@ -32,7 +32,7 @@ var System  = {
     if (false && pack.type === 'DELETE') {
       pack.type = 'POST';
       pack.params =  pack.params || {};
-      pack.params['_method'] = 'DELETE';
+      pack.params._method = 'DELETE';
     }
 
     // ------------- request HEADERS
@@ -61,7 +61,7 @@ var System  = {
     var detail = pack.info + ', req: ' + pack.type + ' ' + pack.url;
 
     // --------------- request
-    xhr = this._initXHR();
+    var xhr = this._initXHR();
 
     xhr.open(pack.type, pack.url, pack.async);
     xhr.withCredentials = true;
@@ -76,25 +76,26 @@ var System  = {
 
         try { result = JSON.parse(xhr.responseText); } catch (e) {
           return pack.error({message: "Data is not JSON", detail: xhr.responseText+"\n"+detail, id: "RESULT_NOT_JSON", xhr: xhr}, pack.context);
-        };
+        }
 
         pack.success(result,pack.context,xhr);
       }
     };
 
-    for(var key in pack.headers){
-      if (pack.headers.hasOwnProperty(key))
+    for (var key in pack.headers) {
+      if (pack.headers.hasOwnProperty(key)) {
         xhr.setRequestHeader(key, pack.headers[key]);
+      }
     }
 
     //--- prepare the params
     var sentParams = null;
     if (pack.params)  {
       try {
-        sentParams = JSON.stringify(pack.params)
+        sentParams = JSON.stringify(pack.params);
       } catch (e) {
         return pack.error({message: "Parameters are not JSON", detail: "params: "+pack.params+"\n "+detail, id: "INTERNAL_ERROR", error: e}, pack.context);
-      };
+      }
     }
 
     //--- sending the request
@@ -102,7 +103,7 @@ var System  = {
       xhr.send(sentParams);
     } catch (e) {
       return pack.error({message: "pryvXHRCall unsent", detail: detail, id: "INTERNAL_ERROR", error: e}, pack.context);
-    };
+    }
     return xhr;
   }
 

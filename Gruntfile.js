@@ -12,6 +12,12 @@ module.exports = function (grunt) {
         }
       }
     },
+    watch: {
+      all: {
+        files: ['src/**/*.*', 'tests/**/*.*'],
+        tasks: ['default']
+      }
+    },
     jshint: {
       files: ['gruntfile.js', 'src/**/*.js', 'test/**/*.js'],
       options: {
@@ -24,15 +30,23 @@ module.exports = function (grunt) {
         }
       }
     },
-    watch: {
-      files: ['<%= jshint.files %>'],
-      tasks: ['jshint', 'qunit']
+    mochaTest: {
+      test: {
+        options: {
+          reporter: 'spec',
+          require: ['./src/pryv.js']
+        },
+        src: ['tests/**/*.test.js']
+      }
     }
   });
 
   grunt.loadNpmTasks('grunt-browserify');
   grunt.loadNpmTasks('grunt-contrib-jshint');
+  grunt.loadNpmTasks('grunt-contrib-watch');
+  grunt.loadNpmTasks('grunt-mocha-test');
+
 
   // Default task.
-  grunt.registerTask('default', ['jshint',  'browserify']);
+  grunt.registerTask('default', ['jshint', 'browserify', 'mochaTest']);
 };
