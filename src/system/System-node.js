@@ -1,5 +1,6 @@
 //file: system node
 
+var socketIO = require('socket.io-client');
 
 var System = {
 
@@ -9,7 +10,7 @@ var System = {
     var url = httpMode + '://' + pack.host + ':' + pack.port + '' +
       pack.path + '?auth=' + pack.auth + '&resource=' + pack.namespace;
 
-    var ioConn = require('socket.io-client').connect(url, {'force new connection': true});
+    var ioConn = socketIO.connect(url, {'force new connection': true});
 
     ioConn.socket.on('error', function (error) {
       pack.error(new Error(error));
