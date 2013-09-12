@@ -1,5 +1,5 @@
 /*global require, describe, it */
-var System = require('../../src/pryv').System,
+var System = require('../../src/main').System,
     should = require('should'),
     nock =   require('nock');
 

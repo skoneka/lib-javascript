@@ -1,3 +1,4 @@
+//TODO: consider merging System into Utility
 
 function isBrowser() {
   return typeof(window) !== 'undefined';

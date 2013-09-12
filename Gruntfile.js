@@ -5,7 +5,7 @@ module.exports = function (grunt) {
     pkg: grunt.file.readJSON('package.json'),
     browserify: {
       main: {
-        src: ['./src/pryv.js'],
+        src: ['./src/main.js'],
         dest: './dist/pryv.js',
         options: {
           ignore: ['./src/system/*-node.js', './src/utility/*-node.js']
@@ -34,7 +34,7 @@ module.exports = function (grunt) {
       test: {
         options: {
           reporter: 'spec',
-          require: ['./src/pryv.js']
+          require: ['./src/main.js']
         },
         src: ['tests/**/*.test.js']
       }

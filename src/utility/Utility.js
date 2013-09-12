@@ -1,9 +1,6 @@
-
-var Utility = {};
-
 var _ = require('underscore');
 
-Utility.MergeAndClean = function (sourceA, sourceB) {
+exports.mergeAndClean = function (sourceA, sourceB) {
   sourceA = sourceA || {};
   sourceB = sourceB || {};
   var result = _.clone(sourceA);
@@ -14,7 +11,7 @@ Utility.MergeAndClean = function (sourceA, sourceB) {
   return result;
 };
 
-Utility.URLParametersFromJSON = function (data) {
+exports.getQueryParametersString = function (data) {
   return Object.keys(data).map(function (k) {
     if (_.isArray(data[k])) {
       var keyE = encodeURIComponent(k + '[]');
@@ -26,5 +23,3 @@ Utility.URLParametersFromJSON = function (data) {
     }
   }).join('&');
 };
-
-module.exports = Utility;
