@@ -1,4 +1,6 @@
+/* global describe, it */
 var Pryv = require('../../src/main'),
+    Utility = require('../../src/utility/Utility'),
     should = require('should'),
     nock = require('nock');
 
@@ -6,26 +8,65 @@ describe('Pryv.events', function () {
 
   var username = 'test-user',
       auth = 'test-token',
-      defaultFilter = new Pryv.Filter();
+      defaultFilter = Pryv.Filter();
   var settings = {
     port: 443,
     ssl: true,
     domain: 'test.io'
   };
-  var con = new Pryv.Connection()
+  var response = { message : 'ok'};
 
-  describe('get', function() {
+  var connection = Pryv.Connection(username, auth, settings);
+
+  describe('get', function () {
 
     it('should call the proper API method', function (done) {
       nock('https://' + username + '.' + settings.domain)
-        .get('/events')
-        .reply(200, TODO);
-      con.events.get(defaultFilter, function(err, result) {
-        //TODO
+        .get('/events?' + Utility.getQueryParametersString(defaultFilter.settings))
+        .reply(200, response);
+      connection.events.get(defaultFilter, function (err, result) {
+        should.not.exist(err);
+        should.exist(result);
+        result.should.eql(response);
         done();
       });
-    };
+    });
 
   });
 
+  describe('create', function () {
+    var events = [
+      { content: 'test-content-1' },
+      { content: 'test-content-2' }
+    ];
+    response = {
+      'temp_ref_id_0' : { 'id' : 'test_id_0'},
+      'temp_ref_id_1' : { 'id' : 'test_id_1'}
+    };
+    it('should call the propoer API method', function (done) {
+      nock('https://' + username + '.' + settings.domain)
+        .post('/events/batch')
+        .reply(200, response);
+      connection.events.create(events, function (err, result) {
+        events[0].tempRefId.should.eql('temp_ref_id_0');
+        events[1].tempRefId.should.eql('temp_ref_id_1');
+        events[0].id.should.eql('test_id_0');
+        events[1].id.should.eql('test_id_1');
+        should.not.exist(err);
+        should.exist(result);
+        result.should.eql(response);
+        done();
+      });
+    });
+  });
+
+  describe('update', function () {
+    it('should call the propoer API method', function (done) {
+      nock('https://' + username + '.' + settings.domain)
+        .post('/events/batch')
+        .reply(200, response);
+        //TODO
+        done();
+    });
+  });
 });

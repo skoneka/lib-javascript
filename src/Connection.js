@@ -3,28 +3,31 @@
  * @type {*}
  */
 
-var _ = require('underscore'),
-    System = require('system/System.js'),
+var _ = require('lodash'),
+    System = require('./system/System.js'),
     ConnectionEvents = require('./connection/Events.js');
 
 var Connection = module.exports = function (username, auth, settings) {
-  this.username = username;
-  this.auth = auth;
+  var self = this instanceof Connection ? this : Object.create(Connection.prototype);
 
-  this.settings = _.extend({
+  self.username = username;
+  self.auth = auth;
+
+  self.settings = _.extend({
     port: 443,
     ssl: true,
     domain: 'pryv.io'
   }, settings);
 
-  this.serverInfos = {
+  self.serverInfos = {
     // currentTime - serverTime
     deltaTime: null,
     apiVersion: null,
     lastSeenLT: null
   };
 
-  this.events = new ConnectionEvents(this);
+  self.events = new ConnectionEvents(self);
+  return self;
 };
 
 Connection.prototype.getLocalTime = function (serverTime) {
@@ -86,7 +89,7 @@ Connection.prototype.request = function (method, path, callback, jsonData) {
   /**
    * @this {Connection}
    */
-  function onSuccess (result, requestInfos) {
+  function onSuccess(result, requestInfos) {
     this.serverInfos.lastSeenLT = (new Date()).getTime();
     this.serverInfos.apiVersion = requestInfos.headers['api-version'] ||
       this.serverInfos.apiVersion;
@@ -95,10 +98,10 @@ Connection.prototype.request = function (method, path, callback, jsonData) {
         requestInfos.headers['server-time'];
     }
     callback(null, result);
-  };
+  }
 
-  function onError (error /*, requestInfo*/) {
+  function onError(error /*, requestInfo*/) {
     callback(error, null);
-  };
+  }
 
 };

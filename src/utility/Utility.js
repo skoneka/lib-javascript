@@ -1,4 +1,4 @@
-var _ = require('underscore');
+var _ = require('lodash');
 
 exports.mergeAndClean = function (sourceA, sourceB) {
   sourceA = sourceA || {};
@@ -12,14 +12,16 @@ exports.mergeAndClean = function (sourceA, sourceB) {
 };
 
 exports.getQueryParametersString = function (data) {
-  return Object.keys(data).map(function (k) {
-    if (_.isArray(data[k])) {
-      var keyE = encodeURIComponent(k + '[]');
-      return data[k].map(function (subData) {
-        return keyE + '=' + encodeURIComponent(subData);
-      }).join('&');
-    } else {
-      return encodeURIComponent(k) + '=' + encodeURIComponent(data[k]);
+  return Object.keys(data).map(function (key) {
+    if (data[key] !== null) {
+      if (_.isArray(data[key])) {
+        var keyE = encodeURIComponent(key + '[]');
+        return data[key].map(function (subData) {
+          return keyE + '=' + encodeURIComponent(subData);
+        }).join('&');
+      } else {
+        return encodeURIComponent(key) + '=' + encodeURIComponent(data[key]);
+      }
     }
   }).join('&');
 };

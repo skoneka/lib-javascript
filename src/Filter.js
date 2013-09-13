@@ -1,7 +1,8 @@
-var _ = require('underscore');
+var _ = require('lodash');
 
 var Filter = module.exports = function (settings) {
-  this.settings = _.extend({
+  var self = this instanceof Filter ? this : Object.create(Filter.prototype);
+  self.settings = _.extend({
     //TODO: set default values
     streams: null,
     tags: null,
@@ -12,6 +13,7 @@ var Filter = module.exports = function (settings) {
     modifiedSince: null,
     state: null
   }, settings);
+  return self;
 };
 
 //TODO: remove or rewrite (name & functionality unclear)

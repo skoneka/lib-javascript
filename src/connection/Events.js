@@ -1,8 +1,11 @@
 
-var Utility = require('../../utility/Utility.js');
+var Utility = require('../utility/Utility.js'),
+    _ = require('lodash');
 
 var Events = module.exports = function (conn) {
-  this.conn = conn;
+  var self = this instanceof Events ? this : Object.create(Events.prototype);
+  self.conn = conn;
+  return self;
 };
 
 Events.prototype.get = function (filter, callback) {
@@ -14,8 +17,17 @@ Events.prototype.get = function (filter, callback) {
  *
  * @param {Array} events
  */
-Events.prototype.create = function (events) {
-
+Events.prototype.create = function (events, callback) {
+  var url = '/events/batch';
+  _.each(events, function (event, index) {
+    event.tempRefId = 'temp_ref_id_' + index;
+  });
+  this.conn.request('POST', url, function (err, result) {
+    _.each(events, function (event) {
+      event.id = result[event.tempRefId].id;
+    });
+    callback(err, result);
+  }, events);
 };
 
 //TODO: rewrite once API for monitoring is sorted out
