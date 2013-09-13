@@ -35,6 +35,7 @@ describe('Pryv.events', function () {
   });
 
   describe('create', function () {
+
     var events = [
       { content: 'test-content-1' },
       { content: 'test-content-2' }
@@ -43,7 +44,18 @@ describe('Pryv.events', function () {
       'temp_ref_id_0' : { 'id' : 'test_id_0'},
       'temp_ref_id_1' : { 'id' : 'test_id_1'}
     };
-    it('should call the propoer API method', function (done) {
+    it('should call the proper API method', function (done) {
+      nock('https://' + username + '.' + settings.domain)
+        .post('/events/batch')
+        .reply(201, response);
+      connection.events.create(events, function (err, result) {
+        should.not.exist(err);
+        should.exist(result);
+        result.should.eql(response);
+        done();
+      });
+    });
+    it('should add received id to the events', function (done) {
       nock('https://' + username + '.' + settings.domain)
         .post('/events/batch')
         .reply(200, response);
@@ -61,12 +73,23 @@ describe('Pryv.events', function () {
   });
 
   describe('update', function () {
-    it('should call the propoer API method', function (done) {
+    var event = {
+      id : 'test-id',
+      content: 'test-content'
+    },
+    response = {
+      message : 'ok'
+    };
+    it('should call the proper API method', function (done) {
       nock('https://' + username + '.' + settings.domain)
-        .post('/events/batch')
+        .put('/events/' + event.id)
         .reply(200, response);
-        //TODO
+      connection.events.update(event, function (err, result) {
+        should.not.exist(err);
+        should.exist(result);
+        result.should.eql(response);
         done();
+      });
     });
   });
 });

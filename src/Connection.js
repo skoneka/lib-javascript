@@ -6,8 +6,10 @@
 var _ = require('lodash'),
     System = require('./system/System.js'),
     ConnectionEvents = require('./connection/Events.js');
+    ConnectionStreams = require('./connection/Streams.js');
 
 var Connection = module.exports = function (username, auth, settings) {
+  // Constructor new-Agnostic
   var self = this instanceof Connection ? this : Object.create(Connection.prototype);
 
   self.username = username;
@@ -27,6 +29,7 @@ var Connection = module.exports = function (username, auth, settings) {
   };
 
   self.events = new ConnectionEvents(self);
+  self.streams = new ConnectionStreams(self);
   return self;
 };
 

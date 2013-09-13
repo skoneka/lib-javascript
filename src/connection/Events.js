@@ -3,9 +3,7 @@ var Utility = require('../utility/Utility.js'),
     _ = require('lodash');
 
 var Events = module.exports = function (conn) {
-  var self = this instanceof Events ? this : Object.create(Events.prototype);
-  self.conn = conn;
-  return self;
+  this.conn = conn;
 };
 
 Events.prototype.get = function (filter, callback) {
@@ -28,6 +26,11 @@ Events.prototype.create = function (events, callback) {
     });
     callback(err, result);
   }, events);
+};
+
+Events.prototype.update = function (event, callback) {
+  var url = '/events/' + event.id;
+  this.conn.request('PUT', url, callback);
 };
 
 //TODO: rewrite once API for monitoring is sorted out

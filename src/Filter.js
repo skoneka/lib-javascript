@@ -1,6 +1,7 @@
 var _ = require('lodash');
 
 var Filter = module.exports = function (settings) {
+  // Constructor new-Agnostic
   var self = this instanceof Filter ? this : Object.create(Filter.prototype);
   self.settings = _.extend({
     //TODO: set default values

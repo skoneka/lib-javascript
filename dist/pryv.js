@@ -147,8 +147,10 @@ module.exports = System;
 var _ = require('lodash'),
     System = require('./system/System.js'),
     ConnectionEvents = require('./connection/Events.js');
+    ConnectionStreams = require('./connection/Streams.js');
 
 var Connection = module.exports = function (username, auth, settings) {
+  // Constructor new-Agnostic
   var self = this instanceof Connection ? this : Object.create(Connection.prototype);
 
   self.username = username;
@@ -168,6 +170,7 @@ var Connection = module.exports = function (username, auth, settings) {
   };
 
   self.events = new ConnectionEvents(self);
+  self.streams = new ConnectionStreams(self);
   return self;
 };
 
@@ -247,10 +250,11 @@ Connection.prototype.request = function (method, path, callback, jsonData) {
 
 };
 
-},{"./connection/Events.js":7,"./system/System.js":3,"lodash":8}],4:[function(require,module,exports){
+},{"./connection/Events.js":7,"./connection/Streams.js":8,"./system/System.js":3,"lodash":9}],4:[function(require,module,exports){
 var _ = require('lodash');
 
 var Filter = module.exports = function (settings) {
+  // Constructor new-Agnostic
   var self = this instanceof Filter ? this : Object.create(Filter.prototype);
   self.settings = _.extend({
     //TODO: set default values
@@ -274,7 +278,7 @@ Filter.prototype.focusedOnSingleStream = function () {
   return null;
 };
 
-},{"lodash":8}],8:[function(require,module,exports){
+},{"lodash":9}],9:[function(require,module,exports){
 (function(global){/**
  * @license
  * Lo-Dash 2.0.0 (Custom Build) <http://lodash.com/>
@@ -6557,9 +6561,7 @@ var Utility = require('../utility/Utility.js'),
     _ = require('lodash');
 
 var Events = module.exports = function (conn) {
-  var self = this instanceof Events ? this : Object.create(Events.prototype);
-  self.conn = conn;
-  return self;
+  this.conn = conn;
 };
 
 Events.prototype.get = function (filter, callback) {
@@ -6582,6 +6584,11 @@ Events.prototype.create = function (events, callback) {
     });
     callback(err, result);
   }, events);
+};
+
+Events.prototype.update = function (event, callback) {
+  var url = '/events/' + event.id;
+  this.conn.request('PUT', url, callback);
 };
 
 //TODO: rewrite once API for monitoring is sorted out
@@ -6614,7 +6621,33 @@ Events.prototype.monitor = function (filter, callback) {
   });
 };
 
-},{"../utility/Utility.js":9,"lodash":8}],9:[function(require,module,exports){
+},{"../utility/Utility.js":10,"lodash":9}],8:[function(require,module,exports){
+
+var _ = require('lodash'),
+    Utility = require('../utility/Utility.js');
+
+var Streams = module.exports = function (connection) {
+  this.connection = connection;
+};
+
+Streams.prototype.get = function (callback, opts) {
+  var url = '/streams?' + Utility.getQueryParametersString(opts);
+  this.connection.request('GET', url, callback);
+};
+Streams.prototype.create = function (stream, callback) {
+  var url = '/streams';
+  this.connection.request('POST', url, function (err, result) {
+    stream.id = result.id;
+    callback(err, result);
+  }, stream);
+};
+
+Streams.prototype.update = function (stream, callback) {
+  var url = '/streams/' + stream.id;
+  this.connection.request('PUT', url, callback);
+};
+
+},{"../utility/Utility.js":10,"lodash":9}],10:[function(require,module,exports){
 var _ = require('lodash');
 
 exports.mergeAndClean = function (sourceA, sourceB) {
@@ -6643,5 +6676,5 @@ exports.getQueryParametersString = function (data) {
   }).join('&');
 };
 
-},{"lodash":8}]},{},[1])
+},{"lodash":9}]},{},[1])
 ;
