@@ -5,7 +5,7 @@
 
 var _ = require('lodash'),
     System = require('./system/System.js'),
-    ConnectionEvents = require('./connection/Events.js');
+    ConnectionEvents = require('./connection/Events.js'),
     ConnectionStreams = require('./connection/Streams.js');
 
 var Connection = module.exports = function (username, auth, settings) {
@@ -14,6 +14,7 @@ var Connection = module.exports = function (username, auth, settings) {
 
   self.username = username;
   self.auth = auth;
+
 
   self.settings = _.extend({
     port: 443,
@@ -34,7 +35,7 @@ var Connection = module.exports = function (username, auth, settings) {
 };
 
 Connection.prototype.getLocalTime = function (serverTime) {
-  return serverTime + this.serverInfos.deltaTime;
+  return (serverTime + this.serverInfos.deltaTime) * 1000;
 };
 
 Connection.prototype.getServerTime = function (localTime) {
