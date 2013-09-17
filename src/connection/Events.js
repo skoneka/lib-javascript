@@ -6,8 +6,9 @@ var Events = module.exports = function (conn) {
   this.conn = conn;
 };
 
-Events.prototype.get = function (filter, callback) {
-  var url = '/events?' + Utility.getQueryParametersString(filter.settings);
+Events.prototype.get = function (filter, callback, deltaFilter) {
+  var tParams = Utility.mergeAndClean(filter.settings, deltaFilter);
+  var url = '/events?' + Utility.getQueryParametersString(tParams);
   this.conn.request('GET', url, callback);
 };
 
@@ -38,18 +39,19 @@ Events.prototype.monitor = function (filter, callback) {
   var that = this;
   var lastSynchedST = -1;
 
-  this.conn.monitor(function (signal, payload) {
+  this.conn.monitor(filter, function (signal, payload) {
     switch (signal) {
     case 'connect':
       // set current serverTime as last update
-      lastSynchedST = that.getServerTime();
+      lastSynchedST = that.conn.getServerTime();
       callback(signal, payload);
       break;
     case 'event' :
-      that.events.get(filter, function (error, result) {
+      that.conn.events.get(filter, function (error, result) {
         _.each(result, function (e) {
           if (e.modified > lastSynchedST)  {
             lastSynchedST = e.modified;
+            console.log("**** "+lastSynchedST) ;
           }
         });
         callback('events', result);

@@ -23,7 +23,7 @@ var Connection = module.exports = function (username, auth, settings) {
   }, settings);
 
   self.serverInfos = {
-    // currentTime - serverTime
+    // nowLocalTime - nowServerTime
     deltaTime: null,
     apiVersion: null,
     lastSeenLT: null
@@ -39,8 +39,8 @@ Connection.prototype.getLocalTime = function (serverTime) {
 };
 
 Connection.prototype.getServerTime = function (localTime) {
-  localTime = localTime || new Date().getTime() / 1000;
-  return localTime - this.serverInfos.deltaTime;
+  localTime = localTime || new Date().getTime();
+  return (localTime / 1000) - this.serverInfos.deltaTime;
 };
 
 Connection.prototype.monitor = function (filter, callback) {
@@ -98,7 +98,7 @@ Connection.prototype.request = function (method, path, callback, jsonData) {
     this.serverInfos.apiVersion = requestInfos.headers['api-version'] ||
       this.serverInfos.apiVersion;
     if (_.has(requestInfos.headers, 'server-time')) {
-      this.serverInfos.deltaTime = ((new Date()).getTime() / 1000) -
+      this.serverInfos.deltaTime = (this.serverInfos.lastSeenLT / 1000) -
         requestInfos.headers['server-time'];
     }
     callback(null, result);
