@@ -34,10 +34,27 @@ var Connection = module.exports = function (username, auth, settings) {
   return self;
 };
 
+Connection.prototype.accessInfo = function (callback) {
+  var url = '/access-info';
+  this.request('GET', url, callback);
+};
+
+/**
+ * Translate this timestamp (server dimension) to local system dimension
+ * This could have been named to "translate2LocalTime"
+ * @param serverTime timestamp  (server dimension)
+ * @returns {number} timestamp (local dimension)
+ */
 Connection.prototype.getLocalTime = function (serverTime) {
   return (serverTime + this.serverInfos.deltaTime) * 1000;
 };
 
+/**
+ * Translate this timestamp (local system dimension) to server dimension
+ * This could have been named to "translate2ServerTime"
+ * @param localTime timestamp  (local dimension)
+ * @returns {number} timestamp (server dimension)
+ */
 Connection.prototype.getServerTime = function (localTime) {
   localTime = localTime || new Date().getTime();
   return (localTime / 1000) - this.serverInfos.deltaTime;
