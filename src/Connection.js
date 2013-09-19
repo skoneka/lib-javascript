@@ -23,7 +23,7 @@ var Connection = module.exports = function (username, auth, settings) {
   }, settings);
 
   self.serverInfos = {
-    // currentTime - serverTime
+    // nowLocalTime - nowServerTime
     deltaTime: null,
     apiVersion: null,
     lastSeenLT: null
@@ -35,13 +35,30 @@ var Connection = module.exports = function (username, auth, settings) {
 };
 
 
+Connection.prototype.accessInfo = function (callback, context) {
+  var url = '/access-info';
+  this.request('GET', url, callback, null, context);
+};
+
+/**
+ * Translate this timestamp (server dimension) to local system dimension
+ * This could have been named to "translate2LocalTime"
+ * @param serverTime timestamp  (server dimension)
+ * @returns {number} timestamp (local dimension)
+ */
 Connection.prototype.getLocalTime = function (serverTime) {
   return (serverTime + this.serverInfos.deltaTime) * 1000;
 };
 
+/**
+ * Translate this timestamp (local system dimension) to server dimension
+ * This could have been named to "translate2ServerTime"
+ * @param localTime timestamp  (local dimension)
+ * @returns {number} timestamp (server dimension)
+ */
 Connection.prototype.getServerTime = function (localTime) {
-  localTime = localTime || new Date().getTime() / 1000;
-  return localTime - this.serverInfos.deltaTime;
+  localTime = localTime || new Date().getTime();
+  return (localTime / 1000) - this.serverInfos.deltaTime;
 };
 
 Connection.prototype.monitor = function (filter, callback) {
@@ -99,7 +116,7 @@ Connection.prototype.request = function (method, path, callback, jsonData, conte
     this.serverInfos.apiVersion = requestInfos.headers['api-version'] ||
       this.serverInfos.apiVersion;
     if (_.has(requestInfos.headers, 'server-time')) {
-      this.serverInfos.deltaTime = ((new Date()).getTime() / 1000) -
+      this.serverInfos.deltaTime = (this.serverInfos.lastSeenLT / 1000) -
         requestInfos.headers['server-time'];
     }
     callback.call(context, null, result);
