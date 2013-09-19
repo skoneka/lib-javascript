@@ -3,7 +3,7 @@
  * @type {*}
  */
 
-var _ = require('lodash'),
+var _ = require('underscore'),
     System = require('./system/System.js'),
     ConnectionEvents = require('./connection/Events.js'),
     ConnectionStreams = require('./connection/Streams.js');
@@ -33,6 +33,7 @@ var Connection = module.exports = function (username, auth, settings) {
   self.streams = new ConnectionStreams(self);
   return self;
 };
+
 
 Connection.prototype.getLocalTime = function (serverTime) {
   return (serverTime + this.serverInfos.deltaTime) * 1000;
@@ -67,9 +68,9 @@ Connection.prototype.monitor = function (filter, callback) {
   });
 };
 
-Connection.prototype.request = function (method, path, callback, jsonData) {
+Connection.prototype.request = function (method, path, callback, jsonData, context) {
   var headers =  { 'authorization': this.auth };
-
+  context = context ? context : this;
   var payload = null;
   if (jsonData) {
     payload = JSON.stringify(jsonData);
@@ -101,11 +102,11 @@ Connection.prototype.request = function (method, path, callback, jsonData) {
       this.serverInfos.deltaTime = ((new Date()).getTime() / 1000) -
         requestInfos.headers['server-time'];
     }
-    callback(null, result);
+    callback.call(context, null, result);
   }
 
   function onError(error /*, requestInfo*/) {
-    callback(error, null);
+    callback.call(context, error, null);
   }
 
 };

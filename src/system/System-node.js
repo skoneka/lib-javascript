@@ -15,7 +15,7 @@ exports.ioConnect = function (settings) {
 /**
  *
  * @param pack json with
- * type : 'GET/DELETE/POST/PUT'
+ * method : 'GET/DELETE/POST/PUT'
  * host : fully qualified host name
  * port : port to use
  * path : the request PATH

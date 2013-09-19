@@ -6,5 +6,6 @@ module.exports = {
   //Event : require('./Event.js'),
   //Stream : require('./Stream.js'),
   Filter : require('./Filter.js'),
-  System : require('./system/System.js')
+  System : require('./system/System.js'),
+  Access: require('./Access.js')
 };

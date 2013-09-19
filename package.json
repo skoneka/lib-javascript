@@ -13,7 +13,7 @@
   },
   "main": "src/main.js",
   "dependencies": {
-    "lodash": "~2.0.0",
+    "underscore": "latest",
     "socket.io-client": "~0.9.16"
   },
   "devDependencies": {

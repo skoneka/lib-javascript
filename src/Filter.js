@@ -1,4 +1,4 @@
-var _ = require('lodash');
+var _ = require('underscore');
 
 var Filter = module.exports = function (settings) {
   // Constructor new-Agnostic

@@ -24,7 +24,7 @@ describe('Pryv.streams', function () {
     it('should call proper the proper API method', function (done) {
 
       nock('https://' + username + '.' + settings.domain)
-        .get('/streams?parentId=test-id&state=default&')
+        .get('/streams?parentId=test-id&state=default')
         .reply(200, response);
       connection.streams.get(function (err, result) {
         should.not.exist(err);

@@ -1,21 +1,21 @@
 
 var Utility = require('../utility/Utility.js'),
-    _ = require('lodash');
+    _ = require('underscore');
 
 var Events = module.exports = function (conn) {
   this.conn = conn;
 };
 
-Events.prototype.get = function (filter, callback) {
+Events.prototype.get = function (filter, callback, context) {
   var url = '/events?' + Utility.getQueryParametersString(filter.settings);
-  this.conn.request('GET', url, callback);
+  this.conn.request('GET', url, callback, null, context);
 };
 
 /**
  *
  * @param {Array} events
  */
-Events.prototype.create = function (events, callback) {
+Events.prototype.create = function (events, callback, context) {
   var url = '/events/batch';
   _.each(events, function (event, index) {
     event.tempRefId = 'temp_ref_id_' + index;
@@ -25,12 +25,12 @@ Events.prototype.create = function (events, callback) {
       event.id = result[event.tempRefId].id;
     });
     callback(err, result);
-  }, events);
+  }, events, context);
 };
 
-Events.prototype.update = function (event, callback) {
+Events.prototype.update = function (event, callback, context) {
   var url = '/events/' + event.id;
-  this.conn.request('PUT', url, callback);
+  this.conn.request('PUT', url, callback, null, context);
 };
 
 //TODO: rewrite once API for monitoring is sorted out
