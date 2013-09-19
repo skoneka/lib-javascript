@@ -45,7 +45,13 @@ exports.request = function (pack)  {
       pack.headers['Content-Type'] || 'application/json; charset=utf-8';
   }
 
-  if (pack.method === 'POST') { pack.params = pack.payload || {}; }
+  if (pack.method === 'POST') {
+    if (pack.params) {
+      pack.params = JSON.stringify(pack.params);
+    } else {
+      pack.params = pack.payload || {};
+    }
+  }
 
 
 
@@ -62,8 +68,9 @@ exports.request = function (pack)  {
 
   // --------------- request
   var xhr = _initXHR(),
-  httpMode = pack.ssl ? 'https://' : 'http://';
-  xhr.open(pack.method, httpMode + pack.host + pack.path, pack.async);
+    httpMode = pack.ssl ? 'https://' : 'http://',
+    url = pack.url || (httpMode + pack.host + pack.path);
+  xhr.open(pack.method, url, pack.async);
   xhr.withCredentials = true;
 
 
