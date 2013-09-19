@@ -1,6 +1,6 @@
 require=(function(e,t,n){function i(n,s){if(!t[n]){if(!e[n]){var o=typeof require=="function"&&require;if(!s&&o)return o(n,!0);if(r)return r(n,!0);throw new Error("Cannot find module '"+n+"'")}var u=t[n]={exports:{}};e[n][0].call(u.exports,function(t){var r=e[n][1][t];return i(r?r:t)},u,u.exports)}return t[n].exports}var r=typeof require=="function"&&require;for(var s=0;s<n.length;s++)i(n[s]);return i})({"pryv":[function(require,module,exports){
-module.exports=require('CNLtvm');
-},{}],"CNLtvm":[function(require,module,exports){
+module.exports=require('cwPZLO');
+},{}],"cwPZLO":[function(require,module,exports){
 /**
  * The main file.
  */
@@ -13,7 +13,7 @@ module.exports = {
   Access: require('./Access.js')
 };
 
-},{"./Access.js":4,"./Connection.js":1,"./Filter.js":2,"./system/System.js":3}],3:[function(require,module,exports){
+},{"./Access.js":3,"./Connection.js":1,"./Filter.js":2,"./system/System.js":4}],4:[function(require,module,exports){
 //TODO: consider merging System into Utility
 
 function isBrowser() {
@@ -22,9 +22,7 @@ function isBrowser() {
 
 module.exports = isBrowser() ?  require('./System-browser.js') : require('./System-node.js');
 
-},{"./System-browser.js":6,"./System-node.js":5}],5:[function(require,module,exports){
-
-},{}],6:[function(require,module,exports){
+},{"./System-browser.js":5,"./System-node.js":6}],5:[function(require,module,exports){
 //file: system browser
 
 
@@ -72,7 +70,13 @@ exports.request = function (pack)  {
       pack.headers['Content-Type'] || 'application/json; charset=utf-8';
   }
 
-  if (pack.method === 'POST') { pack.params = pack.payload || {}; }
+  if (pack.method === 'POST') {
+    if (pack.params) {
+      pack.params = JSON.stringify(pack.params);
+    } else {
+      pack.params = pack.payload || {};
+    }
+  }
 
 
 
@@ -89,8 +93,9 @@ exports.request = function (pack)  {
 
   // --------------- request
   var xhr = _initXHR(),
-  httpMode = pack.ssl ? 'https://' : 'http://';
-  xhr.open(pack.method, httpMode + pack.host + pack.path, pack.async);
+    httpMode = pack.ssl ? 'https://' : 'http://',
+    url = pack.url || (httpMode + pack.host + pack.path);
+  xhr.open(pack.method, url, pack.async);
   xhr.withCredentials = true;
 
 
@@ -165,35 +170,9 @@ var _initXHR = function () {
 
 
 
-},{}],2:[function(require,module,exports){
-var _ = require('underscore');
+},{}],6:[function(require,module,exports){
 
-var Filter = module.exports = function (settings) {
-  // Constructor new-Agnostic
-  var self = this instanceof Filter ? this : Object.create(Filter.prototype);
-  self.settings = _.extend({
-    //TODO: set default values
-    streams: null,
-    tags: null,
-    from: null,
-    to: null,
-    limit: null,
-    skip: null,
-    modifiedSince: null,
-    state: null
-  }, settings);
-  return self;
-};
-
-//TODO: remove or rewrite (name & functionality unclear)
-Filter.prototype.focusedOnSingleStream = function () {
-  if (_.isArray(this.settings.streams) && this.settings.streams.length === 1) {
-    return this.settings.streams[0];
-  }
-  return null;
-};
-
-},{"underscore":7}],1:[function(require,module,exports){
+},{}],1:[function(require,module,exports){
 /**
  * TODO
  * @type {*}
@@ -219,7 +198,7 @@ var Connection = module.exports = function (username, auth, settings) {
   }, settings);
 
   self.serverInfos = {
-    // currentTime - serverTime
+    // nowLocalTime - nowServerTime
     deltaTime: null,
     apiVersion: null,
     lastSeenLT: null
@@ -231,13 +210,30 @@ var Connection = module.exports = function (username, auth, settings) {
 };
 
 
+Connection.prototype.accessInfo = function (callback, context) {
+  var url = '/access-info';
+  this.request('GET', url, callback, null, context);
+};
+
+/**
+ * Translate this timestamp (server dimension) to local system dimension
+ * This could have been named to "translate2LocalTime"
+ * @param serverTime timestamp  (server dimension)
+ * @returns {number} timestamp (local dimension)
+ */
 Connection.prototype.getLocalTime = function (serverTime) {
   return (serverTime + this.serverInfos.deltaTime) * 1000;
 };
 
+/**
+ * Translate this timestamp (local system dimension) to server dimension
+ * This could have been named to "translate2ServerTime"
+ * @param localTime timestamp  (local dimension)
+ * @returns {number} timestamp (server dimension)
+ */
 Connection.prototype.getServerTime = function (localTime) {
-  localTime = localTime || new Date().getTime() / 1000;
-  return localTime - this.serverInfos.deltaTime;
+  localTime = localTime || new Date().getTime();
+  return (localTime / 1000) - this.serverInfos.deltaTime;
 };
 
 Connection.prototype.monitor = function (filter, callback) {
@@ -295,7 +291,7 @@ Connection.prototype.request = function (method, path, callback, jsonData, conte
     this.serverInfos.apiVersion = requestInfos.headers['api-version'] ||
       this.serverInfos.apiVersion;
     if (_.has(requestInfos.headers, 'server-time')) {
-      this.serverInfos.deltaTime = ((new Date()).getTime() / 1000) -
+      this.serverInfos.deltaTime = (this.serverInfos.lastSeenLT / 1000) -
         requestInfos.headers['server-time'];
     }
     callback.call(context, null, result);
@@ -307,7 +303,35 @@ Connection.prototype.request = function (method, path, callback, jsonData, conte
 
 };
 
-},{"./connection/Events.js":8,"./connection/Streams.js":9,"./system/System.js":3,"underscore":7}],4:[function(require,module,exports){
+},{"./connection/Events.js":7,"./connection/Streams.js":8,"./system/System.js":4,"underscore":9}],2:[function(require,module,exports){
+var _ = require('underscore');
+
+var Filter = module.exports = function (settings) {
+  // Constructor new-Agnostic
+  var self = this instanceof Filter ? this : Object.create(Filter.prototype);
+  self.settings = _.extend({
+    //TODO: set default values
+    streams: null,
+    tags: null,
+    from: null,
+    to: null,
+    limit: null,
+    skip: null,
+    modifiedSince: null,
+    state: null
+  }, settings);
+  return self;
+};
+
+//TODO: remove or rewrite (name & functionality unclear)
+Filter.prototype.focusedOnSingleStream = function () {
+  if (_.isArray(this.settings.streams) && this.settings.streams.length === 1) {
+    return this.settings.streams[0];
+  }
+  return null;
+};
+
+},{"underscore":9}],3:[function(require,module,exports){
 var _ = require('underscore'),
   System = require('./system/System.js');
 
@@ -366,7 +390,7 @@ exports.getAccesses = function (pack) {
     error : pack.error
   });
 };
-},{"./system/System.js":3,"underscore":7}],7:[function(require,module,exports){
+},{"./system/System.js":4,"underscore":9}],9:[function(require,module,exports){
 (function(){//     Underscore.js 1.5.2
 //     http://underscorejs.org
 //     (c) 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -1647,6 +1671,32 @@ exports.getAccesses = function (pack) {
 })()
 },{}],8:[function(require,module,exports){
 
+var _ = require('underscore'),
+    Utility = require('../utility/Utility.js');
+
+var Streams = module.exports = function (connection) {
+  this.connection = connection;
+};
+
+Streams.prototype.get = function (callback, opts, context) {
+  var url = opts ? '/streams?' + Utility.getQueryParametersString(opts) : '/streams';
+  this.connection.request('GET', url, callback, null, context);
+};
+Streams.prototype.create = function (stream, callback, context) {
+  var url = '/streams';
+  this.connection.request('POST', url, function (err, result) {
+    stream.id = result.id;
+    callback(err, result);
+  }, stream, context);
+};
+
+Streams.prototype.update = function (stream, callback, context) {
+  var url = '/streams/' + stream.id;
+  this.connection.request('PUT', url, callback, null, context);
+};
+
+},{"../utility/Utility.js":10,"underscore":9}],7:[function(require,module,exports){
+
 var Utility = require('../utility/Utility.js'),
     _ = require('underscore');
 
@@ -1654,8 +1704,10 @@ var Events = module.exports = function (conn) {
   this.conn = conn;
 };
 
-Events.prototype.get = function (filter, callback, context) {
-  var url = '/events?' + Utility.getQueryParametersString(filter.settings);
+
+Events.prototype.get = function (filter, callback, deltaFilter, context) {
+  var tParams = Utility.mergeAndClean(filter.settings, deltaFilter);
+  var url = '/events?' + Utility.getQueryParametersString(tParams);
   this.conn.request('GET', url, callback, null, context);
 };
 
@@ -1686,18 +1738,19 @@ Events.prototype.monitor = function (filter, callback) {
   var that = this;
   var lastSynchedST = -1;
 
-  this.conn.monitor(function (signal, payload) {
+  this.conn.monitor(filter, function (signal, payload) {
     switch (signal) {
     case 'connect':
       // set current serverTime as last update
-      lastSynchedST = that.getServerTime();
+      lastSynchedST = that.conn.getServerTime();
       callback(signal, payload);
       break;
     case 'event' :
-      that.events.get(filter, function (error, result) {
+      that.conn.events.get(filter, function (error, result) {
         _.each(result, function (e) {
           if (e.modified > lastSynchedST)  {
             lastSynchedST = e.modified;
+            console.log("**** "+lastSynchedST) ;
           }
         });
         callback('events', result);
@@ -1711,33 +1764,7 @@ Events.prototype.monitor = function (filter, callback) {
   });
 };
 
-},{"../utility/Utility.js":10,"underscore":7}],9:[function(require,module,exports){
-
-var _ = require('underscore'),
-    Utility = require('../utility/Utility.js');
-
-var Streams = module.exports = function (connection) {
-  this.connection = connection;
-};
-
-Streams.prototype.get = function (callback, opts, context) {
-  var url = opts ? '/streams?' + Utility.getQueryParametersString(opts) : '/streams';
-  this.connection.request('GET', url, callback, null, context);
-};
-Streams.prototype.create = function (stream, callback, context) {
-  var url = '/streams';
-  this.connection.request('POST', url, function (err, result) {
-    stream.id = result.id;
-    callback(err, result);
-  }, stream, context);
-};
-
-Streams.prototype.update = function (stream, callback, context) {
-  var url = '/streams/' + stream.id;
-  this.connection.request('PUT', url, callback, null, context);
-};
-
-},{"../utility/Utility.js":10,"underscore":7}],10:[function(require,module,exports){
+},{"../utility/Utility.js":10,"underscore":9}],10:[function(require,module,exports){
 var _ = require('underscore');
 
 exports.mergeAndClean = function (sourceA, sourceB) {
@@ -1768,5 +1795,5 @@ exports.getQueryParametersString = function (data) {
   }, this).join('&');
 };
 
-},{"underscore":7}]},{},["CNLtvm"])
+},{"underscore":9}]},{},["cwPZLO"])
 ;
