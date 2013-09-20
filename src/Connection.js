@@ -29,15 +29,23 @@ var Connection = module.exports = function (username, auth, settings) {
     lastSeenLT: null
   };
 
+  self._accessInfo = null;
+
   self.events = new ConnectionEvents(self);
   self.streams = new ConnectionStreams(self);
   return self;
 };
 
 
-Connection.prototype.accessInfo = function (callback, context) {
+Connection.prototype.accessInfo = function (callback) {
+  var self = this;
   var url = '/access-info';
-  this.request('GET', url, callback, null, context);
+  this.request('GET', url, function (error, result) {  
+    if (! error) {
+      self._accessInfo = result;
+    }
+    return callback(error, result);
+  });
 };
 
 /**
