@@ -22,7 +22,9 @@ function isBrowser() {
 
 module.exports = isBrowser() ?  require('./System-browser.js') : require('./System-node.js');
 
-},{"./System-browser.js":5,"./System-node.js":6}],5:[function(require,module,exports){
+},{"./System-browser.js":6,"./System-node.js":5}],5:[function(require,module,exports){
+
+},{}],6:[function(require,module,exports){
 //file: system browser
 
 
@@ -170,9 +172,94 @@ var _initXHR = function () {
 
 
 
-},{}],6:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
+var _ = require('underscore'),
+  System = require('./system/System.js');
 
-},{}],1:[function(require,module,exports){
+
+/**
+ *
+ * @param params
+ * host:
+ * username:
+ * password:
+ * appId:
+ * success:
+ * error:
+ */
+exports.getSessionId = function (pack) {
+  var payload,
+  headers = {},
+  params = {
+    username: pack.username,
+    password: pack.password,
+    appId: pack.appId
+  };
+
+  payload = JSON.stringify(params);
+  headers['Content-Type'] = 'application/json; charset=utf-8';
+  headers['Content-Length'] = payload.length;
+
+  System.request({
+    method : 'POST',
+    host : pack.username + '.' + pack.host,
+    port : 443,
+    ssl : true,
+    path : '/admin/login',
+    headers : headers,
+    payload : payload,
+    //TODO: decide what callback convention to use (Node or jQuery)
+    success : pack.success,
+    error : pack.error
+  });
+};
+/**
+ *
+ * @param pack
+ */
+exports.getAccesses = function (pack) {
+  var headers =  { 'authorization': pack.sessionId };
+  System.request({
+    method : 'GET',
+    host : pack.host,
+    port : 443,
+    ssl : true,
+    path : '/admin/accesses',
+    headers : headers,
+    //TODO: decide what callback convention to use (Node or jQuery)
+    success : pack.success,
+    error : pack.error
+  });
+};
+},{"./system/System.js":4,"underscore":7}],2:[function(require,module,exports){
+var _ = require('underscore');
+
+var Filter = module.exports = function (settings) {
+  // Constructor new-Agnostic
+  var self = this instanceof Filter ? this : Object.create(Filter.prototype);
+  self.settings = _.extend({
+    //TODO: set default values
+    streams: null,
+    tags: null,
+    from: null,
+    to: null,
+    limit: null,
+    skip: null,
+    modifiedSince: null,
+    state: null
+  }, settings);
+  return self;
+};
+
+//TODO: remove or rewrite (name & functionality unclear)
+Filter.prototype.focusedOnSingleStream = function () {
+  if (_.isArray(this.settings.streams) && this.settings.streams.length === 1) {
+    return this.settings.streams[0];
+  }
+  return null;
+};
+
+},{"underscore":7}],1:[function(require,module,exports){
 /**
  * TODO
  * @type {*}
@@ -204,15 +291,23 @@ var Connection = module.exports = function (username, auth, settings) {
     lastSeenLT: null
   };
 
+  self._accessInfo = null;
+
   self.events = new ConnectionEvents(self);
   self.streams = new ConnectionStreams(self);
   return self;
 };
 
 
-Connection.prototype.accessInfo = function (callback, context) {
+Connection.prototype.accessInfo = function (callback) {
+  var self = this;
   var url = '/access-info';
-  this.request('GET', url, callback, null, context);
+  this.request('GET', url, function (error, result) {  
+    if (! error) {
+      self._accessInfo = result;
+    }
+    return callback(error, result);
+  });
 };
 
 /**
@@ -303,94 +398,7 @@ Connection.prototype.request = function (method, path, callback, jsonData, conte
 
 };
 
-},{"./connection/Events.js":7,"./connection/Streams.js":8,"./system/System.js":4,"underscore":9}],2:[function(require,module,exports){
-var _ = require('underscore');
-
-var Filter = module.exports = function (settings) {
-  // Constructor new-Agnostic
-  var self = this instanceof Filter ? this : Object.create(Filter.prototype);
-  self.settings = _.extend({
-    //TODO: set default values
-    streams: null,
-    tags: null,
-    from: null,
-    to: null,
-    limit: null,
-    skip: null,
-    modifiedSince: null,
-    state: null
-  }, settings);
-  return self;
-};
-
-//TODO: remove or rewrite (name & functionality unclear)
-Filter.prototype.focusedOnSingleStream = function () {
-  if (_.isArray(this.settings.streams) && this.settings.streams.length === 1) {
-    return this.settings.streams[0];
-  }
-  return null;
-};
-
-},{"underscore":9}],3:[function(require,module,exports){
-var _ = require('underscore'),
-  System = require('./system/System.js');
-
-
-/**
- *
- * @param params
- * host:
- * username:
- * password:
- * appId:
- * success:
- * error:
- */
-exports.getSessionId = function (pack) {
-  var payload,
-  headers = {},
-  params = {
-    username: pack.username,
-    password: pack.password,
-    appId: pack.appId
-  };
-
-  payload = JSON.stringify(params);
-  headers['Content-Type'] = 'application/json; charset=utf-8';
-  headers['Content-Length'] = payload.length;
-
-  System.request({
-    method : 'POST',
-    host : pack.username + '.' + pack.host,
-    port : 443,
-    ssl : true,
-    path : '/admin/login',
-    headers : headers,
-    payload : payload,
-    //TODO: decide what callback convention to use (Node or jQuery)
-    success : pack.success,
-    error : pack.error
-  });
-};
-/**
- *
- * @param pack
- */
-exports.getAccesses = function (pack) {
-  var headers =  { 'authorization': pack.sessionId };
-  System.request({
-    method : 'GET',
-    host : pack.host,
-    port : 443,
-    ssl : true,
-    path : '/admin/accesses',
-    headers : headers,
-    //TODO: decide what callback convention to use (Node or jQuery)
-    success : pack.success,
-    error : pack.error
-  });
-};
-},{"./system/System.js":4,"underscore":9}],9:[function(require,module,exports){
+},{"./connection/Events.js":8,"./connection/Streams.js":9,"./system/System.js":4,"underscore":7}],7:[function(require,module,exports){
 (function(){//     Underscore.js 1.5.2
 //     http://underscorejs.org
 //     (c) 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -1671,32 +1679,6 @@ exports.getAccesses = function (pack) {
 })()
 },{}],8:[function(require,module,exports){
 
-var _ = require('underscore'),
-    Utility = require('../utility/Utility.js');
-
-var Streams = module.exports = function (connection) {
-  this.connection = connection;
-};
-
-Streams.prototype.get = function (callback, opts, context) {
-  var url = opts ? '/streams?' + Utility.getQueryParametersString(opts) : '/streams';
-  this.connection.request('GET', url, callback, null, context);
-};
-Streams.prototype.create = function (stream, callback, context) {
-  var url = '/streams';
-  this.connection.request('POST', url, function (err, result) {
-    stream.id = result.id;
-    callback(err, result);
-  }, stream, context);
-};
-
-Streams.prototype.update = function (stream, callback, context) {
-  var url = '/streams/' + stream.id;
-  this.connection.request('PUT', url, callback, null, context);
-};
-
-},{"../utility/Utility.js":10,"underscore":9}],7:[function(require,module,exports){
-
 var Utility = require('../utility/Utility.js'),
     _ = require('underscore');
 
@@ -1764,7 +1746,33 @@ Events.prototype.monitor = function (filter, callback) {
   });
 };
 
-},{"../utility/Utility.js":10,"underscore":9}],10:[function(require,module,exports){
+},{"../utility/Utility.js":10,"underscore":7}],9:[function(require,module,exports){
+
+var _ = require('underscore'),
+    Utility = require('../utility/Utility.js');
+
+var Streams = module.exports = function (connection) {
+  this.connection = connection;
+};
+
+Streams.prototype.get = function (callback, opts, context) {
+  var url = opts ? '/streams?' + Utility.getQueryParametersString(opts) : '/streams';
+  this.connection.request('GET', url, callback, null, context);
+};
+Streams.prototype.create = function (stream, callback, context) {
+  var url = '/streams';
+  this.connection.request('POST', url, function (err, result) {
+    stream.id = result.id;
+    callback(err, result);
+  }, stream, context);
+};
+
+Streams.prototype.update = function (stream, callback, context) {
+  var url = '/streams/' + stream.id;
+  this.connection.request('PUT', url, callback, null, context);
+};
+
+},{"../utility/Utility.js":10,"underscore":7}],10:[function(require,module,exports){
 var _ = require('underscore');
 
 exports.mergeAndClean = function (sourceA, sourceB) {
@@ -1795,5 +1803,5 @@ exports.getQueryParametersString = function (data) {
   }, this).join('&');
 };
 
-},{"underscore":9}]},{},["cwPZLO"])
+},{"underscore":7}]},{},["cwPZLO"])
 ;
