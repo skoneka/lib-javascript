@@ -7,5 +7,6 @@ module.exports = {
   Stream : require('./Stream.js'),
   Filter : require('./Filter.js'),
   System : require('./system/System.js'),
-  Access: require('./Access.js')
+  Access: require('./Access.js'),
+  Utility: require('./utility/Utility.js')
 };

@@ -4,9 +4,10 @@
  */
 
 var _ = require('underscore'),
-    System = require('./system/System.js'),
-    ConnectionEvents = require('./connection/Events.js'),
-    ConnectionStreams = require('./connection/Streams.js');
+  System = require('./system/System.js'),
+  ConnectionEvents = require('./connection/Events.js'),
+  ConnectionStreams = require('./connection/Streams.js'),
+  Datastore = require('./Datastore.js');
 
 var Connection = module.exports = function (username, auth, settings) {
   // Constructor new-Agnostic
@@ -33,7 +34,17 @@ var Connection = module.exports = function (username, auth, settings) {
 
   self.events = new ConnectionEvents(self);
   self.streams = new ConnectionStreams(self);
+
+  self.datastore = new Datastore(self);
   return self;
+};
+
+Connection.prototype.initDataStore = function (callback) {
+  var self = this;
+  this.accessInfo(function (error) {
+    if (error) { return callback(error); }
+    self.datastore.init(callback);
+  });
 };
 
 
@@ -41,7 +52,7 @@ Connection.prototype.accessInfo = function (callback) {
   if (this._accessInfo) { return this._accessInfo; }
   var self = this;
   var url = '/access-info';
-  this.request('GET', url, function (error, result) {  
+  this.request('GET', url, function (error, result) {
     if (! error) {
       self._accessInfo = result;
     }
