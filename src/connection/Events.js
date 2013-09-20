@@ -13,6 +13,8 @@ Events.prototype.get = function (filter, callback, deltaFilter, context) {
   this.conn.request('GET', url, callback, null, context);
 };
 
+
+//TODO check that we can really override method "create()" of object
 /**
  *
  * @param {Array} events
@@ -52,7 +54,6 @@ Events.prototype.monitor = function (filter, callback) {
         _.each(result, function (e) {
           if (e.modified > lastSynchedST)  {
             lastSynchedST = e.modified;
-            console.log("**** "+lastSynchedST) ;
           }
         });
         callback('events', result);

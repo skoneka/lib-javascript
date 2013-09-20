@@ -38,6 +38,7 @@ var Connection = module.exports = function (username, auth, settings) {
 
 
 Connection.prototype.accessInfo = function (callback) {
+  if (this._accessInfo) { return this._accessInfo; }
   var self = this;
   var url = '/access-info';
   this.request('GET', url, function (error, result) {  
@@ -135,3 +136,26 @@ Connection.prototype.request = function (method, path, callback, jsonData, conte
   }
 
 };
+
+
+Object.defineProperty(Connection.prototype, 'id', {
+  get: function () {
+    var id = this.settings.ssl ? 'https://' : 'http://';
+    id += this.username + '.' + this.settings.domain + ':' +
+      this.settings.port + '/?auth=' + this.auth;
+    return id;
+  },
+  set: function () { throw new Error('ConnectionNode.id property is read only'); }
+});
+
+Object.defineProperty(Connection.prototype, 'shortId', {
+  get: function () {
+    if (! this._accessInfo) {
+      throw new Error('connection must have been initialized to use shortId. ' +
+        ' You can call accessInfo() for this');
+    }
+    var id = this.username + ':' + this._accessInfo.name;
+    return id;
+  },
+  set: function () { throw new Error('Connection.shortId property is read only'); }
+});

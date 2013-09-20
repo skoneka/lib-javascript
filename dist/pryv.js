@@ -1,19 +1,29 @@
 require=(function(e,t,n){function i(n,s){if(!t[n]){if(!e[n]){var o=typeof require=="function"&&require;if(!s&&o)return o(n,!0);if(r)return r(n,!0);throw new Error("Cannot find module '"+n+"'")}var u=t[n]={exports:{}};e[n][0].call(u.exports,function(t){var r=e[n][1][t];return i(r?r:t)},u,u.exports)}return t[n].exports}var r=typeof require=="function"&&require;for(var s=0;s<n.length;s++)i(n[s]);return i})({"pryv":[function(require,module,exports){
-module.exports=require('cwPZLO');
-},{}],"cwPZLO":[function(require,module,exports){
+module.exports=require('r0xNjY');
+},{}],"r0xNjY":[function(require,module,exports){
 /**
  * The main file.
  */
 module.exports = {
   Connection : require('./Connection.js'),
-  //Event : require('./Event.js'),
-  //Stream : require('./Stream.js'),
+  Event : require('./Event.js'),
+  Stream : require('./Stream.js'),
   Filter : require('./Filter.js'),
   System : require('./system/System.js'),
   Access: require('./Access.js')
 };
 
-},{"./Access.js":3,"./Connection.js":1,"./Filter.js":2,"./system/System.js":4}],4:[function(require,module,exports){
+},{"./Access.js":6,"./Connection.js":1,"./Event.js":2,"./Filter.js":4,"./Stream.js":3,"./system/System.js":5}],3:[function(require,module,exports){
+/**
+ *
+ * @type {Function}
+ * @constructor
+ */
+var Stream = module.exports = function () {
+
+};
+
+},{}],5:[function(require,module,exports){
 //TODO: consider merging System into Utility
 
 function isBrowser() {
@@ -22,9 +32,7 @@ function isBrowser() {
 
 module.exports = isBrowser() ?  require('./System-browser.js') : require('./System-node.js');
 
-},{"./System-browser.js":6,"./System-node.js":5}],5:[function(require,module,exports){
-
-},{}],6:[function(require,module,exports){
+},{"./System-browser.js":7,"./System-node.js":8}],7:[function(require,module,exports){
 //file: system browser
 
 
@@ -172,94 +180,9 @@ var _initXHR = function () {
 
 
 
-},{}],3:[function(require,module,exports){
-var _ = require('underscore'),
-  System = require('./system/System.js');
+},{}],8:[function(require,module,exports){
 
-
-/**
- *
- * @param params
- * host:
- * username:
- * password:
- * appId:
- * success:
- * error:
- */
-exports.getSessionId = function (pack) {
-  var payload,
-  headers = {},
-  params = {
-    username: pack.username,
-    password: pack.password,
-    appId: pack.appId
-  };
-
-  payload = JSON.stringify(params);
-  headers['Content-Type'] = 'application/json; charset=utf-8';
-  headers['Content-Length'] = payload.length;
-
-  System.request({
-    method : 'POST',
-    host : pack.username + '.' + pack.host,
-    port : 443,
-    ssl : true,
-    path : '/admin/login',
-    headers : headers,
-    payload : payload,
-    //TODO: decide what callback convention to use (Node or jQuery)
-    success : pack.success,
-    error : pack.error
-  });
-};
-/**
- *
- * @param pack
- */
-exports.getAccesses = function (pack) {
-  var headers =  { 'authorization': pack.sessionId };
-  System.request({
-    method : 'GET',
-    host : pack.host,
-    port : 443,
-    ssl : true,
-    path : '/admin/accesses',
-    headers : headers,
-    //TODO: decide what callback convention to use (Node or jQuery)
-    success : pack.success,
-    error : pack.error
-  });
-};
-},{"./system/System.js":4,"underscore":7}],2:[function(require,module,exports){
-var _ = require('underscore');
-
-var Filter = module.exports = function (settings) {
-  // Constructor new-Agnostic
-  var self = this instanceof Filter ? this : Object.create(Filter.prototype);
-  self.settings = _.extend({
-    //TODO: set default values
-    streams: null,
-    tags: null,
-    from: null,
-    to: null,
-    limit: null,
-    skip: null,
-    modifiedSince: null,
-    state: null
-  }, settings);
-  return self;
-};
-
-//TODO: remove or rewrite (name & functionality unclear)
-Filter.prototype.focusedOnSingleStream = function () {
-  if (_.isArray(this.settings.streams) && this.settings.streams.length === 1) {
-    return this.settings.streams[0];
-  }
-  return null;
-};
-
-},{"underscore":7}],1:[function(require,module,exports){
+},{}],1:[function(require,module,exports){
 /**
  * TODO
  * @type {*}
@@ -300,6 +223,7 @@ var Connection = module.exports = function (username, auth, settings) {
 
 
 Connection.prototype.accessInfo = function (callback) {
+  if (this._accessInfo) { return this._accessInfo; }
   var self = this;
   var url = '/access-info';
   this.request('GET', url, function (error, result) {  
@@ -398,7 +322,130 @@ Connection.prototype.request = function (method, path, callback, jsonData, conte
 
 };
 
-},{"./connection/Events.js":8,"./connection/Streams.js":9,"./system/System.js":4,"underscore":7}],7:[function(require,module,exports){
+
+Object.defineProperty(Connection.prototype, 'id', {
+  get: function () {
+    var id = this.settings.ssl ? 'https://' : 'http://';
+    id += this.username + '.' + this.settings.domain + ':' +
+      this.settings.port + '/?auth=' + this.auth;
+    return id;
+  },
+  set: function () { throw new Error('ConnectionNode.id property is read only'); }
+});
+
+Object.defineProperty(Connection.prototype, 'shortId', {
+  get: function () {
+    if (! this._accessInfo) {
+      throw new Error('connection must have been initialized to use shortId. ' +
+        ' You can call accessInfo() for this');
+    }
+    var id = this.username + ':' + this._accessInfo.name;
+    return id;
+  },
+  set: function () { throw new Error('Connection.shortId property is read only'); }
+});
+
+},{"./connection/Events.js":9,"./connection/Streams.js":10,"./system/System.js":5,"underscore":11}],2:[function(require,module,exports){
+
+var _ = require('underscore');
+/**
+ *
+ * @type {Function}
+ * @constructor
+ */
+var Event = module.exports = function (connection, data) {
+  this.connection = connection;
+  _.extend(this, data);
+};
+
+},{"underscore":11}],4:[function(require,module,exports){
+var _ = require('underscore');
+
+var Filter = module.exports = function (settings) {
+  // Constructor new-Agnostic
+  var self = this instanceof Filter ? this : Object.create(Filter.prototype);
+  self.settings = _.extend({
+    //TODO: set default values
+    streams: null,
+    tags: null,
+    from: null,
+    to: null,
+    limit: null,
+    skip: null,
+    modifiedSince: null,
+    state: null
+  }, settings);
+  return self;
+};
+
+//TODO: remove or rewrite (name & functionality unclear)
+Filter.prototype.focusedOnSingleStream = function () {
+  if (_.isArray(this.settings.streams) && this.settings.streams.length === 1) {
+    return this.settings.streams[0];
+  }
+  return null;
+};
+
+},{"underscore":11}],6:[function(require,module,exports){
+var _ = require('underscore'),
+  System = require('./system/System.js');
+
+
+/**
+ *
+ * @param params
+ * host:
+ * username:
+ * password:
+ * appId:
+ * success:
+ * error:
+ */
+exports.getSessionId = function (pack) {
+  var payload,
+  headers = {},
+  params = {
+    username: pack.username,
+    password: pack.password,
+    appId: pack.appId
+  };
+
+  payload = JSON.stringify(params);
+  headers['Content-Type'] = 'application/json; charset=utf-8';
+  headers['Content-Length'] = payload.length;
+
+  System.request({
+    method : 'POST',
+    host : pack.username + '.' + pack.host,
+    port : 443,
+    ssl : true,
+    path : '/admin/login',
+    headers : headers,
+    payload : payload,
+    //TODO: decide what callback convention to use (Node or jQuery)
+    success : pack.success,
+    error : pack.error
+  });
+};
+/**
+ *
+ * @param pack
+ */
+exports.getAccesses = function (pack) {
+  var headers =  { 'authorization': pack.sessionId };
+  System.request({
+    method : 'GET',
+    host : pack.host,
+    port : 443,
+    ssl : true,
+    path : '/admin/accesses',
+    headers : headers,
+    //TODO: decide what callback convention to use (Node or jQuery)
+    success : pack.success,
+    error : pack.error
+  });
+};
+},{"./system/System.js":5,"underscore":11}],11:[function(require,module,exports){
 (function(){//     Underscore.js 1.5.2
 //     http://underscorejs.org
 //     (c) 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -1677,7 +1724,7 @@ Connection.prototype.request = function (method, path, callback, jsonData, conte
 }).call(this);
 
 })()
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 
 var Utility = require('../utility/Utility.js'),
     _ = require('underscore');
@@ -1693,6 +1740,8 @@ Events.prototype.get = function (filter, callback, deltaFilter, context) {
   this.conn.request('GET', url, callback, null, context);
 };
 
+
+//TODO check that we can really override method "create()" of object
 /**
  *
  * @param {Array} events
@@ -1732,7 +1781,6 @@ Events.prototype.monitor = function (filter, callback) {
         _.each(result, function (e) {
           if (e.modified > lastSynchedST)  {
             lastSynchedST = e.modified;
-            console.log("**** "+lastSynchedST) ;
           }
         });
         callback('events', result);
@@ -1746,7 +1794,7 @@ Events.prototype.monitor = function (filter, callback) {
   });
 };
 
-},{"../utility/Utility.js":10,"underscore":7}],9:[function(require,module,exports){
+},{"../utility/Utility.js":12,"underscore":11}],10:[function(require,module,exports){
 
 var _ = require('underscore'),
     Utility = require('../utility/Utility.js');
@@ -1772,7 +1820,7 @@ Streams.prototype.update = function (stream, callback, context) {
   this.connection.request('PUT', url, callback, null, context);
 };
 
-},{"../utility/Utility.js":10,"underscore":7}],10:[function(require,module,exports){
+},{"../utility/Utility.js":12,"underscore":11}],12:[function(require,module,exports){
 var _ = require('underscore');
 
 exports.mergeAndClean = function (sourceA, sourceB) {
@@ -1803,5 +1851,5 @@ exports.getQueryParametersString = function (data) {
   }, this).join('&');
 };
 
-},{"underscore":7}]},{},["cwPZLO"])
+},{"underscore":11}]},{},["r0xNjY"])
 ;
