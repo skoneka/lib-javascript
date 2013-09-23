@@ -36,7 +36,7 @@ Object.defineProperty(Stream.prototype, 'children', {
   get: function () {
     var self = this;
     var children = [];
-    _.each(this.childrenIds, function(childrenId) {
+    _.each(this.childrenIds, function (childrenId) {
       children.push(self.connection.datastore.getStreamById(childrenId));
     });
     return children;

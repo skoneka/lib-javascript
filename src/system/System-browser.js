@@ -22,7 +22,7 @@ exports.request = function (pack)  {
 
   pack.info = pack.info || '';
 
-  if(!pack.hasOwnProperty('async')) {
+  if (!pack.hasOwnProperty('async')) {
     pack.async = true;
   }
 
@@ -56,7 +56,7 @@ exports.request = function (pack)  {
 
 
   // -------------- error
-  pack.error = pack.error || function (error, context) {
+  pack.error = pack.error || function (error) {
     throw new Error(JSON.stringify(error, function (key, value) {
       if (value === null) { return; }
       if (value === '') { return; }
@@ -77,12 +77,22 @@ exports.request = function (pack)  {
   xhr.onreadystatechange = function () {
     detail += ' xhrstatus:' + xhr.statusText;
     if (xhr.readyState === 0) {
-      pack.error({message: 'pryvXHRCall unsent', detail: detail, id: 'INTERNAL_ERROR', xhr: xhr}, pack.context);
+      pack.error({
+        message: 'pryvXHRCall unsent',
+        detail: detail,
+        id: 'INTERNAL_ERROR',
+        xhr: xhr
+      }, pack.context);
     } else if (xhr.readyState === 4) {
       var result = null;
 
       try { result = JSON.parse(xhr.responseText); } catch (e) {
-        return pack.error({message: 'Data is not JSON', detail: xhr.responseText+'\n'+detail, id: 'RESULT_NOT_JSON', xhr: xhr}, pack.context);
+        return pack.error({
+          message: 'Data is not JSON',
+          detail: xhr.responseText + '\n' + detail,
+          id: 'RESULT_NOT_JSON',
+          xhr: xhr
+        }, pack.context);
       }
       var requestInfo = {
         code : xhr.status,
@@ -103,7 +113,8 @@ exports.request = function (pack)  {
     try {
       sentParams = JSON.stringify(pack.params);
     } catch (e) {
-      return pack.error({message: 'Parameters are not JSON', detail: 'params: '+pack.params+'\n '+detail, id: 'INTERNAL_ERROR', error: e}, pack.context);
+      return pack.error({message: 'Parameters are not JSON', detail: 'params: '+pack.params+'\n
+      '+detail, id: 'INTERNAL_ERROR', error: e}, pack.context);
     }
   }
       */
@@ -111,7 +122,12 @@ exports.request = function (pack)  {
   try {
     xhr.send(pack.params);
   } catch (e) {
-    return pack.error({message: 'pryvXHRCall unsent', detail: detail, id: 'INTERNAL_ERROR', error: e}, pack.context);
+    return pack.error({
+      message: 'pryvXHRCall unsent',
+      detail: detail,
+      id: 'INTERNAL_ERROR',
+      error: e
+    }, pack.context);
   }
   return xhr;
 };
@@ -122,11 +138,12 @@ exports.request = function (pack)  {
  * @access private
  * @return object
  */
+/* jshint -W117 */
 var _initXHR = function () {
   var XHR = null;
 
   try { XHR = new XMLHttpRequest(); }
-  catch(e) {
+  catch (e) {
     try { XHR = new ActiveXObject('Msxml2.XMLHTTP'); }
     catch (e2) {
       try { XHR = new ActiveXObject('Microsoft.XMLHTTP'); }

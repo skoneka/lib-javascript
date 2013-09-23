@@ -3,7 +3,8 @@
  * @type {Function}
  * @constructor
  */
-var Monitor = module.exports = function(filter) {
+/* jshint -W098 */
+var Monitor = module.exports = function (filter) {
 
 };
 

@@ -1,4 +1,3 @@
-var Stream = require('./Stream');
 var _ = require('underscore');
 
 var Datastore = module.exports = function (connection) {
@@ -24,6 +23,6 @@ Datastore.prototype.init = function (callback) {
  * @param streamId
  * @returns Stream or null if not found
  */
-Datastore.prototype.getStreamById = function(streamId) {
+Datastore.prototype.getStreamById = function (streamId) {
   return this.streams[streamId];
 };

@@ -1,6 +1,6 @@
 require=(function(e,t,n){function i(n,s){if(!t[n]){if(!e[n]){var o=typeof require=="function"&&require;if(!s&&o)return o(n,!0);if(r)return r(n,!0);throw new Error("Cannot find module '"+n+"'")}var u=t[n]={exports:{}};e[n][0].call(u.exports,function(t){var r=e[n][1][t];return i(r?r:t)},u,u.exports)}return t[n].exports}var r=typeof require=="function"&&require;for(var s=0;s<n.length;s++)i(n[s]);return i})({"pryv":[function(require,module,exports){
-module.exports=require('r0xNjY');
-},{}],"r0xNjY":[function(require,module,exports){
+module.exports=require('cwPZLO');
+},{}],"cwPZLO":[function(require,module,exports){
 /**
  * The main file.
  */
@@ -10,20 +10,69 @@ module.exports = {
   Stream : require('./Stream.js'),
   Filter : require('./Filter.js'),
   System : require('./system/System.js'),
-  Access: require('./Access.js')
+  Access: require('./Access.js'),
+  Utility: require('./utility/Utility.js')
 };
 
-},{"./Access.js":6,"./Connection.js":1,"./Event.js":2,"./Filter.js":4,"./Stream.js":3,"./system/System.js":5}],3:[function(require,module,exports){
+},{"./Access.js":6,"./Connection.js":1,"./Event.js":3,"./Filter.js":4,"./Stream.js":2,"./system/System.js":5,"./utility/Utility.js":7}],6:[function(require,module,exports){
+var System = require('./system/System.js');
+
+
 /**
  *
- * @type {Function}
- * @constructor
+ * @param params
+ * host:
+ * username:
+ * password:
+ * appId:
+ * success:
+ * error:
  */
-var Stream = module.exports = function () {
+exports.getSessionId = function (pack) {
+  var payload,
+  headers = {},
+  params = {
+    username: pack.username,
+    password: pack.password,
+    appId: pack.appId
+  };
 
+  payload = JSON.stringify(params);
+  headers['Content-Type'] = 'application/json; charset=utf-8';
+  headers['Content-Length'] = payload.length;
+
+  System.request({
+    method : 'POST',
+    host : pack.username + '.' + pack.host,
+    port : 443,
+    ssl : true,
+    path : '/admin/login',
+    headers : headers,
+    payload : payload,
+    //TODO: decide what callback convention to use (Node or jQuery)
+    success : pack.success,
+    error : pack.error
+  });
 };
-
-},{}],5:[function(require,module,exports){
+/**
+ *
+ * @param pack
+ */
+exports.getAccesses = function (pack) {
+  var headers =  { 'authorization': pack.sessionId };
+  System.request({
+    method : 'GET',
+    host : pack.host,
+    port : 443,
+    ssl : true,
+    path : '/admin/accesses',
+    headers : headers,
+    //TODO: decide what callback convention to use (Node or jQuery)
+    success : pack.success,
+    error : pack.error
+  });
+};
+},{"./system/System.js":5}],5:[function(require,module,exports){
 //TODO: consider merging System into Utility
 
 function isBrowser() {
@@ -32,7 +81,9 @@ function isBrowser() {
 
 module.exports = isBrowser() ?  require('./System-browser.js') : require('./System-node.js');
 
-},{"./System-browser.js":7,"./System-node.js":8}],7:[function(require,module,exports){
+},{"./System-browser.js":8,"./System-node.js":9}],9:[function(require,module,exports){
+
+},{}],8:[function(require,module,exports){
 //file: system browser
 
 
@@ -57,7 +108,7 @@ exports.request = function (pack)  {
 
   pack.info = pack.info || '';
 
-  if(!pack.hasOwnProperty('async')) {
+  if (!pack.hasOwnProperty('async')) {
     pack.async = true;
   }
 
@@ -91,7 +142,7 @@ exports.request = function (pack)  {
 
 
   // -------------- error
-  pack.error = pack.error || function (error, context) {
+  pack.error = pack.error || function (error) {
     throw new Error(JSON.stringify(error, function (key, value) {
       if (value === null) { return; }
       if (value === '') { return; }
@@ -112,12 +163,22 @@ exports.request = function (pack)  {
   xhr.onreadystatechange = function () {
     detail += ' xhrstatus:' + xhr.statusText;
     if (xhr.readyState === 0) {
-      pack.error({message: 'pryvXHRCall unsent', detail: detail, id: 'INTERNAL_ERROR', xhr: xhr}, pack.context);
+      pack.error({
+        message: 'pryvXHRCall unsent',
+        detail: detail,
+        id: 'INTERNAL_ERROR',
+        xhr: xhr
+      }, pack.context);
     } else if (xhr.readyState === 4) {
       var result = null;
 
       try { result = JSON.parse(xhr.responseText); } catch (e) {
-        return pack.error({message: 'Data is not JSON', detail: xhr.responseText+'\n'+detail, id: 'RESULT_NOT_JSON', xhr: xhr}, pack.context);
+        return pack.error({
+          message: 'Data is not JSON',
+          detail: xhr.responseText + '\n' + detail,
+          id: 'RESULT_NOT_JSON',
+          xhr: xhr
+        }, pack.context);
       }
       var requestInfo = {
         code : xhr.status,
@@ -138,7 +199,8 @@ exports.request = function (pack)  {
     try {
       sentParams = JSON.stringify(pack.params);
     } catch (e) {
-      return pack.error({message: 'Parameters are not JSON', detail: 'params: '+pack.params+'\n '+detail, id: 'INTERNAL_ERROR', error: e}, pack.context);
+      return pack.error({message: 'Parameters are not JSON', detail: 'params: '+pack.params+'\n
+      '+detail, id: 'INTERNAL_ERROR', error: e}, pack.context);
     }
   }
       */
@@ -146,7 +208,12 @@ exports.request = function (pack)  {
   try {
     xhr.send(pack.params);
   } catch (e) {
-    return pack.error({message: 'pryvXHRCall unsent', detail: detail, id: 'INTERNAL_ERROR', error: e}, pack.context);
+    return pack.error({
+      message: 'pryvXHRCall unsent',
+      detail: detail,
+      id: 'INTERNAL_ERROR',
+      error: e
+    }, pack.context);
   }
   return xhr;
 };
@@ -157,11 +224,12 @@ exports.request = function (pack)  {
  * @access private
  * @return object
  */
+/* jshint -W117 */
 var _initXHR = function () {
   var XHR = null;
 
   try { XHR = new XMLHttpRequest(); }
-  catch(e) {
+  catch (e) {
     try { XHR = new ActiveXObject('Msxml2.XMLHTTP'); }
     catch (e2) {
       try { XHR = new ActiveXObject('Microsoft.XMLHTTP'); }
@@ -180,18 +248,38 @@ var _initXHR = function () {
 
 
 
-},{}],8:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 
-},{}],1:[function(require,module,exports){
+var _ = require('underscore');
+/**
+ *
+ * @type {Function}
+ * @constructor
+ */
+var Event = module.exports = function (connection, data) {
+  this.connection = connection;
+  _.extend(this, data);
+};
+
+
+Object.defineProperty(Event.prototype, 'stream', {
+  get: function () {
+    return this.connection.datastore.getStreamById(this.streamId);
+  },
+  set: function () { throw new Error('Event.stream property is read only'); }
+});
+
+},{"underscore":10}],1:[function(require,module,exports){
 /**
  * TODO
  * @type {*}
  */
 
 var _ = require('underscore'),
-    System = require('./system/System.js'),
-    ConnectionEvents = require('./connection/Events.js'),
-    ConnectionStreams = require('./connection/Streams.js');
+  System = require('./system/System.js'),
+  ConnectionEvents = require('./connection/Events.js'),
+  ConnectionStreams = require('./connection/Streams.js'),
+  Datastore = require('./Datastore.js');
 
 var Connection = module.exports = function (username, auth, settings) {
   // Constructor new-Agnostic
@@ -218,7 +306,17 @@ var Connection = module.exports = function (username, auth, settings) {
 
   self.events = new ConnectionEvents(self);
   self.streams = new ConnectionStreams(self);
+
+  self.datastore = new Datastore(self);
   return self;
+};
+
+Connection.prototype.initDataStore = function (callback) {
+  var self = this;
+  this.accessInfo(function (error) {
+    if (error) { return callback(error); }
+    self.datastore.init(callback);
+  });
 };
 
 
@@ -226,7 +324,7 @@ Connection.prototype.accessInfo = function (callback) {
   if (this._accessInfo) { return this._accessInfo; }
   var self = this;
   var url = '/access-info';
-  this.request('GET', url, function (error, result) {  
+  this.request('GET', url, function (error, result) {
     if (! error) {
       self._accessInfo = result;
     }
@@ -345,20 +443,7 @@ Object.defineProperty(Connection.prototype, 'shortId', {
   set: function () { throw new Error('Connection.shortId property is read only'); }
 });
 
-},{"./connection/Events.js":9,"./connection/Streams.js":10,"./system/System.js":5,"underscore":11}],2:[function(require,module,exports){
-
-var _ = require('underscore');
-/**
- *
- * @type {Function}
- * @constructor
- */
-var Event = module.exports = function (connection, data) {
-  this.connection = connection;
-  _.extend(this, data);
-};
-
-},{"underscore":11}],4:[function(require,module,exports){
+},{"./Datastore.js":12,"./connection/Events.js":11,"./connection/Streams.js":13,"./system/System.js":5,"underscore":10}],4:[function(require,module,exports){
 var _ = require('underscore');
 
 var Filter = module.exports = function (settings) {
@@ -386,66 +471,55 @@ Filter.prototype.focusedOnSingleStream = function () {
   return null;
 };
 
-},{"underscore":11}],6:[function(require,module,exports){
-var _ = require('underscore'),
-  System = require('./system/System.js');
+},{"underscore":10}],2:[function(require,module,exports){
 
+var _ = require('underscore');
 
-/**
- *
- * @param params
- * host:
- * username:
- * password:
- * appId:
- * success:
- * error:
- */
-exports.getSessionId = function (pack) {
-  var payload,
-  headers = {},
-  params = {
-    username: pack.username,
-    password: pack.password,
-    appId: pack.appId
-  };
-
-  payload = JSON.stringify(params);
-  headers['Content-Type'] = 'application/json; charset=utf-8';
-  headers['Content-Length'] = payload.length;
-
-  System.request({
-    method : 'POST',
-    host : pack.username + '.' + pack.host,
-    port : 443,
-    ssl : true,
-    path : '/admin/login',
-    headers : headers,
-    payload : payload,
-    //TODO: decide what callback convention to use (Node or jQuery)
-    success : pack.success,
-    error : pack.error
-  });
+var Stream = module.exports = function (connection, data) {
+  this.connection = connection;
+  _.extend(this, data);
 };
-/**
- *
- * @param pack
- */
-exports.getAccesses = function (pack) {
-  var headers =  { 'authorization': pack.sessionId };
-  System.request({
-    method : 'GET',
-    host : pack.host,
-    port : 443,
-    ssl : true,
-    path : '/admin/accesses',
-    headers : headers,
-    //TODO: decide what callback convention to use (Node or jQuery)
-    success : pack.success,
-    error : pack.error
-  });
-};
-},{"./system/System.js":5,"underscore":11}],11:[function(require,module,exports){
+
+Object.defineProperty(Stream.prototype, 'parents', {
+  get: function () {
+    var self = this;
+
+    if (! self.parentId) { return []; }
+    var parent = self.connection.datastore.getStreamById(self.parentId);
+    var parents = parent.parents;
+    parents.push(parent);
+    return parents;
+  },
+  set: function () { throw new Error('Stream.parents property is read only'); }
+});
+
+Object.defineProperty(Stream.prototype, 'parentsIds', {
+  get: function () {
+    var self = this;
+
+    if (! self.parentId) { return []; }
+    var parent = self.connection.datastore.getStreamById(self.parentId);
+    var parents = parent.parentsIds;
+    parents.push(self.parentId);
+    return parents;
+  },
+  set: function () { throw new Error('Stream.parents property is read only'); }
+});
+
+Object.defineProperty(Stream.prototype, 'children', {
+  get: function () {
+    var self = this;
+    var children = [];
+    _.each(this.childrenIds, function (childrenId) {
+      children.push(self.connection.datastore.getStreamById(childrenId));
+    });
+    return children;
+  },
+  set: function () { throw new Error('Stream.children property is read only'); }
+});
+
+
+},{"underscore":10}],10:[function(require,module,exports){
 (function(){//     Underscore.js 1.5.2
 //     http://underscorejs.org
 //     (c) 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -1724,7 +1798,68 @@ exports.getAccesses = function (pack) {
 }).call(this);
 
 })()
-},{}],9:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
+var _ = require('underscore');
+
+exports.mergeAndClean = function (sourceA, sourceB) {
+  sourceA = sourceA || {};
+  sourceB = sourceB || {};
+  var result = _.clone(sourceA);
+  _.extend(result, sourceB);
+  _.each(_.keys(result), function (key) {
+    if (result[key] === null) { delete result[key]; }
+  });
+  return result;
+};
+
+exports.getQueryParametersString = function (data) {
+  data = this.mergeAndClean(data);
+  return Object.keys(data).map(function (key) {
+    if (data[key] !== null) {
+      if (_.isArray(data[key])) {
+        data[key] = this.mergeAndClean(data[key]);
+        var keyE = encodeURIComponent(key + '[]');
+        return data[key].map(function (subData) {
+          return keyE + '=' + encodeURIComponent(subData);
+        }).join('&');
+      } else {
+        return encodeURIComponent(key) + '=' + encodeURIComponent(data[key]);
+      }
+    }
+  }, this).join('&');
+};
+
+},{"underscore":10}],12:[function(require,module,exports){
+var _ = require('underscore');
+
+var Datastore = module.exports = function (connection) {
+  this.connection = connection;
+  this.streams = {};
+  this.events = {};
+};
+
+Datastore.prototype.init = function (callback) {
+  var self = this;
+  this.connection.streams.getFlatenedObjects(function (error, result) {
+    if (error) { return callback(error); }
+    self.streams = {};
+    _.each(result, function (stream) {
+      self.streams[stream.id] = stream;
+    });
+    callback(error);
+  });
+};
+
+/**
+ *
+ * @param streamId
+ * @returns Stream or null if not found
+ */
+Datastore.prototype.getStreamById = function (streamId) {
+  return this.streams[streamId];
+};
+
+},{"underscore":10}],11:[function(require,module,exports){
 
 var Utility = require('../utility/Utility.js'),
     _ = require('underscore');
@@ -1794,10 +1929,11 @@ Events.prototype.monitor = function (filter, callback) {
   });
 };
 
-},{"../utility/Utility.js":12,"underscore":11}],10:[function(require,module,exports){
+},{"../utility/Utility.js":7,"underscore":10}],13:[function(require,module,exports){
 
 var _ = require('underscore'),
-    Utility = require('../utility/Utility.js');
+  Utility = require('../utility/Utility.js'),
+  Stream = require('../Stream.js');
 
 var Streams = module.exports = function (connection) {
   this.connection = connection;
@@ -1807,6 +1943,23 @@ Streams.prototype.get = function (callback, opts, context) {
   var url = opts ? '/streams?' + Utility.getQueryParametersString(opts) : '/streams';
   this.connection.request('GET', url, callback, null, context);
 };
+
+Streams.prototype.getFlatenedData = function (callback, opts, context) {
+  var self = this;
+  this.get(function (error, result) {
+    if (error) { return callback(error); }
+    callback(null, self.Utils.flatenTree(result));
+  }, opts, context);
+};
+
+Streams.prototype.getFlatenedObjects = function (callback, opts, context) {
+  var self = this;
+  this.get(function (error, result) {
+    if (error) { return callback(error); }
+    callback(null, self.Utils.flatenTree(result, self.connection));
+  }, opts, context);
+};
+
 Streams.prototype.create = function (stream, callback, context) {
   var url = '/streams';
   this.connection.request('POST', url, function (err, result) {
@@ -1820,36 +1973,48 @@ Streams.prototype.update = function (stream, callback, context) {
   this.connection.request('PUT', url, callback, null, context);
 };
 
-},{"../utility/Utility.js":12,"underscore":11}],12:[function(require,module,exports){
-var _ = require('underscore');
+// TODO Validate that it's the good place for them .. Could have been in Stream or Utility
+Streams.prototype.Utils = {
 
-exports.mergeAndClean = function (sourceA, sourceB) {
-  sourceA = sourceA || {};
-  sourceB = sourceB || {};
-  var result = _.clone(sourceA);
-  _.extend(result, sourceB);
-  _.each(_.keys(result), function (key) {
-    if (result[key] === null) { delete result[key]; }
-  });
-  return result;
-};
-
-exports.getQueryParametersString = function (data) {
-  data = this.mergeAndClean(data);
-  return Object.keys(data).map(function (key) {
-    if (data[key] !== null) {
-      if (_.isArray(data[key])) {
-        data[key] = this.mergeAndClean(data[key]);
-        var keyE = encodeURIComponent(key + '[]');
-        return data[key].map(function (subData) {
-          return keyE + '=' + encodeURIComponent(subData);
-        }).join('&');
+  /**
+   * Flaten a streamTree obtained from the API. Replaces the children[] by a childrenIds[]
+   * @param streamTree
+   * @param andGetStreamObjects if true return Stream object as in the model
+   * @returns {Array} of streamData
+   */
+  flatenTree : function (streamTree, andMakeObjectWithConnection) {
+    var streams = [];
+    this.walkTree(streamTree, function (stream) {
+      if (andMakeObjectWithConnection) {
+        streams.push(new Stream(andMakeObjectWithConnection, stream));
       } else {
-        return encodeURIComponent(key) + '=' + encodeURIComponent(data[key]);
+        streams.push(stream);
       }
-    }
-  }, this).join('&');
+    });
+    return streams;
+  },
+
+  /**
+   * Walk thru a streamTree obtained from the API. Replaces the children[] by childrenIds[].
+   * This is used to Flaten the Tree
+   * @param streamTree
+   * @param callback function(streamData)
+   */
+  walkTree : function (streamTree, callback) {
+    var self = this;
+    _.each(streamTree, function (streamStruct) {
+      var stream = _.omit(streamStruct, 'children', 'clientData');
+      stream.childrenIds = [];
+      if (_.has(streamStruct, 'children')) {
+        _.each(streamStruct.children, function (childTree) {
+          stream.childrenIds.push(childTree.id);
+        });
+        self.walkTree(streamStruct.children, callback);
+      }
+      callback(stream);
+    });
+  }
 };
 
-},{"underscore":11}]},{},["r0xNjY"])
+},{"../Stream.js":2,"../utility/Utility.js":7,"underscore":10}]},{},["cwPZLO"])
 ;

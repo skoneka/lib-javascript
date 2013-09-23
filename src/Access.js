@@ -1,5 +1,4 @@
-var _ = require('underscore'),
-  System = require('./system/System.js');
+var System = require('./system/System.js');
 
 
 /**

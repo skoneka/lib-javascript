@@ -65,7 +65,7 @@ exports.request = function (pack)  {
     });
 
   }).on('error', function (e) {
-      return onError('Error: ' + e.message );
+      return onError('Error: ' + e.message);
     });
 
 
