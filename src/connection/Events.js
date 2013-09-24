@@ -7,7 +7,7 @@ var Events = module.exports = function (conn) {
   this.conn = conn;
 };
 
-Events.prototype.get = function (filter, callback, deltaFilter, context) {
+Events.prototype.get = function (filter, deltaFilter, callback, context) {
   //TODO handle caching
   var result = [];
   var self = this;
@@ -56,12 +56,12 @@ Events.prototype.monitor = function (filter, callback) {
 
   this.conn.monitor(filter, function (signal, payload) {
     switch (signal) {
-      case 'connect':
+    case 'connect':
       // set current serverTime as last update
       lastSynchedST = that.conn.getServerTime();
       callback(signal, payload);
       break;
-      case 'event' :
+    case 'event' :
       that.conn.events.get(filter, function (error, result) {
         _.each(result, function (e) {
           if (e.modified > lastSynchedST)  {
@@ -71,7 +71,7 @@ Events.prototype.monitor = function (filter, callback) {
         callback('events', result);
       }, { modifiedSince : lastSynchedST});
       break;
-      case 'error' :
+    case 'error' :
       callback(signal, payload);
       break;
     }

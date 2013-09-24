@@ -1,5 +1,3 @@
-var Streams = require('./connection/Streams.js');
-
 var Datastore = module.exports = function (connection) {
   this.connection = connection;
   this.streamsIndex = {}; // streams are linked to their object representation

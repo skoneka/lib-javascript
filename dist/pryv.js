@@ -14,7 +14,7 @@ module.exports = {
   Utility: require('./utility/Utility.js')
 };
 
-},{"./Access.js":6,"./Connection.js":1,"./Event.js":2,"./Filter.js":3,"./Stream.js":4,"./system/System.js":5,"./utility/Utility.js":7}],6:[function(require,module,exports){
+},{"./Access.js":6,"./Connection.js":2,"./Event.js":1,"./Filter.js":4,"./Stream.js":3,"./system/System.js":5,"./utility/Utility.js":7}],6:[function(require,module,exports){
 var System = require('./system/System.js');
 
 
@@ -81,7 +81,49 @@ function isBrowser() {
 
 module.exports = isBrowser() ?  require('./System-browser.js') : require('./System-node.js');
 
-},{"./System-browser.js":8,"./System-node.js":9}],8:[function(require,module,exports){
+},{"./System-browser.js":8,"./System-node.js":9}],10:[function(require,module,exports){
+var Datastore = module.exports = function (connection) {
+  this.connection = connection;
+  this.streamsIndex = {}; // streams are linked to their object representation
+  this.streams = {};  // pure JSONObject received by the API
+  this.events = {};
+};
+
+Datastore.prototype.init = function (callback) {
+  var self = this;
+  this.connection.streams._get(function (error, result) {
+    if (result) {
+      self.streams = result;
+      self._rebuildStreamIndex(); // maybe done transparently
+    }
+    callback(error);
+  }, {state: 'all'});
+
+  // activate monitoring
+
+};
+
+Datastore.prototype._rebuildStreamIndex = function () {
+  var self = this;
+  this.streamsIndex = {};
+
+  this.connection.streams.Utils.walkDataTree(this.streams, function (stream) {
+    self.streamsIndex[stream.id] = stream;
+  }, true);
+};
+
+
+// TODO move this to connection
+/**
+ *
+ * @param streamId
+ * @returns Stream or null if not found
+ */
+Datastore.prototype.getStreamById = function (streamId) {
+  return this.streamsIndex[streamId];
+};
+
+},{}],8:[function(require,module,exports){
 //file: system browser
 
 
@@ -248,51 +290,28 @@ var _initXHR = function () {
 
 },{}],9:[function(require,module,exports){
 
-},{}],10:[function(require,module,exports){
-var Streams = require('./connection/Streams.js');
+},{}],1:[function(require,module,exports){
 
-var Datastore = module.exports = function (connection) {
-  this.connection = connection;
-  this.streamsIndex = {}; // streams are linked to their object representation
-  this.streams = {};  // pure JSONObject received by the API
-  this.events = {};
-};
-
-Datastore.prototype.init = function (callback) {
-  var self = this;
-  this.connection.streams._get(function (error, result) {
-    if (result) {
-      self.streams = result;
-      self._rebuildStreamIndex(); // maybe done transparently
-    }
-    callback(error);
-  }, {state: 'all'});
-
-  // activate monitoring
-
-};
-
-Datastore.prototype._rebuildStreamIndex = function () {
-  var self = this;
-  this.streamsIndex = {};
-
-  this.connection.streams.Utils.walkDataTree(this.streams, function (stream) {
-    self.streamsIndex[stream.id] = stream;
-  }, true);
-};
-
-
-// TODO move this to connection
+var _ = require('underscore');
 /**
  *
- * @param streamId
- * @returns Stream or null if not found
+ * @type {Function}
+ * @constructor
  */
-Datastore.prototype.getStreamById = function (streamId) {
-  return this.streamsIndex[streamId];
+var Event = module.exports = function (connection, data) {
+  this.connection = connection;
+  _.extend(this, data);
 };
 
-},{"./connection/Streams.js":11}],1:[function(require,module,exports){
+
+Object.defineProperty(Event.prototype, 'stream', {
+  get: function () {
+    return this.connection.datastore.getStreamById(this.streamId);
+  },
+  set: function () { throw new Error('Event.stream property is read only'); }
+});
+
+},{"underscore":11}],2:[function(require,module,exports){
 /**
  * TODO
  * @type {*}
@@ -474,28 +493,7 @@ Object.defineProperty(Connection.prototype, 'shortId', {
   set: function () { throw new Error('Connection.shortId property is read only'); }
 });
 
-},{"./Datastore.js":10,"./connection/Events.js":12,"./connection/Streams.js":11,"./system/System.js":5,"underscore":13}],2:[function(require,module,exports){
-
-var _ = require('underscore');
-/**
- *
- * @type {Function}
- * @constructor
- */
-var Event = module.exports = function (connection, data) {
-  this.connection = connection;
-  _.extend(this, data);
-};
-
-
-Object.defineProperty(Event.prototype, 'stream', {
-  get: function () {
-    return this.connection.datastore.getStreamById(this.streamId);
-  },
-  set: function () { throw new Error('Event.stream property is read only'); }
-});
-
-},{"underscore":13}],4:[function(require,module,exports){
+},{"./Datastore.js":10,"./connection/Events.js":12,"./connection/Streams.js":13,"./system/System.js":5,"underscore":11}],3:[function(require,module,exports){
 
 var _ = require('underscore');
 
@@ -544,7 +542,7 @@ Object.defineProperty(Stream.prototype, 'children', {
 });
 
 
-},{"underscore":13}],3:[function(require,module,exports){
+},{"underscore":11}],4:[function(require,module,exports){
 var _ = require('underscore');
 
 var Filter = module.exports = function (settings) {
@@ -572,7 +570,7 @@ Filter.prototype.focusedOnSingleStream = function () {
   return null;
 };
 
-},{"underscore":13}],13:[function(require,module,exports){
+},{"underscore":11}],11:[function(require,module,exports){
 (function(){//     Underscore.js 1.5.2
 //     http://underscorejs.org
 //     (c) 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -1882,7 +1880,89 @@ exports.getQueryParametersString = function (data) {
   }, this).join('&');
 };
 
-},{"underscore":13}],11:[function(require,module,exports){
+},{"underscore":11}],12:[function(require,module,exports){
+
+var Utility = require('../utility/Utility.js'),
+  _ = require('underscore'),
+  Event = require('../Event');
+
+var Events = module.exports = function (conn) {
+  this.conn = conn;
+};
+
+Events.prototype.get = function (filter, deltaFilter, callback, context) {
+  //TODO handle caching
+  var result = [];
+  var self = this;
+  this._get(filter, deltaFilter, function (error, eventList) {
+    _.each(eventList, function (eventData) {
+      result.push(new Event(self.conn, eventData));
+    });
+    callback(error, result);
+  }, context);
+};
+
+Events.prototype._get = function (filter, deltaFilter, callback, context) {
+  var tParams = Utility.mergeAndClean(filter.settings, deltaFilter);
+  var url = '/events?' + Utility.getQueryParametersString(tParams);
+  this.conn.request('GET', url, callback, null, context);
+};
+
+
+//TODO check that we can really override method "create()" of object
+/**
+ *
+ * @param {Array} events
+ */
+Events.prototype.create = function (events, callback, context) {
+  var url = '/events/batch';
+  _.each(events, function (event, index) {
+    event.tempRefId = 'temp_ref_id_' + index;
+  });
+  this.conn.request('POST', url, function (err, result) {
+    _.each(events, function (event) {
+      event.id = result[event.tempRefId].id;
+    });
+    callback(err, result);
+  }, events, context);
+};
+
+Events.prototype.update = function (event, callback, context) {
+  var url = '/events/' + event.id;
+  this.conn.request('PUT', url, callback, null, context);
+};
+
+//TODO: rewrite once API for monitoring is sorted out
+Events.prototype.monitor = function (filter, callback) {
+  var that = this;
+  var lastSynchedST = -1;
+
+  this.conn.monitor(filter, function (signal, payload) {
+    switch (signal) {
+    case 'connect':
+      // set current serverTime as last update
+      lastSynchedST = that.conn.getServerTime();
+      callback(signal, payload);
+      break;
+    case 'event' :
+      that.conn.events.get(filter, function (error, result) {
+        _.each(result, function (e) {
+          if (e.modified > lastSynchedST)  {
+            lastSynchedST = e.modified;
+          }
+        });
+        callback('events', result);
+      }, { modifiedSince : lastSynchedST});
+      break;
+    case 'error' :
+      callback(signal, payload);
+      break;
+    }
+
+  });
+};
+
+},{"../Event":1,"../utility/Utility.js":7,"underscore":11}],13:[function(require,module,exports){
 
 var _ = require('underscore'),
   Utility = require('../utility/Utility.js'),
@@ -2003,87 +2083,5 @@ Streams.prototype.Utils = {
 
 };
 
-},{"../Stream.js":4,"../utility/Utility.js":7,"underscore":13}],12:[function(require,module,exports){
-
-var Utility = require('../utility/Utility.js'),
-  _ = require('underscore'),
-  Event = require('../Event');
-
-var Events = module.exports = function (conn) {
-  this.conn = conn;
-};
-
-Events.prototype.get = function (filter, callback, deltaFilter, context) {
-  //TODO handle caching
-  var result = [];
-  var self = this;
-  this._get(filter, deltaFilter, function (error, eventList) {
-    _.each(eventList, function (eventData) {
-      result.push(new Event(self.conn, eventData));
-    });
-    callback(error, result);
-  }, context);
-};
-
-Events.prototype._get = function (filter, deltaFilter, callback, context) {
-  var tParams = Utility.mergeAndClean(filter.settings, deltaFilter);
-  var url = '/events?' + Utility.getQueryParametersString(tParams);
-  this.conn.request('GET', url, callback, null, context);
-};
-
-
-//TODO check that we can really override method "create()" of object
-/**
- *
- * @param {Array} events
- */
-Events.prototype.create = function (events, callback, context) {
-  var url = '/events/batch';
-  _.each(events, function (event, index) {
-    event.tempRefId = 'temp_ref_id_' + index;
-  });
-  this.conn.request('POST', url, function (err, result) {
-    _.each(events, function (event) {
-      event.id = result[event.tempRefId].id;
-    });
-    callback(err, result);
-  }, events, context);
-};
-
-Events.prototype.update = function (event, callback, context) {
-  var url = '/events/' + event.id;
-  this.conn.request('PUT', url, callback, null, context);
-};
-
-//TODO: rewrite once API for monitoring is sorted out
-Events.prototype.monitor = function (filter, callback) {
-  var that = this;
-  var lastSynchedST = -1;
-
-  this.conn.monitor(filter, function (signal, payload) {
-    switch (signal) {
-      case 'connect':
-      // set current serverTime as last update
-      lastSynchedST = that.conn.getServerTime();
-      callback(signal, payload);
-      break;
-      case 'event' :
-      that.conn.events.get(filter, function (error, result) {
-        _.each(result, function (e) {
-          if (e.modified > lastSynchedST)  {
-            lastSynchedST = e.modified;
-          }
-        });
-        callback('events', result);
-      }, { modifiedSince : lastSynchedST});
-      break;
-      case 'error' :
-      callback(signal, payload);
-      break;
-    }
-
-  });
-};
-
-},{"../Event":2,"../utility/Utility.js":7,"underscore":13}]},{},["r0xNjY"])
+},{"../Stream.js":3,"../utility/Utility.js":7,"underscore":11}]},{},["r0xNjY"])
 ;

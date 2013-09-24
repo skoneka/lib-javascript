@@ -18,13 +18,13 @@ describe('Pryv.events', function () {
 
   var connection = Pryv.Connection(username, auth, settings);
 
-  describe('get', function () {
+  describe('_get', function () {
 
     it('should call the proper API method', function (done) {
       nock('https://' + username + '.' + settings.domain)
         .get('/events?' + Utility.getQueryParametersString(defaultFilter.settings))
         .reply(200, response);
-      connection.events.get(defaultFilter, function (err, result) {
+      connection.events._get(defaultFilter, null, function (err, result) {
         should.not.exist(err);
         should.exist(result);
         result.should.eql(response);
@@ -33,6 +33,7 @@ describe('Pryv.events', function () {
     });
 
   });
+
 
   describe('create', function () {
 
