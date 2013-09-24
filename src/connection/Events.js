@@ -1,13 +1,25 @@
 
 var Utility = require('../utility/Utility.js'),
-    _ = require('underscore');
+  _ = require('underscore'),
+  Event = require('../Event');
 
 var Events = module.exports = function (conn) {
   this.conn = conn;
 };
 
-
 Events.prototype.get = function (filter, callback, deltaFilter, context) {
+  //TODO handle caching
+  var result = [];
+  var self = this;
+  this._get(filter, deltaFilter, function (error, eventList) {
+    _.each(eventList, function (eventData) {
+      result.push(new Event(self.conn, eventData));
+    });
+    callback(error, result);
+  }, context);
+};
+
+Events.prototype._get = function (filter, deltaFilter, callback, context) {
   var tParams = Utility.mergeAndClean(filter.settings, deltaFilter);
   var url = '/events?' + Utility.getQueryParametersString(tParams);
   this.conn.request('GET', url, callback, null, context);
@@ -44,12 +56,12 @@ Events.prototype.monitor = function (filter, callback) {
 
   this.conn.monitor(filter, function (signal, payload) {
     switch (signal) {
-    case 'connect':
+      case 'connect':
       // set current serverTime as last update
       lastSynchedST = that.conn.getServerTime();
       callback(signal, payload);
       break;
-    case 'event' :
+      case 'event' :
       that.conn.events.get(filter, function (error, result) {
         _.each(result, function (e) {
           if (e.modified > lastSynchedST)  {
@@ -59,7 +71,7 @@ Events.prototype.monitor = function (filter, callback) {
         callback('events', result);
       }, { modifiedSince : lastSynchedST});
       break;
-    case 'error' :
+      case 'error' :
       callback(signal, payload);
       break;
     }

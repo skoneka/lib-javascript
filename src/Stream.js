@@ -6,6 +6,7 @@ var Stream = module.exports = function (connection, data) {
   _.extend(this, data);
 };
 
+
 Object.defineProperty(Stream.prototype, 'parents', {
   get: function () {
     var self = this;

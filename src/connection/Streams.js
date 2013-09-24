@@ -8,6 +8,35 @@ var Streams = module.exports = function (connection) {
 };
 
 Streams.prototype.get = function (callback, opts, context) {
+  opts = opts || {};
+
+  if (this.connection.datastore) {
+    var result = null;
+    if (_.has(opts, 'parentId')) {
+      if (! _.has(this.connection.datastore.streamsIndex, opts.parentId)) { // ERROR
+        return callback('streams.get cannot find parent stream with id: ' + opts.parentId, null);
+      }
+
+      // TODO
+      throw new Error('localStorage does not implement caching correctly');
+      // result = this.connection.datastore.getStreamById(opts.parentId).getSubTree(state);
+    } else {
+      result = this.connection.datastore.streams;
+    }
+
+
+    if (_.has(opts, 'state') && opts.state !== 'all') {
+      //TODO  implement structure filtering for local storage
+      throw new Error('localStorage does not implement structure filtering yet');
+    }
+
+    callback(null, result);
+  }
+  this._get(callback, opts, context);
+};
+
+
+Streams.prototype._get = function (callback, opts, context) {
   var url = opts ? '/streams?' + Utility.getQueryParametersString(opts) : '/streams';
   this.connection.request('GET', url, callback, null, context);
 };
@@ -41,8 +70,10 @@ Streams.prototype.update = function (stream, callback, context) {
   this.connection.request('PUT', url, callback, null, context);
 };
 
+
 // TODO Validate that it's the good place for them .. Could have been in Stream or Utility
 Streams.prototype.Utils = {
+
 
   /**
    * Flaten a streamTree obtained from the API. Replaces the children[] by a childrenIds[]
@@ -52,7 +83,7 @@ Streams.prototype.Utils = {
    */
   flatenTree : function (streamTree, andMakeObjectWithConnection) {
     var streams = [];
-    this.walkTree(streamTree, function (stream) {
+    this.walkDataTree(streamTree, function (stream) {
       if (andMakeObjectWithConnection) {
         streams.push(new Stream(andMakeObjectWithConnection, stream));
       } else {
@@ -66,20 +97,23 @@ Streams.prototype.Utils = {
    * Walk thru a streamTree obtained from the API. Replaces the children[] by childrenIds[].
    * This is used to Flaten the Tree
    * @param streamTree
-   * @param callback function(streamData)
+   * @param callback function(streamData, subTree)  subTree is the descendance tree
    */
-  walkTree : function (streamTree, callback) {
+  walkDataTree : function (streamTree, callback) {
     var self = this;
     _.each(streamTree, function (streamStruct) {
       var stream = _.omit(streamStruct, 'children', 'clientData');
       stream.childrenIds = [];
+      var subTree = {};
       if (_.has(streamStruct, 'children')) {
+        subTree = streamStruct.children;
         _.each(streamStruct.children, function (childTree) {
           stream.childrenIds.push(childTree.id);
         });
-        self.walkTree(streamStruct.children, callback);
+        self.walkDataTree(streamStruct.children, callback);
       }
-      callback(stream);
+      callback(stream, subTree);
     });
   }
+
 };

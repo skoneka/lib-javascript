@@ -35,12 +35,20 @@ var Connection = module.exports = function (username, auth, settings) {
   self.events = new ConnectionEvents(self);
   self.streams = new ConnectionStreams(self);
 
-  self.datastore = new Datastore(self);
+  self.datastore = null;
   return self;
 };
 
-Connection.prototype.initDataStore = function (callback) {
+/**
+ * Use localStorage for caching.
+ * The Library will activate Structure Monitoring and
+ * @param callback
+ * @returns {*}
+ */
+Connection.prototype.useLocalStorage = function (callback) {
   var self = this;
+  if (self.datastore) { return self.datastore.init(callback); }
+  self.datastore = new Datastore(self);
   this.accessInfo(function (error) {
     if (error) { return callback(error); }
     self.datastore.init(callback);

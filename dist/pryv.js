@@ -1,6 +1,6 @@
 require=(function(e,t,n){function i(n,s){if(!t[n]){if(!e[n]){var o=typeof require=="function"&&require;if(!s&&o)return o(n,!0);if(r)return r(n,!0);throw new Error("Cannot find module '"+n+"'")}var u=t[n]={exports:{}};e[n][0].call(u.exports,function(t){var r=e[n][1][t];return i(r?r:t)},u,u.exports)}return t[n].exports}var r=typeof require=="function"&&require;for(var s=0;s<n.length;s++)i(n[s]);return i})({"pryv":[function(require,module,exports){
-module.exports=require('cwPZLO');
-},{}],"cwPZLO":[function(require,module,exports){
+module.exports=require('r0xNjY');
+},{}],"r0xNjY":[function(require,module,exports){
 /**
  * The main file.
  */
@@ -14,7 +14,7 @@ module.exports = {
   Utility: require('./utility/Utility.js')
 };
 
-},{"./Access.js":6,"./Connection.js":1,"./Event.js":3,"./Filter.js":4,"./Stream.js":2,"./system/System.js":5,"./utility/Utility.js":7}],6:[function(require,module,exports){
+},{"./Access.js":6,"./Connection.js":1,"./Event.js":2,"./Filter.js":3,"./Stream.js":4,"./system/System.js":5,"./utility/Utility.js":7}],6:[function(require,module,exports){
 var System = require('./system/System.js');
 
 
@@ -81,9 +81,7 @@ function isBrowser() {
 
 module.exports = isBrowser() ?  require('./System-browser.js') : require('./System-node.js');
 
-},{"./System-browser.js":8,"./System-node.js":9}],9:[function(require,module,exports){
-
-},{}],8:[function(require,module,exports){
+},{"./System-browser.js":8,"./System-node.js":9}],8:[function(require,module,exports){
 //file: system browser
 
 
@@ -248,28 +246,53 @@ var _initXHR = function () {
 
 
 
-},{}],3:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 
-var _ = require('underscore');
-/**
- *
- * @type {Function}
- * @constructor
- */
-var Event = module.exports = function (connection, data) {
+},{}],10:[function(require,module,exports){
+var Streams = require('./connection/Streams.js');
+
+var Datastore = module.exports = function (connection) {
   this.connection = connection;
-  _.extend(this, data);
+  this.streamsIndex = {}; // streams are linked to their object representation
+  this.streams = {};  // pure JSONObject received by the API
+  this.events = {};
+};
+
+Datastore.prototype.init = function (callback) {
+  var self = this;
+  this.connection.streams._get(function (error, result) {
+    if (result) {
+      self.streams = result;
+      self._rebuildStreamIndex(); // maybe done transparently
+    }
+    callback(error);
+  }, {state: 'all'});
+
+  // activate monitoring
+
+};
+
+Datastore.prototype._rebuildStreamIndex = function () {
+  var self = this;
+  this.streamsIndex = {};
+
+  this.connection.streams.Utils.walkDataTree(this.streams, function (stream) {
+    self.streamsIndex[stream.id] = stream;
+  }, true);
 };
 
 
-Object.defineProperty(Event.prototype, 'stream', {
-  get: function () {
-    return this.connection.datastore.getStreamById(this.streamId);
-  },
-  set: function () { throw new Error('Event.stream property is read only'); }
-});
+// TODO move this to connection
+/**
+ *
+ * @param streamId
+ * @returns Stream or null if not found
+ */
+Datastore.prototype.getStreamById = function (streamId) {
+  return this.streamsIndex[streamId];
+};
 
-},{"underscore":10}],1:[function(require,module,exports){
+},{"./connection/Streams.js":11}],1:[function(require,module,exports){
 /**
  * TODO
  * @type {*}
@@ -307,12 +330,20 @@ var Connection = module.exports = function (username, auth, settings) {
   self.events = new ConnectionEvents(self);
   self.streams = new ConnectionStreams(self);
 
-  self.datastore = new Datastore(self);
+  self.datastore = null;
   return self;
 };
 
-Connection.prototype.initDataStore = function (callback) {
+/**
+ * Use localStorage for caching.
+ * The Library will activate Structure Monitoring and
+ * @param callback
+ * @returns {*}
+ */
+Connection.prototype.useLocalStorage = function (callback) {
   var self = this;
+  if (self.datastore) { return self.datastore.init(callback); }
+  self.datastore = new Datastore(self);
   this.accessInfo(function (error) {
     if (error) { return callback(error); }
     self.datastore.init(callback);
@@ -443,35 +474,28 @@ Object.defineProperty(Connection.prototype, 'shortId', {
   set: function () { throw new Error('Connection.shortId property is read only'); }
 });
 
-},{"./Datastore.js":12,"./connection/Events.js":11,"./connection/Streams.js":13,"./system/System.js":5,"underscore":10}],4:[function(require,module,exports){
+},{"./Datastore.js":10,"./connection/Events.js":12,"./connection/Streams.js":11,"./system/System.js":5,"underscore":13}],2:[function(require,module,exports){
+
 var _ = require('underscore');
-
-var Filter = module.exports = function (settings) {
-  // Constructor new-Agnostic
-  var self = this instanceof Filter ? this : Object.create(Filter.prototype);
-  self.settings = _.extend({
-    //TODO: set default values
-    streams: null,
-    tags: null,
-    from: null,
-    to: null,
-    limit: null,
-    skip: null,
-    modifiedSince: null,
-    state: null
-  }, settings);
-  return self;
+/**
+ *
+ * @type {Function}
+ * @constructor
+ */
+var Event = module.exports = function (connection, data) {
+  this.connection = connection;
+  _.extend(this, data);
 };
 
-//TODO: remove or rewrite (name & functionality unclear)
-Filter.prototype.focusedOnSingleStream = function () {
-  if (_.isArray(this.settings.streams) && this.settings.streams.length === 1) {
-    return this.settings.streams[0];
-  }
-  return null;
-};
 
-},{"underscore":10}],2:[function(require,module,exports){
+Object.defineProperty(Event.prototype, 'stream', {
+  get: function () {
+    return this.connection.datastore.getStreamById(this.streamId);
+  },
+  set: function () { throw new Error('Event.stream property is read only'); }
+});
+
+},{"underscore":13}],4:[function(require,module,exports){
 
 var _ = require('underscore');
 
@@ -479,6 +503,7 @@ var Stream = module.exports = function (connection, data) {
   this.connection = connection;
   _.extend(this, data);
 };
+
 
 Object.defineProperty(Stream.prototype, 'parents', {
   get: function () {
@@ -519,7 +544,35 @@ Object.defineProperty(Stream.prototype, 'children', {
 });
 
 
-},{"underscore":10}],10:[function(require,module,exports){
+},{"underscore":13}],3:[function(require,module,exports){
+var _ = require('underscore');
+
+var Filter = module.exports = function (settings) {
+  // Constructor new-Agnostic
+  var self = this instanceof Filter ? this : Object.create(Filter.prototype);
+  self.settings = _.extend({
+    //TODO: set default values
+    streams: null,
+    tags: null,
+    from: null,
+    to: null,
+    limit: null,
+    skip: null,
+    modifiedSince: null,
+    state: null
+  }, settings);
+  return self;
+};
+
+//TODO: remove or rewrite (name & functionality unclear)
+Filter.prototype.focusedOnSingleStream = function () {
+  if (_.isArray(this.settings.streams) && this.settings.streams.length === 1) {
+    return this.settings.streams[0];
+  }
+  return null;
+};
+
+},{"underscore":13}],13:[function(require,module,exports){
 (function(){//     Underscore.js 1.5.2
 //     http://underscorejs.org
 //     (c) 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -1829,47 +1882,150 @@ exports.getQueryParametersString = function (data) {
   }, this).join('&');
 };
 
-},{"underscore":10}],12:[function(require,module,exports){
-var _ = require('underscore');
+},{"underscore":13}],11:[function(require,module,exports){
 
-var Datastore = module.exports = function (connection) {
+var _ = require('underscore'),
+  Utility = require('../utility/Utility.js'),
+  Stream = require('../Stream.js');
+
+var Streams = module.exports = function (connection) {
   this.connection = connection;
-  this.streams = {};
-  this.events = {};
 };
 
-Datastore.prototype.init = function (callback) {
+Streams.prototype.get = function (callback, opts, context) {
+  opts = opts || {};
+
+  if (this.connection.datastore) {
+    var result = null;
+    if (_.has(opts, 'parentId')) {
+      if (! _.has(this.connection.datastore.streamsIndex, opts.parentId)) { // ERROR
+        return callback('streams.get cannot find parent stream with id: ' + opts.parentId, null);
+      }
+
+      // TODO
+      throw new Error('localStorage does not implement caching correctly');
+      // result = this.connection.datastore.getStreamById(opts.parentId).getSubTree(state);
+    } else {
+      result = this.connection.datastore.streams;
+    }
+
+
+    if (_.has(opts, 'state') && opts.state !== 'all') {
+      //TODO  implement structure filtering for local storage
+      throw new Error('localStorage does not implement structure filtering yet');
+    }
+
+    callback(null, result);
+  }
+  this._get(callback, opts, context);
+};
+
+
+Streams.prototype._get = function (callback, opts, context) {
+  var url = opts ? '/streams?' + Utility.getQueryParametersString(opts) : '/streams';
+  this.connection.request('GET', url, callback, null, context);
+};
+
+Streams.prototype.getFlatenedData = function (callback, opts, context) {
   var self = this;
-  this.connection.streams.getFlatenedObjects(function (error, result) {
+  this.get(function (error, result) {
     if (error) { return callback(error); }
-    self.streams = {};
-    _.each(result, function (stream) {
-      self.streams[stream.id] = stream;
+    callback(null, self.Utils.flatenTree(result));
+  }, opts, context);
+};
+
+Streams.prototype.getFlatenedObjects = function (callback, opts, context) {
+  var self = this;
+  this.get(function (error, result) {
+    if (error) { return callback(error); }
+    callback(null, self.Utils.flatenTree(result, self.connection));
+  }, opts, context);
+};
+
+Streams.prototype.create = function (stream, callback, context) {
+  var url = '/streams';
+  this.connection.request('POST', url, function (err, result) {
+    stream.id = result.id;
+    callback(err, result);
+  }, stream, context);
+};
+
+Streams.prototype.update = function (stream, callback, context) {
+  var url = '/streams/' + stream.id;
+  this.connection.request('PUT', url, callback, null, context);
+};
+
+
+// TODO Validate that it's the good place for them .. Could have been in Stream or Utility
+Streams.prototype.Utils = {
+
+
+  /**
+   * Flaten a streamTree obtained from the API. Replaces the children[] by a childrenIds[]
+   * @param streamTree
+   * @param andGetStreamObjects if true return Stream object as in the model
+   * @returns {Array} of streamData
+   */
+  flatenTree : function (streamTree, andMakeObjectWithConnection) {
+    var streams = [];
+    this.walkDataTree(streamTree, function (stream) {
+      if (andMakeObjectWithConnection) {
+        streams.push(new Stream(andMakeObjectWithConnection, stream));
+      } else {
+        streams.push(stream);
+      }
     });
-    callback(error);
-  });
+    return streams;
+  },
+
+  /**
+   * Walk thru a streamTree obtained from the API. Replaces the children[] by childrenIds[].
+   * This is used to Flaten the Tree
+   * @param streamTree
+   * @param callback function(streamData, subTree)  subTree is the descendance tree
+   */
+  walkDataTree : function (streamTree, callback) {
+    var self = this;
+    _.each(streamTree, function (streamStruct) {
+      var stream = _.omit(streamStruct, 'children', 'clientData');
+      stream.childrenIds = [];
+      var subTree = {};
+      if (_.has(streamStruct, 'children')) {
+        subTree = streamStruct.children;
+        _.each(streamStruct.children, function (childTree) {
+          stream.childrenIds.push(childTree.id);
+        });
+        self.walkDataTree(streamStruct.children, callback);
+      }
+      callback(stream, subTree);
+    });
+  }
+
 };
 
-/**
- *
- * @param streamId
- * @returns Stream or null if not found
- */
-Datastore.prototype.getStreamById = function (streamId) {
-  return this.streams[streamId];
-};
-
-},{"underscore":10}],11:[function(require,module,exports){
+},{"../Stream.js":4,"../utility/Utility.js":7,"underscore":13}],12:[function(require,module,exports){
 
 var Utility = require('../utility/Utility.js'),
-    _ = require('underscore');
+  _ = require('underscore'),
+  Event = require('../Event');
 
 var Events = module.exports = function (conn) {
   this.conn = conn;
 };
 
-
 Events.prototype.get = function (filter, callback, deltaFilter, context) {
+  //TODO handle caching
+  var result = [];
+  var self = this;
+  this._get(filter, deltaFilter, function (error, eventList) {
+    _.each(eventList, function (eventData) {
+      result.push(new Event(self.conn, eventData));
+    });
+    callback(error, result);
+  }, context);
+};
+
+Events.prototype._get = function (filter, deltaFilter, callback, context) {
   var tParams = Utility.mergeAndClean(filter.settings, deltaFilter);
   var url = '/events?' + Utility.getQueryParametersString(tParams);
   this.conn.request('GET', url, callback, null, context);
@@ -1906,12 +2062,12 @@ Events.prototype.monitor = function (filter, callback) {
 
   this.conn.monitor(filter, function (signal, payload) {
     switch (signal) {
-    case 'connect':
+      case 'connect':
       // set current serverTime as last update
       lastSynchedST = that.conn.getServerTime();
       callback(signal, payload);
       break;
-    case 'event' :
+      case 'event' :
       that.conn.events.get(filter, function (error, result) {
         _.each(result, function (e) {
           if (e.modified > lastSynchedST)  {
@@ -1921,7 +2077,7 @@ Events.prototype.monitor = function (filter, callback) {
         callback('events', result);
       }, { modifiedSince : lastSynchedST});
       break;
-    case 'error' :
+      case 'error' :
       callback(signal, payload);
       break;
     }
@@ -1929,92 +2085,5 @@ Events.prototype.monitor = function (filter, callback) {
   });
 };
 
-},{"../utility/Utility.js":7,"underscore":10}],13:[function(require,module,exports){
-
-var _ = require('underscore'),
-  Utility = require('../utility/Utility.js'),
-  Stream = require('../Stream.js');
-
-var Streams = module.exports = function (connection) {
-  this.connection = connection;
-};
-
-Streams.prototype.get = function (callback, opts, context) {
-  var url = opts ? '/streams?' + Utility.getQueryParametersString(opts) : '/streams';
-  this.connection.request('GET', url, callback, null, context);
-};
-
-Streams.prototype.getFlatenedData = function (callback, opts, context) {
-  var self = this;
-  this.get(function (error, result) {
-    if (error) { return callback(error); }
-    callback(null, self.Utils.flatenTree(result));
-  }, opts, context);
-};
-
-Streams.prototype.getFlatenedObjects = function (callback, opts, context) {
-  var self = this;
-  this.get(function (error, result) {
-    if (error) { return callback(error); }
-    callback(null, self.Utils.flatenTree(result, self.connection));
-  }, opts, context);
-};
-
-Streams.prototype.create = function (stream, callback, context) {
-  var url = '/streams';
-  this.connection.request('POST', url, function (err, result) {
-    stream.id = result.id;
-    callback(err, result);
-  }, stream, context);
-};
-
-Streams.prototype.update = function (stream, callback, context) {
-  var url = '/streams/' + stream.id;
-  this.connection.request('PUT', url, callback, null, context);
-};
-
-// TODO Validate that it's the good place for them .. Could have been in Stream or Utility
-Streams.prototype.Utils = {
-
-  /**
-   * Flaten a streamTree obtained from the API. Replaces the children[] by a childrenIds[]
-   * @param streamTree
-   * @param andGetStreamObjects if true return Stream object as in the model
-   * @returns {Array} of streamData
-   */
-  flatenTree : function (streamTree, andMakeObjectWithConnection) {
-    var streams = [];
-    this.walkTree(streamTree, function (stream) {
-      if (andMakeObjectWithConnection) {
-        streams.push(new Stream(andMakeObjectWithConnection, stream));
-      } else {
-        streams.push(stream);
-      }
-    });
-    return streams;
-  },
-
-  /**
-   * Walk thru a streamTree obtained from the API. Replaces the children[] by childrenIds[].
-   * This is used to Flaten the Tree
-   * @param streamTree
-   * @param callback function(streamData)
-   */
-  walkTree : function (streamTree, callback) {
-    var self = this;
-    _.each(streamTree, function (streamStruct) {
-      var stream = _.omit(streamStruct, 'children', 'clientData');
-      stream.childrenIds = [];
-      if (_.has(streamStruct, 'children')) {
-        _.each(streamStruct.children, function (childTree) {
-          stream.childrenIds.push(childTree.id);
-        });
-        self.walkTree(streamStruct.children, callback);
-      }
-      callback(stream);
-    });
-  }
-};
-
-},{"../Stream.js":2,"../utility/Utility.js":7,"underscore":10}]},{},["cwPZLO"])
+},{"../Event":2,"../utility/Utility.js":7,"underscore":13}]},{},["r0xNjY"])
 ;
