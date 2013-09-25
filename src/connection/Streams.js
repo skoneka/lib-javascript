@@ -30,7 +30,7 @@ Streams.prototype.get = function (callback, opts, context) {
       throw new Error('localStorage does not implement structure filtering yet');
     }
 
-    callback(null, result);
+    return callback(null, result);
   }
   this._get(callback, opts, context);
 };
