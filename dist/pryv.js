@@ -14,7 +14,7 @@ module.exports = {
   Utility: require('./utility/Utility.js')
 };
 
-},{"./Access.js":6,"./Connection.js":1,"./Event.js":2,"./Filter.js":4,"./Stream.js":3,"./system/System.js":5,"./utility/Utility.js":7}],6:[function(require,module,exports){
+},{"./Access.js":6,"./Connection.js":1,"./Event.js":2,"./Filter.js":3,"./Stream.js":4,"./system/System.js":5,"./utility/Utility.js":7}],6:[function(require,module,exports){
 var System = require('./system/System.js');
 
 
@@ -91,13 +91,15 @@ var Datastore = module.exports = function (connection) {
 
 Datastore.prototype.init = function (callback) {
   var self = this;
-  this.connection.streams._get(function (error, result) {
+  this.connection.streams._get({state: 'all'}, function (error, result) {
     if (result) {
+
+      console.log(JSON.stringify(result));
       self.streams = result;
       self._rebuildStreamIndex(); // maybe done transparently
     }
     callback(error);
-  }, {state: 'all'});
+  });
 
   // activate monitoring
 
@@ -494,55 +496,6 @@ Object.defineProperty(Connection.prototype, 'shortId', {
 });
 
 },{"./Datastore.js":10,"./connection/Events.js":12,"./connection/Streams.js":13,"./system/System.js":5,"underscore":11}],3:[function(require,module,exports){
-
-var _ = require('underscore');
-
-var Stream = module.exports = function (connection, data) {
-  this.connection = connection;
-  _.extend(this, data);
-};
-
-
-Object.defineProperty(Stream.prototype, 'parents', {
-  get: function () {
-    var self = this;
-
-    if (! self.parentId) { return []; }
-    var parent = self.connection.datastore.getStreamById(self.parentId);
-    var parents = parent.parents;
-    parents.push(parent);
-    return parents;
-  },
-  set: function () { throw new Error('Stream.parents property is read only'); }
-});
-
-Object.defineProperty(Stream.prototype, 'parentsIds', {
-  get: function () {
-    var self = this;
-
-    if (! self.parentId) { return []; }
-    var parent = self.connection.datastore.getStreamById(self.parentId);
-    var parents = parent.parentsIds;
-    parents.push(self.parentId);
-    return parents;
-  },
-  set: function () { throw new Error('Stream.parents property is read only'); }
-});
-
-Object.defineProperty(Stream.prototype, 'children', {
-  get: function () {
-    var self = this;
-    var children = [];
-    _.each(this.childrenIds, function (childrenId) {
-      children.push(self.connection.datastore.getStreamById(childrenId));
-    });
-    return children;
-  },
-  set: function () { throw new Error('Stream.children property is read only'); }
-});
-
-
-},{"underscore":11}],4:[function(require,module,exports){
 var _ = require('underscore');
 
 var Filter = module.exports = function (settings) {
@@ -569,6 +522,63 @@ Filter.prototype.focusedOnSingleStream = function () {
   }
   return null;
 };
+
+},{"underscore":11}],4:[function(require,module,exports){
+
+var _ = require('underscore');
+
+var Stream = module.exports = function (connection, data) {
+  this.connection = connection;
+  _.extend(this, data);
+};
+
+
+
+Object.defineProperty(Stream.prototype, 'parent', {
+  get: function () {
+
+    if (! this.parentId) { return null; }
+
+    if (! this.connection.datastore) { // we use this._parent and this._children
+      return this._parent;
+    }
+
+    return this.connection.datastore.getStreamById(this.parentId);
+  },
+  set: function () { throw new Error('Stream.children property is read only'); }
+});
+
+
+Object.defineProperty(Stream.prototype, 'children', {
+  get: function () {
+    var self = this;
+    if (! self.connection.datastore) { // we use this._parent and this._children
+      return this._children;
+    }
+
+
+    var children = [];
+    _.each(this.childrenIds, function (childrenId) {
+      children.push(self.connection.datastore.getStreamById(childrenId));
+    });
+    return children;
+  },
+  set: function () { throw new Error('Stream.children property is read only'); }
+});
+
+
+Object.defineProperty(Stream.prototype, 'ancestors', {
+  get: function () {
+    var self = this;
+
+    if (! self.parentId) { return []; }
+
+    var result = this.parent.ancestors;
+    result.push(parent);
+    return result;
+  },
+  set: function () { throw new Error('Stream.ancestors property is read only'); }
+});
 
 },{"underscore":11}],11:[function(require,module,exports){
 (function(){//     Underscore.js 1.5.2
@@ -1970,6 +1980,7 @@ var _ = require('underscore'),
 
 var Streams = module.exports = function (connection) {
   this.connection = connection;
+  this._streamsIndex = {};
 };
 
 
@@ -1993,11 +2004,15 @@ Streams.prototype.tree = function (options, callback, context) {
   done();
 };
 
+Streams.prototype.getById = function (streamId) {
+
+};
+
 /**
  * @param options {parentId: <parentId | null> , state: <all | null>}
  * @return Arrray of Pryv.Stream matching the options
  */
-Streams.prototype.get = function (callback, options, context) {
+Streams.prototype.get = function (options, callback, context) {
   options = options || {};
   options.parentId = options.parentId || null;
   var self = this;
@@ -2016,7 +2031,16 @@ Streams.prototype.get = function (callback, options, context) {
       streamsIndex[streamData.id] = stream;
       if (stream.parentId === options.parentId) { // attached to the rootNode or filter
         resultTree.push(stream);
+        stream._parent = null;
+        stream._children = [];
+      } else {
+        // if no localStorage create parent / children link
+        stream._parent =  streamsIndex[stream.parentId];
+        stream._parent._children.push(stream);
       }
+
+
+
     });
 
     callback(null, resultTree);
@@ -2088,18 +2112,19 @@ Streams.Utils = {
       var stream = _.omit(streamStruct, 'children', 'clientData');
       stream.childrenIds = [];
       var subTree = {};
+      callback(stream, subTree);
       if (_.has(streamStruct, 'children')) {
         subTree = streamStruct.children;
+
         _.each(streamStruct.children, function (childTree) {
           stream.childrenIds.push(childTree.id);
         });
         self.walkDataTree(streamStruct.children, callback);
       }
-      callback(stream, subTree);
     });
   }
 
 };
 
-},{"../Stream.js":3,"../utility/Utility.js":7,"underscore":11}]},{},["r0xNjY"])
+},{"../Stream.js":4,"../utility/Utility.js":7,"underscore":11}]},{},["r0xNjY"])
 ;

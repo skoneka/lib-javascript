@@ -7,13 +7,15 @@ var Datastore = module.exports = function (connection) {
 
 Datastore.prototype.init = function (callback) {
   var self = this;
-  this.connection.streams._get(function (error, result) {
+  this.connection.streams._get({state: 'all'}, function (error, result) {
     if (result) {
+
+      console.log(JSON.stringify(result));
       self.streams = result;
       self._rebuildStreamIndex(); // maybe done transparently
     }
     callback(error);
-  }, {state: 'all'});
+  });
 
   // activate monitoring
 

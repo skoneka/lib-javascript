@@ -2,7 +2,8 @@
 
 var Pryv = require('../../src/main'),
     should = require('should'),
-    nock = require('nock');
+    nock = require('nock'),
+    _ = require('underscore');
 
 describe('Pryv.streams', function () {
   var username = 'test-user',
@@ -34,6 +35,46 @@ describe('Pryv.streams', function () {
       });
     });
   });
+
+
+  describe('get', function () {
+    var opts = null;
+    var responseAccessInfo = JSON.parse(
+      '[{"clientData":{"col":"#7AEABF","color":"color_3","colorClass":"color3"},"name":"Journal",' +
+        '"parentId":null,"id":"diary","children":[{"clientData":{"color":"color_3_0"},' +
+        '"name":"Notes","parentId":"diary","id":"notes","children":[]},' +
+        '{"clientData":{"color":"color_3_1"},"name":"Twitter","parentId":"diary",' +
+        '"id":"social-twitter","children":[]},{"clientData":{"color":"color_3_2"},'  +
+        '"name":"Withings","parentId":"diary","id":"health-withings","children":[]},' +
+        '{"clientData":{"color":"color_3_3"},"name":"a","parentId":"diary",' +
+        '"id":"Pe1mzKxmK5","children":[]}]}]');
+
+    it('should return an object with a correct structure', function (done) {
+
+      nock('https://' + username + '.' + settings.domain)
+        .get('/streams?')
+        .reply(200, responseAccessInfo);
+      connection.streams.get(opts, function (err, result) {
+        should.not.exist(err);
+        should.exist(result);
+
+        result.should.be.instanceOf(Array);
+
+        function testTree(arrayOfStreams) {
+          _.each(arrayOfStreams, function (stream) { 
+            stream.should.be.instanceOf(Pryv.Stream);
+            testTree(stream.children);
+          });
+        }
+
+        testTree(result);
+
+        done();
+      });
+    });
+  });
+
+
   describe('create', function () {
 
     var response = {

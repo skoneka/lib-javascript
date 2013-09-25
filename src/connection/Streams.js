@@ -5,6 +5,7 @@ var _ = require('underscore'),
 
 var Streams = module.exports = function (connection) {
   this.connection = connection;
+  this._streamsIndex = {};
 };
 
 
@@ -28,11 +29,15 @@ Streams.prototype.tree = function (options, callback, context) {
   done();
 };
 
+Streams.prototype.getById = function (streamId) {
+
+};
+
 /**
  * @param options {parentId: <parentId | null> , state: <all | null>}
  * @return Arrray of Pryv.Stream matching the options
  */
-Streams.prototype.get = function (callback, options, context) {
+Streams.prototype.get = function (options, callback, context) {
   options = options || {};
   options.parentId = options.parentId || null;
   var self = this;
@@ -51,7 +56,16 @@ Streams.prototype.get = function (callback, options, context) {
       streamsIndex[streamData.id] = stream;
       if (stream.parentId === options.parentId) { // attached to the rootNode or filter
         resultTree.push(stream);
+        stream._parent = null;
+        stream._children = [];
+      } else {
+        // if no localStorage create parent / children link
+        stream._parent =  streamsIndex[stream.parentId];
+        stream._parent._children.push(stream);
       }
+
+
+
     });
 
     callback(null, resultTree);
@@ -123,14 +137,15 @@ Streams.Utils = {
       var stream = _.omit(streamStruct, 'children', 'clientData');
       stream.childrenIds = [];
       var subTree = {};
+      callback(stream, subTree);
       if (_.has(streamStruct, 'children')) {
         subTree = streamStruct.children;
+
         _.each(streamStruct.children, function (childTree) {
           stream.childrenIds.push(childTree.id);
         });
         self.walkDataTree(streamStruct.children, callback);
       }
-      callback(stream, subTree);
     });
   }
 
