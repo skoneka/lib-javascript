@@ -14,7 +14,7 @@ describe('Pryv.streams', function () {
   },
   connection = Pryv.Connection(username, auth, settings);
 
-  describe('get', function () {
+  describe('_get', function () {
     var opts = {
       parentId : 'test-id',
       state : 'default',
@@ -26,12 +26,12 @@ describe('Pryv.streams', function () {
       nock('https://' + username + '.' + settings.domain)
         .get('/streams?parentId=test-id&state=default')
         .reply(200, response);
-      connection.streams.get(function (err, result) {
+      connection.streams._get(opts, function (err, result) {
         should.not.exist(err);
         should.exist(result);
         result.should.eql(response);
         done();
-      }, opts);
+      });
     });
   });
   describe('create', function () {

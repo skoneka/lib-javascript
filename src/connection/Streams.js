@@ -7,47 +7,65 @@ var Streams = module.exports = function (connection) {
   this.connection = connection;
 };
 
-Streams.prototype.get = function (callback, opts, context) {
-  opts = opts || {};
 
-  if (this.connection.datastore) {
-    var result = null;
-    if (_.has(opts, 'parentId')) {
-      if (! _.has(this.connection.datastore.streamsIndex, opts.parentId)) { // ERROR
-        return callback('streams.get cannot find parent stream with id: ' + opts.parentId, null);
-      }
+/**
+ * @param options {parentId: <parentId | null> , state: <all | null>}
+ */
+Streams.prototype.walkTree = function (options, foundStream, done, context) {
+  options = options || { };
 
-      // TODO
-      throw new Error('localStorage does not implement caching correctly');
-      // result = this.connection.datastore.getStreamById(opts.parentId).getSubTree(state);
-    } else {
-      result = this.connection.datastore.streams;
-    }
-
-
-    if (_.has(opts, 'state') && opts.state !== 'all') {
-      //TODO  implement structure filtering for local storage
-      throw new Error('localStorage does not implement structure filtering yet');
-    }
-
-    return callback(null, result);
-  }
-  this._get(callback, opts, context);
+  done();
 };
 
 
-Streams.prototype._get = function (callback, opts, context) {
+
+/**
+ * @param options {parentId: <parentId | null> , state: <all | null>}
+ */
+Streams.prototype.tree = function (options, callback, context) {
+  options = options || { };
+
+  done();
+};
+
+/**
+ * @param options {parentId: <parentId | null> , state: <all | null>}
+ * @return Arrray of Pryv.Stream matching the options
+ */
+Streams.prototype.get = function (callback, options, context) {
+  options = options || {};
+  options.parentId = options.parentId || null;
+  var self = this;
+  if (this.connection.datastore) {
+    // do otherwise
+    console.log('todo');
+  }
+
+
+  var resultTree = [];
+  var streamsIndex = {};
+  this._get(options, function (error, treeData) {
+    if (error) { return callback('Stream.get failed: ' + error); }
+    Streams.Utils.walkDataTree(treeData, function (streamData) {
+      var stream = new Stream(self.connection, streamData);
+      streamsIndex[streamData.id] = stream;
+      if (stream.parentId === options.parentId) { // attached to the rootNode or filter
+        resultTree.push(stream);
+      }
+    });
+
+    callback(null, resultTree);
+  }, context);
+
+};
+
+
+
+Streams.prototype._get = function (opts, callback, context) {
   var url = opts ? '/streams?' + Utility.getQueryParametersString(opts) : '/streams';
   this.connection.request('GET', url, callback, null, context);
 };
 
-Streams.prototype.getFlatenedData = function (callback, opts, context) {
-  var self = this;
-  this.get(function (error, result) {
-    if (error) { return callback(error); }
-    callback(null, self.Utils.flatenTree(result));
-  }, opts, context);
-};
 
 Streams.prototype.getFlatenedObjects = function (callback, opts, context) {
   var self = this;
@@ -72,7 +90,7 @@ Streams.prototype.update = function (stream, callback, context) {
 
 
 // TODO Validate that it's the good place for them .. Could have been in Stream or Utility
-Streams.prototype.Utils = {
+Streams.Utils = {
 
 
   /**
