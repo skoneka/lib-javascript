@@ -4,6 +4,11 @@ var _ = require('underscore');
 var Stream = module.exports = function (connection, data) {
   this.connection = connection;
   _.extend(this, data);
+
+  /** those are only used when no datastore **/
+  this._parent = null;
+  this._children = null;
+
 };
 
 
@@ -40,15 +45,15 @@ Object.defineProperty(Stream.prototype, 'children', {
   set: function () { throw new Error('Stream.children property is read only'); }
 });
 
-
+// TODO write test
 Object.defineProperty(Stream.prototype, 'ancestors', {
   get: function () {
     var self = this;
 
     if (! self.parentId) { return []; }
 
-    var result = this.parent.ancestors;
-    result.push(parent);
+    var result = [this.parent];
+    result.push(this.parent.ancestors);
     return result;
   },
   set: function () { throw new Error('Stream.ancestors property is read only'); }

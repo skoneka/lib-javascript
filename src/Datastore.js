@@ -1,16 +1,14 @@
 var Datastore = module.exports = function (connection) {
   this.connection = connection;
   this.streamsIndex = {}; // streams are linked to their object representation
-  this.streams = {};  // pure JSONObject received by the API
+  this.streams = null;  // object streams as if connection.streams._getObjects({state: 'all'})
   this.events = {};
 };
 
 Datastore.prototype.init = function (callback) {
   var self = this;
-  this.connection.streams._get({state: 'all'}, function (error, result) {
+  this.connection.streams._getObjects({state: 'all'}, function (error, result) {
     if (result) {
-
-      console.log(JSON.stringify(result));
       self.streams = result;
       self._rebuildStreamIndex(); // maybe done transparently
     }
@@ -31,7 +29,16 @@ Datastore.prototype._rebuildStreamIndex = function () {
 };
 
 
-// TODO move this to connection
+/**
+ *
+ * @param streamId
+ * @returns Stream or null if not found
+ */
+Datastore.prototype.getStreams = function (streamId) {
+  return this.streamsIndex[streamId];
+};
+
+
 /**
  *
  * @param streamId

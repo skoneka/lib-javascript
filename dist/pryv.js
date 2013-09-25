@@ -14,7 +14,7 @@ module.exports = {
   Utility: require('./utility/Utility.js')
 };
 
-},{"./Access.js":6,"./Connection.js":1,"./Event.js":2,"./Filter.js":3,"./Stream.js":4,"./system/System.js":5,"./utility/Utility.js":7}],6:[function(require,module,exports){
+},{"./Access.js":6,"./Connection.js":1,"./Event.js":2,"./Filter.js":4,"./Stream.js":3,"./system/System.js":5,"./utility/Utility.js":7}],6:[function(require,module,exports){
 var System = require('./system/System.js');
 
 
@@ -85,16 +85,14 @@ module.exports = isBrowser() ?  require('./System-browser.js') : require('./Syst
 var Datastore = module.exports = function (connection) {
   this.connection = connection;
   this.streamsIndex = {}; // streams are linked to their object representation
-  this.streams = {};  // pure JSONObject received by the API
+  this.streams = null;  // object streams as if connection.streams._getObjects({state: 'all'})
   this.events = {};
 };
 
 Datastore.prototype.init = function (callback) {
   var self = this;
-  this.connection.streams._get({state: 'all'}, function (error, result) {
+  this.connection.streams._getObjects({state: 'all'}, function (error, result) {
     if (result) {
-
-      console.log(JSON.stringify(result));
       self.streams = result;
       self._rebuildStreamIndex(); // maybe done transparently
     }
@@ -115,7 +113,16 @@ Datastore.prototype._rebuildStreamIndex = function () {
 };
 
 
-// TODO move this to connection
+/**
+ *
+ * @param streamId
+ * @returns Stream or null if not found
+ */
+Datastore.prototype.getStreams = function (streamId) {
+  return this.streamsIndex[streamId];
+};
+
+
 /**
  *
  * @param streamId
@@ -292,28 +299,7 @@ var _initXHR = function () {
 
 },{}],9:[function(require,module,exports){
 
-},{}],2:[function(require,module,exports){
-
-var _ = require('underscore');
-/**
- *
- * @type {Function}
- * @constructor
- */
-var Event = module.exports = function (connection, data) {
-  this.connection = connection;
-  _.extend(this, data);
-};
-
-
-Object.defineProperty(Event.prototype, 'stream', {
-  get: function () {
-    return this.connection.datastore.getStreamById(this.streamId);
-  },
-  set: function () { throw new Error('Event.stream property is read only'); }
-});
-
-},{"underscore":11}],1:[function(require,module,exports){
+},{}],1:[function(require,module,exports){
 /**
  * TODO
  * @type {*}
@@ -495,41 +481,39 @@ Object.defineProperty(Connection.prototype, 'shortId', {
   set: function () { throw new Error('Connection.shortId property is read only'); }
 });
 
-},{"./Datastore.js":10,"./connection/Events.js":12,"./connection/Streams.js":13,"./system/System.js":5,"underscore":11}],3:[function(require,module,exports){
+},{"./Datastore.js":10,"./connection/Events.js":11,"./connection/Streams.js":12,"./system/System.js":5,"underscore":13}],2:[function(require,module,exports){
+
 var _ = require('underscore');
-
-var Filter = module.exports = function (settings) {
-  // Constructor new-Agnostic
-  var self = this instanceof Filter ? this : Object.create(Filter.prototype);
-  self.settings = _.extend({
-    //TODO: set default values
-    streams: null,
-    tags: null,
-    from: null,
-    to: null,
-    limit: null,
-    skip: null,
-    modifiedSince: null,
-    state: null
-  }, settings);
-  return self;
+/**
+ *
+ * @type {Function}
+ * @constructor
+ */
+var Event = module.exports = function (connection, data) {
+  this.connection = connection;
+  _.extend(this, data);
 };
 
-//TODO: remove or rewrite (name & functionality unclear)
-Filter.prototype.focusedOnSingleStream = function () {
-  if (_.isArray(this.settings.streams) && this.settings.streams.length === 1) {
-    return this.settings.streams[0];
-  }
-  return null;
-};
 
-},{"underscore":11}],4:[function(require,module,exports){
+Object.defineProperty(Event.prototype, 'stream', {
+  get: function () {
+    return this.connection.datastore.getStreamById(this.streamId);
+  },
+  set: function () { throw new Error('Event.stream property is read only'); }
+});
+
+},{"underscore":13}],3:[function(require,module,exports){
 
 var _ = require('underscore');
 
 var Stream = module.exports = function (connection, data) {
   this.connection = connection;
   _.extend(this, data);
+
+  /** those are only used when no datastore **/
+  this._parent = null;
+  this._children = null;
+
 };
 
 
@@ -566,21 +550,49 @@ Object.defineProperty(Stream.prototype, 'children', {
   set: function () { throw new Error('Stream.children property is read only'); }
 });
 
-
+// TODO write test
 Object.defineProperty(Stream.prototype, 'ancestors', {
   get: function () {
     var self = this;
 
     if (! self.parentId) { return []; }
 
-    var result = this.parent.ancestors;
-    result.push(parent);
+    var result = [this.parent];
+    result.push(this.parent.ancestors);
     return result;
   },
   set: function () { throw new Error('Stream.ancestors property is read only'); }
 });
 
-},{"underscore":11}],11:[function(require,module,exports){
+},{"underscore":13}],4:[function(require,module,exports){
+var _ = require('underscore');
+
+var Filter = module.exports = function (settings) {
+  // Constructor new-Agnostic
+  var self = this instanceof Filter ? this : Object.create(Filter.prototype);
+  self.settings = _.extend({
+    //TODO: set default values
+    streams: null,
+    tags: null,
+    from: null,
+    to: null,
+    limit: null,
+    skip: null,
+    modifiedSince: null,
+    state: null
+  }, settings);
+  return self;
+};
+
+//TODO: remove or rewrite (name & functionality unclear)
+Filter.prototype.focusedOnSingleStream = function () {
+  if (_.isArray(this.settings.streams) && this.settings.streams.length === 1) {
+    return this.settings.streams[0];
+  }
+  return null;
+};
+
+},{"underscore":13}],13:[function(require,module,exports){
 (function(){//     Underscore.js 1.5.2
 //     http://underscorejs.org
 //     (c) 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -1890,7 +1902,7 @@ exports.getQueryParametersString = function (data) {
   }, this).join('&');
 };
 
-},{"underscore":11}],12:[function(require,module,exports){
+},{"underscore":13}],11:[function(require,module,exports){
 
 var Utility = require('../utility/Utility.js'),
   _ = require('underscore'),
@@ -1972,7 +1984,7 @@ Events.prototype.monitor = function (filter, callback) {
   });
 };
 
-},{"../Event":2,"../utility/Utility.js":7,"underscore":11}],13:[function(require,module,exports){
+},{"../Event":2,"../utility/Utility.js":7,"underscore":13}],12:[function(require,module,exports){
 
 var _ = require('underscore'),
   Utility = require('../utility/Utility.js'),
@@ -1981,50 +1993,35 @@ var _ = require('underscore'),
 var Streams = module.exports = function (connection) {
   this.connection = connection;
   this._streamsIndex = {};
-};
-
-
-/**
- * @param options {parentId: <parentId | null> , state: <all | null>}
- */
-Streams.prototype.walkTree = function (options, foundStream, done, context) {
-  options = options || { };
-
-  done();
-};
-
-
-
-/**
- * @param options {parentId: <parentId | null> , state: <all | null>}
- */
-Streams.prototype.tree = function (options, callback, context) {
-  options = options || { };
-
-  done();
-};
-
-Streams.prototype.getById = function (streamId) {
 
 };
+
 
 /**
  * @param options {parentId: <parentId | null> , state: <all | null>}
  * @return Arrray of Pryv.Stream matching the options
  */
 Streams.prototype.get = function (options, callback, context) {
+
+  if (this.connection.datastore) {
+    var resultTree = [];
+    if (options && _.has(options, 'parentId')) {
+      resultTree = this.connection.datastore.getStreamById(options.parentId).children;
+    } else {
+      resultTree = this.connection.datastore.getStreams();
+    }
+  } else {
+    this._getObjects(options, callback, context);
+  }
+};
+
+Streams.prototype._getObjects = function (options, callback, context) {
   options = options || {};
   options.parentId = options.parentId || null;
   var self = this;
-  if (this.connection.datastore) {
-    // do otherwise
-    console.log('todo');
-  }
-
-
-  var resultTree = [];
   var streamsIndex = {};
-  this._get(options, function (error, treeData) {
+  var resultTree = [];
+  this._getData(options, function (error, treeData) {
     if (error) { return callback('Stream.get failed: ' + error); }
     Streams.Utils.walkDataTree(treeData, function (streamData) {
       var stream = new Stream(self.connection, streamData);
@@ -2038,31 +2035,17 @@ Streams.prototype.get = function (options, callback, context) {
         stream._parent =  streamsIndex[stream.parentId];
         stream._parent._children.push(stream);
       }
-
-
-
     });
-
     callback(null, resultTree);
   }, context);
-
 };
 
-
-
-Streams.prototype._get = function (opts, callback, context) {
+Streams.prototype._getData = function (opts, callback, context) {
   var url = opts ? '/streams?' + Utility.getQueryParametersString(opts) : '/streams';
   this.connection.request('GET', url, callback, null, context);
 };
 
 
-Streams.prototype.getFlatenedObjects = function (callback, opts, context) {
-  var self = this;
-  this.get(function (error, result) {
-    if (error) { return callback(error); }
-    callback(null, self.Utils.flatenTree(result, self.connection));
-  }, opts, context);
-};
 
 Streams.prototype.create = function (stream, callback, context) {
   var url = '/streams';
@@ -2075,6 +2058,31 @@ Streams.prototype.create = function (stream, callback, context) {
 Streams.prototype.update = function (stream, callback, context) {
   var url = '/streams/' + stream.id;
   this.connection.request('PUT', url, callback, null, context);
+};
+
+/**
+ * Walk the tree structure..
+ * parents are always announced before childrens
+ * @param opts
+ * @param eachStream
+ * @param done
+ * @param context
+ */
+Streams.prototype.walkTree = function (opts, eachStream, done, context) {
+  this.get(function (error, result) {
+    if (error) { return done('Stream.walkTree failed: ' + error); }
+    Streams.Utils.walkDataTree(result, eachStream);
+    done(null);
+  }, opts, context);
+};
+
+
+Streams.prototype.getFlatenedObjects = function (callback, opts, context) {
+  var self = this;
+  this.get(function (error, result) {
+    if (error) { return callback(error); }
+    callback(null, self.Utils.flatenTree(result, self.connection));
+  }, opts, context);
 };
 
 
@@ -2126,5 +2134,5 @@ Streams.Utils = {
 
 };
 
-},{"../Stream.js":4,"../utility/Utility.js":7,"underscore":11}]},{},["r0xNjY"])
+},{"../Stream.js":3,"../utility/Utility.js":7,"underscore":13}]},{},["r0xNjY"])
 ;
