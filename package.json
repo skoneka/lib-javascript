@@ -13,7 +13,7 @@
   },
   "main": "src/main.js",
   "dependencies": {
-    "underscore": "latest",
+    "underscore": "~1.5.2",
     "socket.io-client": "~0.9.16"
   },
   "devDependencies": {
