@@ -60,7 +60,15 @@ exports.request = function (pack)  {
         code : res.statusCode,
         headers : res.headers
       };
-      var resJson = JSON.parse(bodyarr.join(''));
+      var resJson = {};
+      try {
+        resJson = JSON.parse(bodyarr.join(''));
+      } catch (error) {
+
+        return onError('System-node.request failed to parse JSON in response' +
+          bodyarr.join('')
+        );
+      }
       return pack.success(resJson, requestInfo);
     });
 

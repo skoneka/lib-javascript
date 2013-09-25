@@ -23,6 +23,7 @@ Streams.prototype.get = function (options, callback, context) {
     } else {
       resultTree = this.connection.datastore.getStreams();
     }
+    callback(null, resultTree);
   } else {
     this._getObjects(options, callback, context);
   }
@@ -44,7 +45,7 @@ Streams.prototype._getObjects = function (options, callback, context) {
         stream._parent = null;
         stream._children = [];
       } else {
-        // if no localStorage create parent / children link
+        // localStorage will cleanup  parent / children link if needed
         stream._parent =  streamsIndex[stream.parentId];
         stream._parent._children.push(stream);
       }
@@ -81,12 +82,12 @@ Streams.prototype.update = function (stream, callback, context) {
  * @param done
  * @param context
  */
-Streams.prototype.walkTree = function (opts, eachStream, done, context) {
-  this.get(function (error, result) {
+Streams.prototype.walkTree = function (options, eachStream, done, context) {
+  this.get(options, function (error, result) {
     if (error) { return done('Stream.walkTree failed: ' + error); }
-    Streams.Utils.walkDataTree(result, eachStream);
-    done(null);
-  }, opts, context);
+    Streams.Utils.walkObjectTree(result, eachStream);
+    if (done) { done(null); }
+  }, context);
 };
 
 
@@ -122,6 +123,18 @@ Streams.Utils = {
   },
 
   /**
+   * Walk thru a streamArray of objects
+   * @param streamTree
+   * @param callback function(stream)
+   */
+  walkObjectTree : function (streamArray, eachStream) {
+    _.each(streamArray, function (stream) {
+      eachStream(stream);
+      Streams.Utils.walkObjectTree(stream.children, eachStream);
+    });
+  },
+
+  /**
    * Walk thru a streamTree obtained from the API. Replaces the children[] by childrenIds[].
    * This is used to Flaten the Tree
    * @param streamTree
@@ -143,6 +156,28 @@ Streams.Utils = {
         self.walkDataTree(streamStruct.children, callback);
       }
     });
+  },
+
+  /**
+   * ShowTree
+   */
+  _debugTree : function (arrayOfStreams) {
+    var result = [];
+    if (! arrayOfStreams  || ! arrayOfStreams instanceof Array) {
+      throw new Error('expected an array for argument :' + arrayOfStreams);
+    }
+    _.each(arrayOfStreams, function (stream) {
+      if (! stream || ! stream instanceof Stream) {
+        throw new Error('expected a Streams array ' + stream);
+      }
+      result.push({
+        name : stream.name,
+        id : stream.id,
+        parentId : stream.parentId,
+        children : Streams.Utils._debugTree(stream.children)
+      });
+    });
+    return result;
   }
 
 };

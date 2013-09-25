@@ -7,7 +7,7 @@ var Stream = module.exports = function (connection, data) {
 
   /** those are only used when no datastore **/
   this._parent = null;
-  this._children = null;
+  this._children = [];
 
 };
 
@@ -31,14 +31,14 @@ Object.defineProperty(Stream.prototype, 'parent', {
 Object.defineProperty(Stream.prototype, 'children', {
   get: function () {
     var self = this;
+
     if (! self.connection.datastore) { // we use this._parent and this._children
       return this._children;
     }
-
-
     var children = [];
     _.each(this.childrenIds, function (childrenId) {
-      children.push(self.connection.datastore.getStreamById(childrenId));
+      var child = self.connection.datastore.getStreamById(childrenId);
+      children.push(child);
     });
     return children;
   },

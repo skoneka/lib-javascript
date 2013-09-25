@@ -6,7 +6,7 @@ var Pryv = require('../../src/main'),
   _ = require('underscore');
 
 
-var testStreams = function(enableLocalStorage) {
+var testStreams = function (enableLocalStorage) {
 
   var localEnabledStr = enableLocalStorage ? ' + LocalStorage' : '';
 
@@ -19,6 +19,39 @@ var testStreams = function(enableLocalStorage) {
         domain: 'test.io'
       },
       connection = Pryv.Connection(username, auth, settings);
+
+    var responseAccessInfo = JSON.parse(
+      '[{"clientData":{"col":"#7AEABF","color":"color_3","colorClass":"color3"},"name":"Journal",' +
+        '"parentId":null,"id":"diary","children":[{"clientData":{"color":"color_3_0"},' +
+        '"name":"Notes","parentId":"diary","id":"notes","children":[]},' +
+        '{"clientData":{"color":"color_3_1"},"name":"Twitter","parentId":"diary",' +
+        '"id":"social-twitter","children":[]},{"clientData":{"color":"color_3_2"},'  +
+        '"name":"Withings","parentId":"diary","id":"health-withings","children":[]},' +
+        '{"clientData":{"color":"color_3_3"},"name":"a","parentId":"diary",' +
+        '"id":"Pe1mzKxmK5","children":[]}]}]');
+
+
+    if (enableLocalStorage) {
+      before(function (done) {
+
+        nock('https://' + username + '.' + settings.domain)
+          .get('/access-info')
+          .reply(200, { type: 'app',
+            name: 'diary-read-only',
+            permissions: [ { streamId: 'diary', level: 'read' } ] });
+
+
+        nock('https://' + username + '.' + settings.domain)
+          .get('/streams?state=all')
+          .reply(200, responseAccessInfo);
+
+        connection.useLocalStorage(function (error) {
+          should.not.exist(error);
+          done();
+        });
+      });
+    }
+
 
     describe('_getData', function () {
       var opts = {
@@ -44,28 +77,32 @@ var testStreams = function(enableLocalStorage) {
 
     describe('get', function () {
       var opts = null;
-      var responseAccessInfo = JSON.parse(
-        '[{"clientData":{"col":"#7AEABF","color":"color_3","colorClass":"color3"},"name":"Journal",' +
-          '"parentId":null,"id":"diary","children":[{"clientData":{"color":"color_3_0"},' +
-          '"name":"Notes","parentId":"diary","id":"notes","children":[]},' +
-          '{"clientData":{"color":"color_3_1"},"name":"Twitter","parentId":"diary",' +
-          '"id":"social-twitter","children":[]},{"clientData":{"color":"color_3_2"},'  +
-          '"name":"Withings","parentId":"diary","id":"health-withings","children":[]},' +
-          '{"clientData":{"color":"color_3_3"},"name":"a","parentId":"diary",' +
-          '"id":"Pe1mzKxmK5","children":[]}]}]');
 
-      it('should return an object with a correct structure', function (done) {
 
+      if (! enableLocalStorage) {
         nock('https://' + username + '.' + settings.domain)
-          .get('/streams?')
+          .get('/streams?').times(2)  // 3 requests when no localStorage
           .reply(200, responseAccessInfo);
+      }
+
+      it('should return an object', function (done) {
+
         connection.streams.get(opts, function (err, result) {
           should.not.exist(err);
           should.exist(result);
 
           result.should.be.instanceOf(Array);
 
+          /**
+
+          console.log('******' + JSON.stringify(
+            require('../../src/connection/Streams.js').Utils._debugTree(result), null, 2));
+           *
+           */
+
+          var countTest = 0;
           function testTree(arrayOfStreams) {
+            countTest++;
             _.each(arrayOfStreams, function (stream) {
               stream.should.be.instanceOf(Pryv.Stream);
               testTree(stream.children);
@@ -73,15 +110,37 @@ var testStreams = function(enableLocalStorage) {
           }
 
           testTree(result);
+          countTest.should.equal(6);
 
           done();
         });
       });
+
+
+
+
+      it('walkTree should allow full view of object', function (done) {
+        var count = 0;
+        var order = ['diary', 'notes', 'social-twitter', 'health-withings', 'Pe1mzKxmK5'];
+        connection.streams.walkTree(null, function (stream) {  // each stream
+          order[count].should.equal(stream.id);
+          count++;
+        }, function (error) { // done
+          should.not.exist(error);
+          count.should.equal(5);
+          done();
+        }, this);
+
+      });
+
+
     });
 
 
 
-    describe('Pryv.streams' + localEnabledStr, function () {
+
+
+    describe('Pryv.streams CREATE' + localEnabledStr, function () {
 
       var response = {
           id : 'test-id'
@@ -111,7 +170,9 @@ var testStreams = function(enableLocalStorage) {
         });
       });
     });
-    describe('update', function () {
+
+
+    describe('Pryv.streams UPDATE' + localEnabledStr, function () {
       var stream = {
           id : 'test-id',
           content : 'test-content'
@@ -131,9 +192,10 @@ var testStreams = function(enableLocalStorage) {
         });
       });
     });
+
   });
 
-}
+};
 
 testStreams(false);
 
