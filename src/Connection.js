@@ -85,7 +85,7 @@ Connection.prototype.getLocalTime = function (serverTime) {
  * @returns {number} timestamp (server dimension)
  */
 Connection.prototype.getServerTime = function (localTime) {
-  localTime = localTime || new Date().getTime();
+  localTime = localTime || new Date().getTime();
   return (localTime / 1000) - this.serverInfos.deltaTime;
 };
 

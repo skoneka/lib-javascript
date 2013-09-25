@@ -10,7 +10,7 @@ var Datastore = module.exports = function (connection) {
 Datastore.prototype.init = function (callback) {
   var self = this;
   this.connection.streams._getObjects({state: 'all'}, function (error, result) {
-    if (error) { return callback('Datastore faild to init - '  + error); }
+    if (error) { return callback('Datastore faild to init - '  + error); }
     if (result) {
       self._rebuildStreamIndex(result); // maybe done transparently
     }
