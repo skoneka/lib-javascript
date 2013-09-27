@@ -1,16 +1,15 @@
 /* global before, describe, it */
 
 var Pryv = require('../../source/main'),
-  should = require('should'),
-  nock = require('nock'),
-  _ = require('underscore');
-
+    should = require('should'),
+    nock = require('nock'),
+    _ = require('underscore');
 
 var testStreams = function (enableLocalStorage) {
 
   var localEnabledStr = enableLocalStorage ? ' + LocalStorage' : '';
 
-  describe('Pryv.streams' + localEnabledStr, function () {
+  describe('Connection.streams' + localEnabledStr, function () {
     var username = 'test-user',
       auth = 'test-token',
       settings = {
@@ -18,7 +17,7 @@ var testStreams = function (enableLocalStorage) {
         ssl: true,
         domain: 'test.io'
       },
-      connection = Pryv.Connection(username, auth, settings);
+      connection = new Pryv.Connection(username, auth, settings);
 
     var responseAccessInfo = JSON.parse(
       '[{"clientData":{"col":"#7AEABF","color":"color_3","colorClass":"color3"},"name":"Journal",' +
@@ -30,10 +29,8 @@ var testStreams = function (enableLocalStorage) {
         '{"clientData":{"color":"color_3_3"},"name":"a","parentId":"diary",' +
         '"id":"Pe1mzKxmK5","children":[]}]}]');
 
-
     if (enableLocalStorage) {
       before(function (done) {
-
         nock('https://' + username + '.' + settings.domain)
           .get('/access-info')
           .reply(200, { type: 'app',
@@ -52,14 +49,14 @@ var testStreams = function (enableLocalStorage) {
       });
     }
 
-
-    describe('_getData', function () {
+    describe('_getData()', function () {
       var opts = {
-          parentId : 'test-id',
-          state : 'default',
-          other : null
-        },
-        response = { message : 'ok'};
+        parentId : 'test-id',
+        state : 'default',
+        other : null
+      };
+      var response = { message : 'ok'};
+
       it('should call proper the proper API method', function (done) {
 
         nock('https://' + username + '.' + settings.domain)
@@ -72,12 +69,11 @@ var testStreams = function (enableLocalStorage) {
           done();
         });
       });
+
     });
 
-
-    describe('get', function () {
+    describe('get()', function () {
       var opts = null;
-
 
       if (! enableLocalStorage) {
         nock('https://' + username + '.' + settings.domain)
@@ -109,9 +105,6 @@ var testStreams = function (enableLocalStorage) {
         });
       });
 
-
-
-
       it('walkTree should allow full view of object', function (done) {
         var count = 0;
         var order = ['diary', 'notes', 'social-twitter', 'health-withings', 'Pe1mzKxmK5'];
@@ -123,24 +116,14 @@ var testStreams = function (enableLocalStorage) {
           count.should.equal(5);
           done();
         }, this);
-
       });
-
 
     });
 
+    describe('create()' + localEnabledStr, function () {
+      var response = {id : 'test-id'},
+          stream = {name : 'test-name'};
 
-
-
-
-    describe('Pryv.streams CREATE' + localEnabledStr, function () {
-
-      var response = {
-          id : 'test-id'
-        },
-        stream = {
-          name : 'test-name'
-        };
       it('should call proper the proper API method', function (done) {
         nock('https://' + username + '.' + settings.domain)
           .post('/streams')
@@ -152,6 +135,7 @@ var testStreams = function (enableLocalStorage) {
           done();
         });
       });
+
       it('should add received id to the stream', function (done) {
         nock('https://' + username + '.' + settings.domain)
           .post('/streams')
@@ -162,17 +146,16 @@ var testStreams = function (enableLocalStorage) {
           done();
         });
       });
+
     });
 
-
-    describe('Pryv.streams UPDATE' + localEnabledStr, function () {
+    describe('update()' + localEnabledStr, function () {
       var stream = {
-          id : 'test-id',
-          content : 'test-content'
-        },
-        response = {
-          message : 'ok'
-        };
+        id : 'test-id',
+        content : 'test-content'
+      };
+      var response = {message : 'ok'};
+
       it('should call the proper API method', function (done) {
         nock('https://' + username + '.' + settings.domain)
           .put('/streams/' + stream.id)
@@ -184,6 +167,7 @@ var testStreams = function (enableLocalStorage) {
           done();
         });
       });
+
     });
 
   });

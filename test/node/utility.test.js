@@ -14,13 +14,14 @@ describe('Utility', function () {
     skip : 10,
     username: null
   };
-  describe('getQueryParametersString()', function () {
 
+  describe('getQueryParametersString()', function () {
     var validQuery = 'id=test-id&limit=20&array%5B%5D=a-0&array%5B%5D=a-1';
 
     it('should return valid query', function () {
       Utility.getQueryParametersString(params).should.eql(validQuery);
     });
+
   });
 
   describe('mergeAndClean()', function () {
@@ -33,5 +34,7 @@ describe('Utility', function () {
       res.id.should.eql('test-id');
       res.skip.should.eql(10);
     });
+
   });
+
 });

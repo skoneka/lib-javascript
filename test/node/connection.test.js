@@ -3,10 +3,10 @@ var Pryv = require('../../source/main'),
     should = require('should'),
     nock = require('nock');
 
-describe('Pryv.connection', function () {
+describe('Connection', function () {
 
   var username = 'test-user',
-    auth = 'test-token';
+      auth = 'test-token';
   var settings = {
     port: 443,
     ssl: true,
@@ -19,18 +19,20 @@ describe('Pryv.connection', function () {
       '"permissions":[{"level":"manage","streamId":"*"}]}');
   var generatedShortId = 'test-user:pryv-sdk-macosx-example';
 
-  var connection = Pryv.Connection(username, auth, settings);
-
+  var connection = new Pryv.Connection(username, auth, settings);
 
   describe('connection id generation', function () {
+
     it('should return correct url', function (done) {
       connection.id.should.equal(generatedConnectionId);
       done();
     });
+
   });
 
-  describe('shortID with connection not initialized', function () {
-    it('should throw Error', function (done) {
+  describe('shortId with connection not initialized', function () {
+
+    it('should throw error', function (done) {
       var shortId = null;
       var catchedError = null;
       try {
@@ -42,10 +44,10 @@ describe('Pryv.connection', function () {
       should.not.exist(shortId);
       done();
     });
+
   });
 
-
-  describe('access-info', function () {
+  describe('accessInfo()', function () {
 
     it('should call the proper API method', function (done) {
       nock('https://' + username + '.' + settings.domain)
@@ -61,9 +63,9 @@ describe('Pryv.connection', function () {
 
   });
 
+  describe('shortId with connection initialized', function () {
 
-  describe('shortID with connection  initialized', function () {
-    it('should throw Error', function (done) {
+    it('should throw error', function (done) {
       var shortId = null;
       var catchedError = null;
       try {
@@ -75,6 +77,7 @@ describe('Pryv.connection', function () {
       shortId.should.equal(generatedShortId);
       done();
     });
+
   });
 
 });

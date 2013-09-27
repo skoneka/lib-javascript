@@ -1,9 +1,12 @@
 var _ = require('underscore');
 
 var Filter = module.exports = function (settings) {
-  // Constructor new-Agnostic
-  var self = this instanceof Filter ? this : Object.create(Filter.prototype);
-  self.settings = _.extend({
+  // protect against calls without `new`
+  if (! (this instanceof Filter)) {
+    return new Filter(settings);
+  }
+
+  this.settings = _.extend({
     //TODO: set default values
     streams: null,
     tags: null,
@@ -14,7 +17,6 @@ var Filter = module.exports = function (settings) {
     modifiedSince: null,
     state: null
   }, settings);
-  return self;
 };
 
 //TODO: remove or rewrite (name & functionality unclear)

@@ -1,45 +1,46 @@
-/**
- * TODO
- * @type {*}
- */
-
 var _ = require('underscore'),
   System = require('./system/System.js'),
   ConnectionEvents = require('./connection/Events.js'),
   ConnectionStreams = require('./connection/Streams.js'),
   Datastore = require('./Datastore.js');
 
+/**
+ * TODO
+ *
+ * @constructor
+ * @type {Connection}
+ */
 var Connection = module.exports = function (username, auth, settings) {
-  // Constructor new-Agnostic
-  var self = this instanceof Connection ? this : Object.create(Connection.prototype);
+  // protect against calls without `new`
+  if (! (this instanceof Connection)) {
+    return new Connection(username, auth, settings);
+  }
 
-  self.username = username;
-  self.auth = auth;
+  this.username = username;
+  this.auth = auth;
 
-
-  self.settings = _.extend({
+  this.settings = _.extend({
     port: 443,
     ssl: true,
     domain: 'pryv.io'
   }, settings);
 
-  self.serverInfos = {
+  this.serverInfos = {
     // nowLocalTime - nowServerTime
     deltaTime: null,
     apiVersion: null,
     lastSeenLT: null
   };
 
-  self._accessInfo = null;
+  this._accessInfo = null;
 
-  self.events = new ConnectionEvents(self);
-  self.streams = new ConnectionStreams(self);
+  this.events = new ConnectionEvents(this);
+  this.streams = new ConnectionStreams(this);
 
-  self.datastore = null;
+  this.datastore = null;
 
-  self._ioSocket = null;
-  self._ioSocketMonitors = {};
-  return self;
+  this._ioSocket = null;
+  this._ioSocketMonitors = {};
 };
 
 /**
@@ -49,28 +50,23 @@ var Connection = module.exports = function (username, auth, settings) {
  * @returns {*}
  */
 Connection.prototype.useLocalStorage = function (callback) {
-  var self = this;
-  if (self.datastore) { return self.datastore.init(callback); }
-  self.datastore = new Datastore(self);
+  if (this.datastore) { return this.datastore.init(callback); }
+  this.datastore = new Datastore(this);
   this.accessInfo(function (error) {
     if (error) { return callback(error); }
-    self.datastore.init(callback);
-  });
-
-
+    this.datastore.init(callback);
+  }.bind(this));
 };
-
 
 Connection.prototype.accessInfo = function (callback) {
   if (this._accessInfo) { return this._accessInfo; }
-  var self = this;
   var url = '/access-info';
   this.request('GET', url, function (error, result) {
     if (! error) {
-      self._accessInfo = result;
+      this._accessInfo = result;
     }
     return callback(error, result);
-  });
+  }.bind(this));
 };
 
 /**
@@ -171,7 +167,6 @@ Connection.prototype.request = function (method, path, callback, jsonData, conte
   function onError(error /*, requestInfo*/) {
     callback.call(context, error, null);
   }
-
 };
 
 

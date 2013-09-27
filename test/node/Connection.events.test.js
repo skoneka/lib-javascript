@@ -1,10 +1,10 @@
 /* global describe, it */
 var Pryv = require('../../source/main'),
     Utility = require('../../source/utility/Utility'),
-    should = require('should'),
-    nock = require('nock');
+    nock = require('nock'),
+    should = require('should');
 
-describe('Pryv.events', function () {
+describe('Connection.events', function () {
 
   var username = 'test-user',
       auth = 'test-token',
@@ -14,11 +14,11 @@ describe('Pryv.events', function () {
     ssl: true,
     domain: 'test.io'
   };
-  var response = { message : 'ok'};
+  var response = {message : 'ok'};
 
-  var connection = Pryv.Connection(username, auth, settings);
+  var connection = new Pryv.Connection(username, auth, settings);
 
-  describe('_get', function () {
+  describe('_get()', function () {
 
     it('should call the proper API method', function (done) {
       nock('https://' + username + '.' + settings.domain)
@@ -30,13 +30,12 @@ describe('Pryv.events', function () {
         result.should.eql(response);
         done();
       });
+
     });
 
   });
 
-
-  describe('create', function () {
-
+  describe('create()', function () {
     var events = [
       { content: 'test-content-1' },
       { content: 'test-content-2' }
@@ -45,6 +44,7 @@ describe('Pryv.events', function () {
       'temp_ref_id_0' : { 'id' : 'test_id_0'},
       'temp_ref_id_1' : { 'id' : 'test_id_1'}
     };
+
     it('should call the proper API method', function (done) {
       nock('https://' + username + '.' + settings.domain)
         .post('/events/batch')
@@ -56,6 +56,7 @@ describe('Pryv.events', function () {
         done();
       });
     });
+
     it('should add received id to the events', function (done) {
       nock('https://' + username + '.' + settings.domain)
         .post('/events/batch')
@@ -71,9 +72,10 @@ describe('Pryv.events', function () {
         done();
       });
     });
+
   });
 
-  describe('update', function () {
+  describe('update()', function () {
     var event = {
       id : 'test-id',
       content: 'test-content'
@@ -81,6 +83,7 @@ describe('Pryv.events', function () {
     response = {
       message : 'ok'
     };
+
     it('should call the proper API method', function (done) {
       nock('https://' + username + '.' + settings.domain)
         .put('/events/' + event.id)
@@ -92,5 +95,6 @@ describe('Pryv.events', function () {
         done();
       });
     });
+
   });
 });

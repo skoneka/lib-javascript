@@ -1,21 +1,17 @@
-
 var _ = require('underscore'),
-  Utility = require('../utility/Utility.js'),
-  Stream = require('../Stream.js');
+    Utility = require('../utility/Utility.js'),
+    Stream = require('../Stream.js');
 
 var Streams = module.exports = function (connection) {
   this.connection = connection;
   this._streamsIndex = {};
-
 };
-
 
 /**
  * @param options {parentId: <parentId | null> , state: <all | null>}
  * @return Arrray of Pryv.Stream matching the options
  */
 Streams.prototype.get = function (options, callback, context) {
-
   if (this.connection.datastore) {
     var resultTree = [];
     if (options && _.has(options, 'parentId')) {
@@ -32,13 +28,12 @@ Streams.prototype.get = function (options, callback, context) {
 Streams.prototype._getObjects = function (options, callback, context) {
   options = options || {};
   options.parentId = options.parentId || null;
-  var self = this;
   var streamsIndex = {};
   var resultTree = [];
   this._getData(options, function (error, treeData) {
     if (error) { return callback('Stream.get failed: ' + error); }
     Streams.Utils.walkDataTree(treeData, function (streamData) {
-      var stream = new Stream(self.connection, streamData);
+      var stream = new Stream(this.connection, streamData);
       streamsIndex[streamData.id] = stream;
       if (stream.parentId === options.parentId) { // attached to the rootNode or filter
         resultTree.push(stream);
@@ -49,17 +44,15 @@ Streams.prototype._getObjects = function (options, callback, context) {
         stream._parent =  streamsIndex[stream.parentId];
         stream._parent._children.push(stream);
       }
-    });
+    }.bind(this));
     callback(null, resultTree);
-  }, context);
+  }.bind(this), context);
 };
 
 Streams.prototype._getData = function (opts, callback, context) {
   var url = opts ? '/streams?' + Utility.getQueryParametersString(opts) : '/streams';
   this.connection.request('GET', url, callback, null, context);
 };
-
-
 
 Streams.prototype.create = function (stream, callback, context) {
   var url = '/streams';
@@ -90,20 +83,16 @@ Streams.prototype.walkTree = function (options, eachStream, done, context) {
   }, context);
 };
 
-
 Streams.prototype.getFlatenedObjects = function (callback, opts, context) {
-  var self = this;
   this.get(function (error, result) {
     if (error) { return callback(error); }
-    callback(null, self.Utils.flatenTree(result, self.connection));
-  }, opts, context);
+    callback(null, this.Utils.flatenTree(result, this.connection));
+  }.bind(this), opts, context);
 };
 
 
 // TODO Validate that it's the good place for them .. Could have been in Stream or Utility
 Streams.Utils = {
-
-
   /**
    * Flaten a streamTree obtained from the API. Replaces the children[] by a childrenIds[]
    * @param streamTree
@@ -141,7 +130,6 @@ Streams.Utils = {
    * @param callback function(streamData, subTree)  subTree is the descendance tree
    */
   walkDataTree : function (streamTree, callback) {
-    var self = this;
     _.each(streamTree, function (streamStruct) {
       var stream = _.omit(streamStruct, 'children', 'clientData');
       stream.childrenIds = [];
@@ -153,9 +141,9 @@ Streams.Utils = {
         _.each(streamStruct.children, function (childTree) {
           stream.childrenIds.push(childTree.id);
         });
-        self.walkDataTree(streamStruct.children, callback);
+        this.walkDataTree(streamStruct.children, callback);
       }
-    });
+    }.bind(this));
   },
 
   /**

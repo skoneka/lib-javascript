@@ -249,48 +249,49 @@ var _initXHR = function () {
 },{}],9:[function(require,module,exports){
 
 },{}],1:[function(require,module,exports){
-/**
- * TODO
- * @type {*}
- */
-
 var _ = require('underscore'),
   System = require('./system/System.js'),
   ConnectionEvents = require('./connection/Events.js'),
   ConnectionStreams = require('./connection/Streams.js'),
   Datastore = require('./Datastore.js');
 
+/**
+ * TODO
+ *
+ * @constructor
+ * @type {Connection}
+ */
 var Connection = module.exports = function (username, auth, settings) {
-  // Constructor new-Agnostic
-  var self = this instanceof Connection ? this : Object.create(Connection.prototype);
+  // protect against calls without `new`
+  if (! (this instanceof Connection)) {
+    return new Connection(username, auth, settings);
+  }
 
-  self.username = username;
-  self.auth = auth;
+  this.username = username;
+  this.auth = auth;
 
-
-  self.settings = _.extend({
+  this.settings = _.extend({
     port: 443,
     ssl: true,
     domain: 'pryv.io'
   }, settings);
 
-  self.serverInfos = {
+  this.serverInfos = {
     // nowLocalTime - nowServerTime
     deltaTime: null,
     apiVersion: null,
     lastSeenLT: null
   };
 
-  self._accessInfo = null;
+  this._accessInfo = null;
 
-  self.events = new ConnectionEvents(self);
-  self.streams = new ConnectionStreams(self);
+  this.events = new ConnectionEvents(this);
+  this.streams = new ConnectionStreams(this);
 
-  self.datastore = null;
+  this.datastore = null;
 
-  self._ioSocket = null;
-  self._ioSocketMonitors = {};
-  return self;
+  this._ioSocket = null;
+  this._ioSocketMonitors = {};
 };
 
 /**
@@ -300,28 +301,23 @@ var Connection = module.exports = function (username, auth, settings) {
  * @returns {*}
  */
 Connection.prototype.useLocalStorage = function (callback) {
-  var self = this;
-  if (self.datastore) { return self.datastore.init(callback); }
-  self.datastore = new Datastore(self);
+  if (this.datastore) { return this.datastore.init(callback); }
+  this.datastore = new Datastore(this);
   this.accessInfo(function (error) {
     if (error) { return callback(error); }
-    self.datastore.init(callback);
-  });
-
-
+    this.datastore.init(callback);
+  }.bind(this));
 };
-
 
 Connection.prototype.accessInfo = function (callback) {
   if (this._accessInfo) { return this._accessInfo; }
-  var self = this;
   var url = '/access-info';
   this.request('GET', url, function (error, result) {
     if (! error) {
-      self._accessInfo = result;
+      this._accessInfo = result;
     }
     return callback(error, result);
-  });
+  }.bind(this));
 };
 
 /**
@@ -422,7 +418,6 @@ Connection.prototype.request = function (method, path, callback, jsonData, conte
   function onError(error /*, requestInfo*/) {
     callback.call(context, error, null);
   }
-
 };
 
 
@@ -502,16 +497,14 @@ Object.defineProperty(Stream.prototype, 'parent', {
 
 Object.defineProperty(Stream.prototype, 'children', {
   get: function () {
-    var self = this;
-
-    if (! self.connection.datastore) { // we use this._parent and this._children
+    if (! this.connection.datastore) { // we use this._parent and this._children
       return this._children;
     }
     var children = [];
     _.each(this.childrenIds, function (childrenId) {
-      var child = self.connection.datastore.getStreamById(childrenId);
+      var child = this.connection.datastore.getStreamById(childrenId);
       children.push(child);
-    });
+    }.bind(this));
     return children;
   },
   set: function () { throw new Error('Stream.children property is read only'); }
@@ -520,9 +513,7 @@ Object.defineProperty(Stream.prototype, 'children', {
 // TODO write test
 Object.defineProperty(Stream.prototype, 'ancestors', {
   get: function () {
-    var self = this;
-
-    if (! self.parentId) { return []; }
+    if (! this.parentId) { return []; }
 
     var result = [this.parent];
     result.push(this.parent.ancestors);
@@ -535,9 +526,12 @@ Object.defineProperty(Stream.prototype, 'ancestors', {
 var _ = require('underscore');
 
 var Filter = module.exports = function (settings) {
-  // Constructor new-Agnostic
-  var self = this instanceof Filter ? this : Object.create(Filter.prototype);
-  self.settings = _.extend({
+  // protect against calls without `new`
+  if (! (this instanceof Filter)) {
+    return new Filter(settings);
+  }
+
+  this.settings = _.extend({
     //TODO: set default values
     streams: null,
     tags: null,
@@ -548,7 +542,6 @@ var Filter = module.exports = function (settings) {
     modifiedSince: null,
     state: null
   }, settings);
-  return self;
 };
 
 //TODO: remove or rewrite (name & functionality unclear)
@@ -557,37 +550,6 @@ Filter.prototype.focusedOnSingleStream = function () {
     return this.settings.streams[0];
   }
   return null;
-};
-
-},{"underscore":13}],7:[function(require,module,exports){
-var _ = require('underscore');
-
-exports.mergeAndClean = function (sourceA, sourceB) {
-  sourceA = sourceA || {};
-  sourceB = sourceB || {};
-  var result = _.clone(sourceA);
-  _.extend(result, sourceB);
-  _.each(_.keys(result), function (key) {
-    if (result[key] === null) { delete result[key]; }
-  });
-  return result;
-};
-
-exports.getQueryParametersString = function (data) {
-  data = this.mergeAndClean(data);
-  return Object.keys(data).map(function (key) {
-    if (data[key] !== null) {
-      if (_.isArray(data[key])) {
-        data[key] = this.mergeAndClean(data[key]);
-        var keyE = encodeURIComponent(key + '[]');
-        return data[key].map(function (subData) {
-          return keyE + '=' + encodeURIComponent(subData);
-        }).join('&');
-      } else {
-        return encodeURIComponent(key) + '=' + encodeURIComponent(data[key]);
-      }
-    }
-  }, this).join('&');
 };
 
 },{"underscore":13}],13:[function(require,module,exports){
@@ -1869,7 +1831,38 @@ exports.getQueryParametersString = function (data) {
 }).call(this);
 
 })()
-},{}],12:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
+var _ = require('underscore');
+
+exports.mergeAndClean = function (sourceA, sourceB) {
+  sourceA = sourceA || {};
+  sourceB = sourceB || {};
+  var result = _.clone(sourceA);
+  _.extend(result, sourceB);
+  _.each(_.keys(result), function (key) {
+    if (result[key] === null) { delete result[key]; }
+  });
+  return result;
+};
+
+exports.getQueryParametersString = function (data) {
+  data = this.mergeAndClean(data);
+  return Object.keys(data).map(function (key) {
+    if (data[key] !== null) {
+      if (_.isArray(data[key])) {
+        data[key] = this.mergeAndClean(data[key]);
+        var keyE = encodeURIComponent(key + '[]');
+        return data[key].map(function (subData) {
+          return keyE + '=' + encodeURIComponent(subData);
+        }).join('&');
+      } else {
+        return encodeURIComponent(key) + '=' + encodeURIComponent(data[key]);
+      }
+    }
+  }, this).join('&');
+};
+
+},{"underscore":13}],12:[function(require,module,exports){
 var _ = require('underscore');
 
 var Datastore = module.exports = function (connection) {
@@ -1880,36 +1873,32 @@ var Datastore = module.exports = function (connection) {
 };
 
 Datastore.prototype.init = function (callback) {
-  var self = this;
   this.connection.streams._getObjects({state: 'all'}, function (error, result) {
     if (error) { return callback('Datastore faild to init - '  + error); }
     if (result) {
-      self._rebuildStreamIndex(result); // maybe done transparently
+      this._rebuildStreamIndex(result); // maybe done transparently
     }
     callback(null);
-  });
+  }.bind(this));
 
   // activate monitoring
 
 };
 
 Datastore.prototype._rebuildStreamIndex = function (streamArray) {
-  var self = this;
-  self.streamsIndex = {};
-  self.rootStreams = [];
-  self._indexStreamArray(streamArray);
+  this.streamsIndex = {};
+  this.rootStreams = [];
+  this._indexStreamArray(streamArray);
 };
 
 Datastore.prototype._indexStreamArray = function (streamArray) {
-
-  var self = this;
   _.each(streamArray, function (stream) {
-    self.streamsIndex[stream.id] = stream;
-    if (! stream._parent) { self.rootStreams.push(stream); }
-    self._indexStreamArray(stream._children);
+    this.streamsIndex[stream.id] = stream;
+    if (! stream._parent) { this.rootStreams.push(stream); }
+    this._indexStreamArray(stream._children);
     delete stream._children; // cleanup when in datastore mode
     delete stream._parent;
-  });
+  }.bind(this));
 };
 
 
@@ -1950,11 +1939,10 @@ var Events = module.exports = function (conn) {
 Events.prototype.get = function (filter, deltaFilter, callback, context) {
   //TODO handle caching
   var result = [];
-  var self = this;
   this._get(filter, deltaFilter, function (error, eventList) {
     _.each(eventList, function (eventData) {
-      result.push(new Event(self.conn, eventData));
-    });
+      result.push(new Event(this.conn, eventData));
+    }.bind(this));
     callback(error, result);
   }, context);
 };
@@ -2020,24 +2008,20 @@ Events.prototype.monitor = function (filter, callback) {
 };
 
 },{"../Event":2,"../utility/Utility.js":7,"underscore":13}],11:[function(require,module,exports){
-
 var _ = require('underscore'),
-  Utility = require('../utility/Utility.js'),
-  Stream = require('../Stream.js');
+    Utility = require('../utility/Utility.js'),
+    Stream = require('../Stream.js');
 
 var Streams = module.exports = function (connection) {
   this.connection = connection;
   this._streamsIndex = {};
-
 };
-
 
 /**
  * @param options {parentId: <parentId | null> , state: <all | null>}
  * @return Arrray of Pryv.Stream matching the options
  */
 Streams.prototype.get = function (options, callback, context) {
-
   if (this.connection.datastore) {
     var resultTree = [];
     if (options && _.has(options, 'parentId')) {
@@ -2054,13 +2038,12 @@ Streams.prototype.get = function (options, callback, context) {
 Streams.prototype._getObjects = function (options, callback, context) {
   options = options || {};
   options.parentId = options.parentId || null;
-  var self = this;
   var streamsIndex = {};
   var resultTree = [];
   this._getData(options, function (error, treeData) {
     if (error) { return callback('Stream.get failed: ' + error); }
     Streams.Utils.walkDataTree(treeData, function (streamData) {
-      var stream = new Stream(self.connection, streamData);
+      var stream = new Stream(this.connection, streamData);
       streamsIndex[streamData.id] = stream;
       if (stream.parentId === options.parentId) { // attached to the rootNode or filter
         resultTree.push(stream);
@@ -2071,17 +2054,15 @@ Streams.prototype._getObjects = function (options, callback, context) {
         stream._parent =  streamsIndex[stream.parentId];
         stream._parent._children.push(stream);
       }
-    });
+    }.bind(this));
     callback(null, resultTree);
-  }, context);
+  }.bind(this), context);
 };
 
 Streams.prototype._getData = function (opts, callback, context) {
   var url = opts ? '/streams?' + Utility.getQueryParametersString(opts) : '/streams';
   this.connection.request('GET', url, callback, null, context);
 };
-
-
 
 Streams.prototype.create = function (stream, callback, context) {
   var url = '/streams';
@@ -2112,20 +2093,16 @@ Streams.prototype.walkTree = function (options, eachStream, done, context) {
   }, context);
 };
 
-
 Streams.prototype.getFlatenedObjects = function (callback, opts, context) {
-  var self = this;
   this.get(function (error, result) {
     if (error) { return callback(error); }
-    callback(null, self.Utils.flatenTree(result, self.connection));
-  }, opts, context);
+    callback(null, this.Utils.flatenTree(result, this.connection));
+  }.bind(this), opts, context);
 };
 
 
 // TODO Validate that it's the good place for them .. Could have been in Stream or Utility
 Streams.Utils = {
-
-
   /**
    * Flaten a streamTree obtained from the API. Replaces the children[] by a childrenIds[]
    * @param streamTree
@@ -2163,7 +2140,6 @@ Streams.Utils = {
    * @param callback function(streamData, subTree)  subTree is the descendance tree
    */
   walkDataTree : function (streamTree, callback) {
-    var self = this;
     _.each(streamTree, function (streamStruct) {
       var stream = _.omit(streamStruct, 'children', 'clientData');
       stream.childrenIds = [];
@@ -2175,9 +2151,9 @@ Streams.Utils = {
         _.each(streamStruct.children, function (childTree) {
           stream.childrenIds.push(childTree.id);
         });
-        self.walkDataTree(streamStruct.children, callback);
+        this.walkDataTree(streamStruct.children, callback);
       }
-    });
+    }.bind(this));
   },
 
   /**

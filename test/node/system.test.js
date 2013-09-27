@@ -2,7 +2,6 @@
 var System = require('../../source/main').System,
     nock =   require('nock');
 
-
 describe('System', function () {
   var testPack = {
     type : 'GET',
@@ -26,6 +25,7 @@ describe('System', function () {
   };
 
   describe('request()', function () {
+
     it('should return valid data', function (done) {
       this.timeout(0);
       nock('https://' + testPack.host)
@@ -39,7 +39,7 @@ describe('System', function () {
       System.request(testPack);
     });
 
-
   });
+
 });
 

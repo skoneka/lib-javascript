@@ -30,16 +30,14 @@ Object.defineProperty(Stream.prototype, 'parent', {
 
 Object.defineProperty(Stream.prototype, 'children', {
   get: function () {
-    var self = this;
-
-    if (! self.connection.datastore) { // we use this._parent and this._children
+    if (! this.connection.datastore) { // we use this._parent and this._children
       return this._children;
     }
     var children = [];
     _.each(this.childrenIds, function (childrenId) {
-      var child = self.connection.datastore.getStreamById(childrenId);
+      var child = this.connection.datastore.getStreamById(childrenId);
       children.push(child);
-    });
+    }.bind(this));
     return children;
   },
   set: function () { throw new Error('Stream.children property is read only'); }
@@ -48,9 +46,7 @@ Object.defineProperty(Stream.prototype, 'children', {
 // TODO write test
 Object.defineProperty(Stream.prototype, 'ancestors', {
   get: function () {
-    var self = this;
-
-    if (! self.parentId) { return []; }
+    if (! this.parentId) { return []; }
 
     var result = [this.parent];
     result.push(this.parent.ancestors);

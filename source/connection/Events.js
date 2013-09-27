@@ -10,11 +10,10 @@ var Events = module.exports = function (conn) {
 Events.prototype.get = function (filter, deltaFilter, callback, context) {
   //TODO handle caching
   var result = [];
-  var self = this;
   this._get(filter, deltaFilter, function (error, eventList) {
     _.each(eventList, function (eventData) {
-      result.push(new Event(self.conn, eventData));
-    });
+      result.push(new Event(this.conn, eventData));
+    }.bind(this));
     callback(error, result);
   }, context);
 };

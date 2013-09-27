@@ -8,36 +8,32 @@ var Datastore = module.exports = function (connection) {
 };
 
 Datastore.prototype.init = function (callback) {
-  var self = this;
   this.connection.streams._getObjects({state: 'all'}, function (error, result) {
     if (error) { return callback('Datastore faild to init - '  + error); }
     if (result) {
-      self._rebuildStreamIndex(result); // maybe done transparently
+      this._rebuildStreamIndex(result); // maybe done transparently
     }
     callback(null);
-  });
+  }.bind(this));
 
   // activate monitoring
 
 };
 
 Datastore.prototype._rebuildStreamIndex = function (streamArray) {
-  var self = this;
-  self.streamsIndex = {};
-  self.rootStreams = [];
-  self._indexStreamArray(streamArray);
+  this.streamsIndex = {};
+  this.rootStreams = [];
+  this._indexStreamArray(streamArray);
 };
 
 Datastore.prototype._indexStreamArray = function (streamArray) {
-
-  var self = this;
   _.each(streamArray, function (stream) {
-    self.streamsIndex[stream.id] = stream;
-    if (! stream._parent) { self.rootStreams.push(stream); }
-    self._indexStreamArray(stream._children);
+    this.streamsIndex[stream.id] = stream;
+    if (! stream._parent) { this.rootStreams.push(stream); }
+    this._indexStreamArray(stream._children);
     delete stream._children; // cleanup when in datastore mode
     delete stream._parent;
-  });
+  }.bind(this));
 };
 
 
