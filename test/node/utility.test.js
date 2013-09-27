@@ -1,7 +1,7 @@
 /* global describe, it */
 
 var should = require('should'),
-    Utility = require('../../src/utility/Utility.js');
+    Utility = require('../../source/utility/Utility.js');
 
 describe('Utility', function () {
   var params = {

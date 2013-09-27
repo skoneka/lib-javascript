@@ -1,6 +1,6 @@
-/* global describe, it */
+/* global before, describe, it */
 
-var Pryv = require('../../src/main'),
+var Pryv = require('../../source/main'),
   should = require('should'),
   nock = require('nock'),
   _ = require('underscore');
@@ -92,13 +92,6 @@ var testStreams = function (enableLocalStorage) {
           should.exist(result);
 
           result.should.be.instanceOf(Array);
-
-          /**
-
-          console.log('******' + JSON.stringify(
-            require('../../src/connection/Streams.js').Utils._debugTree(result), null, 2));
-           *
-           */
 
           var countTest = 0;
           function testTree(arrayOfStreams) {

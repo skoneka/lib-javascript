@@ -1,8 +1,7 @@
 /* global describe, it */
-var Pryv = require('../../src/main'),
-  Utility = require('../../src/utility/Utility'),
-  should = require('should'),
-  nock = require('nock');
+var Pryv = require('../../source/main'),
+    should = require('should'),
+    nock = require('nock');
 
 describe('Pryv.connection', function () {
 

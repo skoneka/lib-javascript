@@ -1,6 +1,6 @@
 require=(function(e,t,n){function i(n,s){if(!t[n]){if(!e[n]){var o=typeof require=="function"&&require;if(!s&&o)return o(n,!0);if(r)return r(n,!0);throw new Error("Cannot find module '"+n+"'")}var u=t[n]={exports:{}};e[n][0].call(u.exports,function(t){var r=e[n][1][t];return i(r?r:t)},u,u.exports)}return t[n].exports}var r=typeof require=="function"&&require;for(var s=0;s<n.length;s++)i(n[s]);return i})({"pryv":[function(require,module,exports){
-module.exports=require('r0xNjY');
-},{}],"r0xNjY":[function(require,module,exports){
+module.exports=require('yfS/Pm');
+},{}],"yfS/Pm":[function(require,module,exports){
 /**
  * The main file.
  */
@@ -14,7 +14,7 @@ module.exports = {
   Utility: require('./utility/Utility.js')
 };
 
-},{"./Access.js":6,"./Connection.js":1,"./Event.js":2,"./Filter.js":5,"./Stream.js":3,"./system/System.js":4,"./utility/Utility.js":7}],6:[function(require,module,exports){
+},{"./Access.js":6,"./Connection.js":1,"./Event.js":2,"./Filter.js":4,"./Stream.js":3,"./system/System.js":5,"./utility/Utility.js":7}],6:[function(require,module,exports){
 var System = require('./system/System.js');
 
 
@@ -72,7 +72,7 @@ exports.getAccesses = function (pack) {
     error : pack.error
   });
 };
-},{"./system/System.js":4}],4:[function(require,module,exports){
+},{"./system/System.js":5}],5:[function(require,module,exports){
 //TODO: consider merging System into Utility
 
 function isBrowser() {
@@ -287,6 +287,9 @@ var Connection = module.exports = function (username, auth, settings) {
   self.streams = new ConnectionStreams(self);
 
   self.datastore = null;
+
+  self._ioSocket = null;
+  self._ioSocketMonitors = {};
   return self;
 };
 
@@ -304,6 +307,8 @@ Connection.prototype.useLocalStorage = function (callback) {
     if (error) { return callback(error); }
     self.datastore.init(callback);
   });
+
+
 };
 
 
@@ -336,11 +341,21 @@ Connection.prototype.getLocalTime = function (serverTime) {
  * @returns {number} timestamp (server dimension)
  */
 Connection.prototype.getServerTime = function (localTime) {
-  localTime = localTime || new Date().getTime();
+  localTime = localTime || new Date().getTime();
   return (localTime / 1000) - this.serverInfos.deltaTime;
 };
 
-Connection.prototype.monitor = function (filter, callback) {
+// ------------- start / stop Monitoring is called by Monitor constructor / destructor -----//
+
+Connection.prototype._stopMonitoring = function (/*callback*/) {
+
+};
+
+Connection.prototype._startMonitoring = function (callback) {
+
+  if (this.ioSocket) { return callback(null/*, ioSocket*/); }
+
+
   var settings = {
     host : this.username + '.' + this.settings.domain,
     port : this.settings.port,
@@ -350,18 +365,21 @@ Connection.prototype.monitor = function (filter, callback) {
     auth : this.auth
   };
 
-  var ioSocket = System.ioConnect(settings);
+  this.ioSocket = System.ioConnect(settings);
 
-  //TODO: rethink how we want to expose this to clients
-  ioSocket.on('connect', function () {
-    callback('connect');
+  this.ioSocket.on('connect', function () {
+    _.each(this._ioSocketMonitors, function (monitor) { monitor.onConnect(); });
   });
-  ioSocket.on('connect', function (error) {
-    callback('error', error);
+  this.ioSocket.on('error', function (error) {
+    _.each(this._ioSocketMonitors, function (monitor) { monitor.onError(error); });
   });
-  ioSocket.on('eventsChanged', function () {
-    callback('event');
+  this.ioSocket.on('eventsChanged', function () {
+    _.each(this._ioSocketMonitors, function (monitor) { monitor.onEventsChanged(); });
   });
+  this.ioSocket.on('streamsChanged', function () {
+    _.each(this._ioSocketMonitors, function (monitor) { monitor.onStreamsChanged(); });
+  });
+
 };
 
 Connection.prototype.request = function (method, path, callback, jsonData, context) {
@@ -430,7 +448,7 @@ Object.defineProperty(Connection.prototype, 'shortId', {
   set: function () { throw new Error('Connection.shortId property is read only'); }
 });
 
-},{"./Datastore.js":12,"./connection/Events.js":10,"./connection/Streams.js":11,"./system/System.js":4,"underscore":13}],2:[function(require,module,exports){
+},{"./Datastore.js":12,"./connection/Events.js":10,"./connection/Streams.js":11,"./system/System.js":5,"underscore":13}],2:[function(require,module,exports){
 
 var _ = require('underscore');
 /**
@@ -513,7 +531,7 @@ Object.defineProperty(Stream.prototype, 'ancestors', {
   set: function () { throw new Error('Stream.ancestors property is read only'); }
 });
 
-},{"underscore":13}],5:[function(require,module,exports){
+},{"underscore":13}],4:[function(require,module,exports){
 var _ = require('underscore');
 
 var Filter = module.exports = function (settings) {
@@ -539,6 +557,37 @@ Filter.prototype.focusedOnSingleStream = function () {
     return this.settings.streams[0];
   }
   return null;
+};
+
+},{"underscore":13}],7:[function(require,module,exports){
+var _ = require('underscore');
+
+exports.mergeAndClean = function (sourceA, sourceB) {
+  sourceA = sourceA || {};
+  sourceB = sourceB || {};
+  var result = _.clone(sourceA);
+  _.extend(result, sourceB);
+  _.each(_.keys(result), function (key) {
+    if (result[key] === null) { delete result[key]; }
+  });
+  return result;
+};
+
+exports.getQueryParametersString = function (data) {
+  data = this.mergeAndClean(data);
+  return Object.keys(data).map(function (key) {
+    if (data[key] !== null) {
+      if (_.isArray(data[key])) {
+        data[key] = this.mergeAndClean(data[key]);
+        var keyE = encodeURIComponent(key + '[]');
+        return data[key].map(function (subData) {
+          return keyE + '=' + encodeURIComponent(subData);
+        }).join('&');
+      } else {
+        return encodeURIComponent(key) + '=' + encodeURIComponent(data[key]);
+      }
+    }
+  }, this).join('&');
 };
 
 },{"underscore":13}],13:[function(require,module,exports){
@@ -1820,38 +1869,7 @@ Filter.prototype.focusedOnSingleStream = function () {
 }).call(this);
 
 })()
-},{}],7:[function(require,module,exports){
-var _ = require('underscore');
-
-exports.mergeAndClean = function (sourceA, sourceB) {
-  sourceA = sourceA || {};
-  sourceB = sourceB || {};
-  var result = _.clone(sourceA);
-  _.extend(result, sourceB);
-  _.each(_.keys(result), function (key) {
-    if (result[key] === null) { delete result[key]; }
-  });
-  return result;
-};
-
-exports.getQueryParametersString = function (data) {
-  data = this.mergeAndClean(data);
-  return Object.keys(data).map(function (key) {
-    if (data[key] !== null) {
-      if (_.isArray(data[key])) {
-        data[key] = this.mergeAndClean(data[key]);
-        var keyE = encodeURIComponent(key + '[]');
-        return data[key].map(function (subData) {
-          return keyE + '=' + encodeURIComponent(subData);
-        }).join('&');
-      } else {
-        return encodeURIComponent(key) + '=' + encodeURIComponent(data[key]);
-      }
-    }
-  }, this).join('&');
-};
-
-},{"underscore":13}],12:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 var _ = require('underscore');
 
 var Datastore = module.exports = function (connection) {
@@ -1864,7 +1882,7 @@ var Datastore = module.exports = function (connection) {
 Datastore.prototype.init = function (callback) {
   var self = this;
   this.connection.streams._getObjects({state: 'all'}, function (error, result) {
-    if (error) { return callback('Datastore faild to init - '  + error); }
+    if (error) { return callback('Datastore faild to init - '  + error); }
     if (result) {
       self._rebuildStreamIndex(result); // maybe done transparently
     }
@@ -2171,7 +2189,7 @@ Streams.Utils = {
       throw new Error('expected an array for argument :' + arrayOfStreams);
     }
     _.each(arrayOfStreams, function (stream) {
-      if (! stream || ! stream instanceof Stream) {
+      if (! stream || ! stream instanceof Stream) {
         throw new Error('expected a Streams array ' + stream);
       }
       result.push({
@@ -2186,5 +2204,5 @@ Streams.Utils = {
 
 };
 
-},{"../Stream.js":3,"../utility/Utility.js":7,"underscore":13}]},{},["r0xNjY"])
+},{"../Stream.js":3,"../utility/Utility.js":7,"underscore":13}]},{},["yfS/Pm"])
 ;

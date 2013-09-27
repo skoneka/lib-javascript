@@ -1,7 +1,7 @@
 {
-  "name": "pryv-api.js",
-  "version": "0.1.1",
-  "homepage": "https://github.com/pryv/pryv-js",
-  "ignore": ["src/*", "package.json"],
-  "main": "pryv-browser.js"
+  "name": "pryv",
+  "version": "0.0.1",
+  "homepage": "https://github.com/pryv/lib-javascript",
+  "ignore": [ "source/*", "test/*", "package.json" ],
+  "main": "dist/pryv.js"
 }

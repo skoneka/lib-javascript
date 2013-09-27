@@ -1,37 +1,43 @@
-
 module.exports = function (grunt) {
-
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
     browserify: {
       main: {
-        src: ['./src/main.js'],
+        src: ['./source/main.js'],
         dest: './dist/pryv.js',
         options: {
-          alias: ['./src/main.js:pryv'],
-          ignore: ['./src/system/*-node.js', './src/utility/*-node.js']
+          alias: ['./source/main.js:pryv'],
+          ignore: [ './source/system/*-node.js', './source/utility/*-node.js' ]
         }
       }
     },
     watch: {
       all: {
-        files: ['src/**/*.*', 'tests/**/*.*'],
+        files: [ 'source/**/*.*', 'test/**/*.*' ],
         tasks: ['default']
       }
     },
     jshint: {
-      files: ['gruntfile.js', 'src/**/*.js', 'test/**/*.js'],
+      files: [ 'gruntfile.js', 'source/**/*.js', 'test/**/*.js' ],
       options: {
         jshintrc: '.jshintrc'
       }
     },
     mochaTest: {
       test: {
+        src: ['test/**/*.test.js'],
         options: {
-          reporter: 'spec',
-          require: ['./src/main.js']
-        },
-        src: ['tests/**/*.test.js']
+          require: [ './test/blanket', './source/main.js' ],
+          reporter: 'spec'
+        }
+      },
+      coverage: {
+        src: ['test/**/*.test.js'],
+        options: {
+          quiet: true,
+          reporter: 'html-cov',
+          captureFile: 'test/coverage.html'
+        }
       }
     }
   });
@@ -41,7 +47,5 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-mocha-test');
 
-
-  // Default task.
-  grunt.registerTask('default', ['jshint', 'browserify', 'mochaTest']);
+  grunt.registerTask('default', [ 'jshint', 'browserify', 'mochaTest' ]);
 };

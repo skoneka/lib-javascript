@@ -1,6 +1,5 @@
 /*global require, describe, it */
-var System = require('../../src/main').System,
-    should = require('should'),
+var System = require('../../source/main').System,
     nock =   require('nock');
 
 

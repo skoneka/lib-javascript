@@ -1,6 +1,6 @@
 /* global describe, it */
-var Pryv = require('../../src/main'),
-    Utility = require('../../src/utility/Utility'),
+var Pryv = require('../../source/main'),
+    Utility = require('../../source/utility/Utility'),
     should = require('should'),
     nock = require('nock');
 

@@ -96,13 +96,13 @@ Connection.prototype.getServerTime = function (localTime) {
 
 // ------------- start / stop Monitoring is called by Monitor constructor / destructor -----//
 
-Connection.prototype._stopMonitoring = function (callback) {
+Connection.prototype._stopMonitoring = function (/*callback*/) {
 
 };
 
 Connection.prototype._startMonitoring = function (callback) {
 
-  if (this.ioSocket) { return callback(null, ioSocket); }
+  if (this.ioSocket) { return callback(null/*, ioSocket*/); }
 
 
   var settings = {
