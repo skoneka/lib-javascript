@@ -36,6 +36,9 @@ var Connection = module.exports = function (username, auth, settings) {
   self.streams = new ConnectionStreams(self);
 
   self.datastore = null;
+
+  self._ioSocket = null;
+  self._ioSocketMonitors = {};
   return self;
 };
 
@@ -53,6 +56,8 @@ Connection.prototype.useLocalStorage = function (callback) {
     if (error) { return callback(error); }
     self.datastore.init(callback);
   });
+
+
 };
 
 
@@ -89,7 +94,17 @@ Connection.prototype.getServerTime = function (localTime) {
   return (localTime / 1000) - this.serverInfos.deltaTime;
 };
 
-Connection.prototype.monitor = function (filter, callback) {
+// ------------- start / stop Monitoring is called by Monitor constructor / destructor -----//
+
+Connection.prototype._stopMonitoring = function (callback) {
+
+};
+
+Connection.prototype._startMonitoring = function (callback) {
+
+  if (this.ioSocket) { return callback(null, ioSocket); }
+
+
   var settings = {
     host : this.username + '.' + this.settings.domain,
     port : this.settings.port,
@@ -99,18 +114,21 @@ Connection.prototype.monitor = function (filter, callback) {
     auth : this.auth
   };
 
-  var ioSocket = System.ioConnect(settings);
+  this.ioSocket = System.ioConnect(settings);
 
-  //TODO: rethink how we want to expose this to clients
-  ioSocket.on('connect', function () {
-    callback('connect');
+  this.ioSocket.on('connect', function () {
+    _.each(this._ioSocketMonitors, function (monitor) { monitor.onConnect(); });
   });
-  ioSocket.on('connect', function (error) {
-    callback('error', error);
+  this.ioSocket.on('error', function (error) {
+    _.each(this._ioSocketMonitors, function (monitor) { monitor.onError(error); });
   });
-  ioSocket.on('eventsChanged', function () {
-    callback('event');
+  this.ioSocket.on('eventsChanged', function () {
+    _.each(this._ioSocketMonitors, function (monitor) { monitor.onEventsChanged(); });
   });
+  this.ioSocket.on('streamsChanged', function () {
+    _.each(this._ioSocketMonitors, function (monitor) { monitor.onStreamsChanged(); });
+  });
+
 };
 
 Connection.prototype.request = function (method, path, callback, jsonData, context) {

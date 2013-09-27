@@ -1,12 +1,32 @@
+var _ = require('underscore');
+
 /**
  *
  * @type {Function}
  * @constructor
  */
-/* jshint -W098 */
-var Monitor = module.exports = function (filter) {
-
+var Monitor = module.exports = function (connection, filter) {
+  this.filter = filter;
+  this.connection = connection;
+  this.id = 'M' + Monitor.serial++;
+  this.connection._ioSocketMonitors[this.id] = this;
+  this.connection._startMonitoring();
 };
+
+Monitor.prototype.onConnect = function () { };
+Monitor.prototype.onError = function (/*error*/) { };
+Monitor.prototype.onEventsChanged = function () { };
+Monitor.prototype.onStreamsChanged = function () { };
+
+
+Monitor.prototype.destroy = function () {
+  delete this.connection._ioSocketMonitors[this.id];
+  if (_.keys(this.connection._ioSocketMonitors).length === 0) {
+    this.connection._stopMonitoring();
+  }
+};
+
+Monitor.serial = 0;
 
 /**
  * TODO:
