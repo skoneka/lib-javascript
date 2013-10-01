@@ -8,7 +8,6 @@ var _ = require('underscore'),
  * TODO
  *
  * @constructor
- * @type {Connection}
  */
 var Connection = module.exports = function (username, auth, settings) {
   // protect against calls without `new`
@@ -98,7 +97,7 @@ Connection.prototype._stopMonitoring = function (/*callback*/) {
 
 Connection.prototype._startMonitoring = function (callback) {
 
-  if (this.ioSocket) { return callback(null/*, ioSocket*/); }
+  if (this.ioSocket) { return callback(null/*, ioSocket*/); }
 
 
   var settings = {
@@ -113,16 +112,16 @@ Connection.prototype._startMonitoring = function (callback) {
   this.ioSocket = System.ioConnect(settings);
 
   this.ioSocket.on('connect', function () {
-    _.each(this._ioSocketMonitors, function (monitor) { monitor.onConnect(); });
+    _.each(this._ioSocketMonitors, function (monitor) { monitor.onConnect(); });
   });
   this.ioSocket.on('error', function (error) {
-    _.each(this._ioSocketMonitors, function (monitor) { monitor.onError(error); });
+    _.each(this._ioSocketMonitors, function (monitor) { monitor.onError(error); });
   });
   this.ioSocket.on('eventsChanged', function () {
-    _.each(this._ioSocketMonitors, function (monitor) { monitor.onEventsChanged(); });
+    _.each(this._ioSocketMonitors, function (monitor) { monitor.onEventsChanged(); });
   });
   this.ioSocket.on('streamsChanged', function () {
-    _.each(this._ioSocketMonitors, function (monitor) { monitor.onStreamsChanged(); });
+    _.each(this._ioSocketMonitors, function (monitor) { monitor.onStreamsChanged(); });
   });
 
 };
