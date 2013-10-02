@@ -442,31 +442,7 @@ Object.defineProperty(Connection.prototype, 'shortId', {
   set: function () { throw new Error('Connection.shortId property is read only'); }
 });
 
-},{"./Datastore.js":12,"./connection/Events.js":10,"./connection/Streams.js":11,"./system/System.js":5,"underscore":13}],2:[function(require,module,exports){
-
-var _ = require('underscore');
-/**
- *
- * @type {Function}
- * @constructor
- */
-var Event = module.exports = function (connection, data) {
-  this.connection = connection;
-  _.extend(this, data);
-};
-
-
-Object.defineProperty(Event.prototype, 'stream', {
-  get: function () {
-    if (! this.connection.datastore) {
-      throw new Error('Activate Datastore to get automatic stream mapping. Or use StreamId');
-    }
-    return this.connection.datastore.getStreamById(this.streamId);
-  },
-  set: function () { throw new Error('Event.stream property is read only'); }
-});
-
-},{"underscore":13}],3:[function(require,module,exports){
+},{"./Datastore.js":12,"./connection/Events.js":10,"./connection/Streams.js":11,"./system/System.js":5,"underscore":13}],3:[function(require,module,exports){
 
 var _ = require('underscore');
 
@@ -522,6 +498,30 @@ Object.defineProperty(Stream.prototype, 'ancestors', {
     return result;
   },
   set: function () { throw new Error('Stream.ancestors property is read only'); }
+});
+
+},{"underscore":13}],2:[function(require,module,exports){
+
+var _ = require('underscore');
+/**
+ *
+ * @type {Function}
+ * @constructor
+ */
+var Event = module.exports = function (connection, data) {
+  this.connection = connection;
+  _.extend(this, data);
+};
+
+
+Object.defineProperty(Event.prototype, 'stream', {
+  get: function () {
+    if (! this.connection.datastore) {
+      throw new Error('Activate localStorage to get automatic stream mapping. Or use StreamId');
+    }
+    return this.connection.datastore.getStreamById(this.streamId);
+  },
+  set: function () { throw new Error('Event.stream property is read only'); }
 });
 
 },{"underscore":13}],4:[function(require,module,exports){
@@ -1946,7 +1946,7 @@ Events.prototype.get = function (filter, deltaFilter, callback) {
       result.push(new Event(this.conn, eventData));
     }.bind(this));
     callback(error, result);
-  });
+  }.bind(this));
 };
 
 Events.prototype._get = function (filter, deltaFilter, callback, context) {
@@ -2037,6 +2037,21 @@ Streams.prototype.get = function (options, callback, context) {
   }
 };
 
+/**
+ * Get a Stream by it's Id.
+ * Works only if localStorage is activated
+ */
+Streams.prototype.getById = function (streamId) {
+  if (! this.connection.datastore) {
+    throw new Error('Activate localStorage to get automatic stream mapping');
+  }
+  return this.connection.datastore.getStreamById(streamId);
+};
+
+
+/**
+ * @private
+ */
 Streams.prototype._getObjects = function (options, callback, context) {
   options = options || {};
   options.parentId = options.parentId || null;

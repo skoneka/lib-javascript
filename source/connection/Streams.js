@@ -25,6 +25,21 @@ Streams.prototype.get = function (options, callback, context) {
   }
 };
 
+/**
+ * Get a Stream by it's Id.
+ * Works only if localStorage is activated
+ */
+Streams.prototype.getById = function (streamId) {
+  if (! this.connection.datastore) {
+    throw new Error('Activate localStorage to get automatic stream mapping');
+  }
+  return this.connection.datastore.getStreamById(streamId);
+};
+
+
+/**
+ * @private
+ */
 Streams.prototype._getObjects = function (options, callback, context) {
   options = options || {};
   options.parentId = options.parentId || null;
@@ -131,7 +146,7 @@ Streams.Utils = {
    */
   walkDataTree : function (streamTree, callback) {
     _.each(streamTree, function (streamStruct) {
-      var stream = _.omit(streamStruct, 'children', 'clientData');
+      var stream = _.omit(streamStruct, 'children');
       stream.childrenIds = [];
       var subTree = {};
       callback(stream, subTree);
