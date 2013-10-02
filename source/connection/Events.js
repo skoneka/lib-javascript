@@ -7,16 +7,15 @@ var Events = module.exports = function (conn) {
   this.conn = conn;
 };
 
-Events.prototype.get = function (filter, deltaFilter, callback, context) {
+Events.prototype.get = function (filter, deltaFilter, callback) {
   //TODO handle caching
   var result = [];
-  var self = this;
   this._get(filter, deltaFilter, function (error, eventList) {
     _.each(eventList, function (eventData) {
-      result.push(new Event(self.conn, eventData));
-    });
+      result.push(new Event(this.conn, eventData));
+    }.bind(this));
     callback(error, result);
-  }, context);
+  }.bind(this));
 };
 
 Events.prototype._get = function (filter, deltaFilter, callback, context) {
