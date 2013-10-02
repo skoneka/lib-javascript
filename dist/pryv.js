@@ -1,6 +1,6 @@
 require=(function(e,t,n){function i(n,s){if(!t[n]){if(!e[n]){var o=typeof require=="function"&&require;if(!s&&o)return o(n,!0);if(r)return r(n,!0);throw new Error("Cannot find module '"+n+"'")}var u=t[n]={exports:{}};e[n][0].call(u.exports,function(t){var r=e[n][1][t];return i(r?r:t)},u,u.exports)}return t[n].exports}var r=typeof require=="function"&&require;for(var s=0;s<n.length;s++)i(n[s]);return i})({"pryv":[function(require,module,exports){
-module.exports=require('yfS/Pm');
-},{}],"yfS/Pm":[function(require,module,exports){
+module.exports=require('CRIC1q');
+},{}],"CRIC1q":[function(require,module,exports){
 /**
  * The main file.
  */
@@ -259,7 +259,6 @@ var _ = require('underscore'),
  * TODO
  *
  * @constructor
- * @type {Connection}
  */
 var Connection = module.exports = function (username, auth, settings) {
   // protect against calls without `new`
@@ -349,7 +348,7 @@ Connection.prototype._stopMonitoring = function (/*callback*/) {
 
 Connection.prototype._startMonitoring = function (callback) {
 
-  if (this.ioSocket) { return callback(null/*, ioSocket*/); }
+  if (this.ioSocket) { return callback(null/*, ioSocket*/); }
 
 
   var settings = {
@@ -364,16 +363,16 @@ Connection.prototype._startMonitoring = function (callback) {
   this.ioSocket = System.ioConnect(settings);
 
   this.ioSocket.on('connect', function () {
-    _.each(this._ioSocketMonitors, function (monitor) { monitor.onConnect(); });
+    _.each(this._ioSocketMonitors, function (monitor) { monitor.onConnect(); });
   });
   this.ioSocket.on('error', function (error) {
-    _.each(this._ioSocketMonitors, function (monitor) { monitor.onError(error); });
+    _.each(this._ioSocketMonitors, function (monitor) { monitor.onError(error); });
   });
   this.ioSocket.on('eventsChanged', function () {
-    _.each(this._ioSocketMonitors, function (monitor) { monitor.onEventsChanged(); });
+    _.each(this._ioSocketMonitors, function (monitor) { monitor.onEventsChanged(); });
   });
   this.ioSocket.on('streamsChanged', function () {
-    _.each(this._ioSocketMonitors, function (monitor) { monitor.onStreamsChanged(); });
+    _.each(this._ioSocketMonitors, function (monitor) { monitor.onStreamsChanged(); });
   });
 
 };
@@ -459,6 +458,9 @@ var Event = module.exports = function (connection, data) {
 
 Object.defineProperty(Event.prototype, 'stream', {
   get: function () {
+    if (! this.connection.datastore) {
+      throw new Error('Activate Datastore to get automatic stream mapping. Or use StreamId');
+    }
     return this.connection.datastore.getStreamById(this.streamId);
   },
   set: function () { throw new Error('Event.stream property is read only'); }
@@ -1939,10 +1941,11 @@ var Events = module.exports = function (conn) {
 Events.prototype.get = function (filter, deltaFilter, callback, context) {
   //TODO handle caching
   var result = [];
+  var self = this;
   this._get(filter, deltaFilter, function (error, eventList) {
     _.each(eventList, function (eventData) {
-      result.push(new Event(this.conn, eventData));
-    }.bind(this));
+      result.push(new Event(self.conn, eventData));
+    });
     callback(error, result);
   }, context);
 };
@@ -2180,5 +2183,5 @@ Streams.Utils = {
 
 };
 
-},{"../Stream.js":3,"../utility/Utility.js":7,"underscore":13}]},{},["yfS/Pm"])
+},{"../Stream.js":3,"../utility/Utility.js":7,"underscore":13}]},{},["CRIC1q"])
 ;

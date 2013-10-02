@@ -3,7 +3,8 @@
 var Pryv = require('../../source/main'),
     should = require('should'),
     nock = require('nock'),
-    _ = require('underscore');
+    _ = require('underscore'),
+    responses = require('../data/responses.js');
 
 var testStreams = function (enableLocalStorage) {
 
@@ -19,28 +20,17 @@ var testStreams = function (enableLocalStorage) {
       },
       connection = new Pryv.Connection(username, auth, settings);
 
-    var responseAccessInfo = JSON.parse(
-      '[{"clientData":{"col":"#7AEABF","color":"color_3","colorClass":"color3"},"name":"Journal",' +
-        '"parentId":null,"id":"diary","children":[{"clientData":{"color":"color_3_0"},' +
-        '"name":"Notes","parentId":"diary","id":"notes","children":[]},' +
-        '{"clientData":{"color":"color_3_1"},"name":"Twitter","parentId":"diary",' +
-        '"id":"social-twitter","children":[]},{"clientData":{"color":"color_3_2"},'  +
-        '"name":"Withings","parentId":"diary","id":"health-withings","children":[]},' +
-        '{"clientData":{"color":"color_3_3"},"name":"a","parentId":"diary",' +
-        '"id":"Pe1mzKxmK5","children":[]}]}]');
 
     if (enableLocalStorage) {
       before(function (done) {
         nock('https://' + username + '.' + settings.domain)
           .get('/access-info')
-          .reply(200, { type: 'app',
-            name: 'diary-read-only',
-            permissions: [ { streamId: 'diary', level: 'read' } ] });
+          .reply(200, responses.accessInfo);
 
 
         nock('https://' + username + '.' + settings.domain)
           .get('/streams?state=all')
-          .reply(200, responseAccessInfo);
+          .reply(200, responses.streams);
 
         connection.useLocalStorage(function (error) {
           should.not.exist(error);
@@ -78,7 +68,7 @@ var testStreams = function (enableLocalStorage) {
       if (! enableLocalStorage) {
         nock('https://' + username + '.' + settings.domain)
           .get('/streams?').times(2)  // 3 requests when no localStorage
-          .reply(200, responseAccessInfo);
+          .reply(200, responses.streams);
       }
 
       it('should return an object', function (done) {
@@ -99,7 +89,7 @@ var testStreams = function (enableLocalStorage) {
           }
 
           testTree(result);
-          countTest.should.equal(6);
+          countTest.should.equal(38);
 
           done();
         });
@@ -107,13 +97,15 @@ var testStreams = function (enableLocalStorage) {
 
       it('walkTree should allow full view of object', function (done) {
         var count = 0;
-        var order = ['diary', 'notes', 'social-twitter', 'health-withings', 'Pe1mzKxmK5'];
+        var order = ['PVxE_JMMzM', 'PVH-rfMJx5', 'TTks3555R5', 'VPjBRzkF8J', 'TPHz3GWTRJ'];
         connection.streams.walkTree(null, function (stream) {  // each stream
-          order[count].should.equal(stream.id);
+          if (order.length > count) {  // test only the firsts
+            order[count].should.equal(stream.id);
+          }
           count++;
         }, function (error) { // done
           should.not.exist(error);
-          count.should.equal(5);
+          count.should.equal(37);
           done();
         }, this);
       });
