@@ -6,6 +6,8 @@ var Filter = module.exports = function (settings) {
     return new Filter(settings);
   }
 
+  this._onChangeListeners = [];
+
   this.settings = _.extend({
     //TODO: set default values
     streams: null,
@@ -17,6 +19,17 @@ var Filter = module.exports = function (settings) {
     modifiedSince: null,
     state: null
   }, settings);
+};
+
+
+Filter.prototype.addOnChangeListener = function (callback) {
+  this._onChangeListeners.push(callback);
+};
+
+Filter.prototype.fireOnChange = function () {
+  _.each(this._onChangeListeners, function (listener) {
+    listener(this);
+  }.bind(this));
 };
 
 //TODO: remove or rewrite (name & functionality unclear)
