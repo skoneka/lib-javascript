@@ -1,5 +1,10 @@
 
 var _ = require('underscore');
+
+var RW_PROPERTIES =
+  ['id', 'streamid', 'time', 'duration', 'type', 'content', 'tags', 'description',
+    'clientData', 'trashed', 'modified'];
+
 /**
  *
  * @type {Function}
@@ -7,7 +12,19 @@ var _ = require('underscore');
  */
 var Event = module.exports = function (connection, data) {
   this.connection = connection;
+  this._serialId = this.connection._eventSerialCounter++;
   _.extend(this, data);
+};
+
+/**
+ * get Json object ready to be posted on the API
+ */
+Event.prototype.getData = function () {
+  var data = {};
+  _.each(RW_PROPERTIES, function (key) { // only set non null values
+    if (_.has(this, key)) { data[key] = this[key]; }
+  }.bind(this));
+  return data;
 };
 
 
@@ -19,4 +36,9 @@ Object.defineProperty(Event.prototype, 'stream', {
     return this.connection.datastore.getStreamById(this.streamId);
   },
   set: function () { throw new Error('Event.stream property is read only'); }
+});
+
+
+Object.defineProperty(Event.prototype, 'serialId', {
+  get: function () { return this.conn.serialId + '>E' + this._serialId; }
 });
