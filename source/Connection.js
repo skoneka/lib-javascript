@@ -10,6 +10,7 @@ var _ = require('underscore'),
  * @constructor
  */
 var Connection = module.exports = function (username, auth, settings) {
+  this._serialId = Connection._serialCounter++;
   // protect against calls without `new`
   if (! (this instanceof Connection)) {
     return new Connection(username, auth, settings);
@@ -33,6 +34,9 @@ var Connection = module.exports = function (username, auth, settings) {
 
   this._accessInfo = null;
 
+  this._streamSerialCounter = 0;
+  this._eventSerialCounter = 0;
+
   this.events = new ConnectionEvents(this);
   this.streams = new ConnectionStreams(this);
 
@@ -41,6 +45,8 @@ var Connection = module.exports = function (username, auth, settings) {
   this._ioSocket = null;
   this._ioSocketMonitors = {};
 };
+
+Connection._serialCounter = 0;
 
 /**
  * Use localStorage for caching.
@@ -179,6 +185,7 @@ Object.defineProperty(Connection.prototype, 'id', {
   set: function () { throw new Error('ConnectionNode.id property is read only'); }
 });
 
+//TODO rename in displayID
 Object.defineProperty(Connection.prototype, 'shortId', {
   get: function () {
     if (! this._accessInfo) {
@@ -189,4 +196,9 @@ Object.defineProperty(Connection.prototype, 'shortId', {
     return id;
   },
   set: function () { throw new Error('Connection.shortId property is read only'); }
+});
+
+
+Object.defineProperty(Connection.prototype, 'serialId', {
+  get: function () { return 'C' + this._serialId; }
 });

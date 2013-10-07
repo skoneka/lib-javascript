@@ -20,11 +20,23 @@ describe('Connection', function () {
   var generatedShortId = 'test-user:pryv-sdk-macosx-example';
 
   var connection = new Pryv.Connection(username, auth, settings);
+  var serialId = 'C' +  (Pryv.Connection._serialCounter - 1);
+
 
   describe('connection id generation', function () {
 
+
     it('should return correct url', function (done) {
       connection.id.should.equal(generatedConnectionId);
+      done();
+    });
+
+  });
+
+  describe('serialId', function () {
+
+    it('should exists', function (done) {
+      connection.serialId.should.equal(serialId);
       done();
     });
 
@@ -65,7 +77,7 @@ describe('Connection', function () {
 
   describe('shortId with connection initialized', function () {
 
-    it('should throw error', function (done) {
+    it('should not throw error', function (done) {
       var shortId = null;
       var catchedError = null;
       try {
@@ -79,5 +91,7 @@ describe('Connection', function () {
     });
 
   });
+
+
 
 });
