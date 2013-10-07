@@ -6,11 +6,18 @@ var _ = require('underscore');
  * @constructor
  */
 var Monitor = module.exports = function (connection, filter) {
-  this.filter = filter;
   this.connection = connection;
   this.id = 'M' + Monitor.serial++;
+
+  this.filter = filter;
+  this.filter.addOnChangeListener(this.onFilterChange);
+
   this.connection._ioSocketMonitors[this.id] = this;
   this.connection._startMonitoring();
+};
+
+Monitor.prototype.onFilterChange = function () {
+  console.log('onFilterChange');
 };
 
 Monitor.prototype.onConnect = function () { };
