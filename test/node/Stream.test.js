@@ -5,7 +5,7 @@ var Pryv = require('../../source/main'),
   should = require('should'),
   responses = require('../data/responses.js');
 
-var testEvent = function (enableLocalStorage) {
+var testStream = function (enableLocalStorage) {
 
   var localEnabledStr = enableLocalStorage ? ' + LocalStorage' : '';
 
@@ -39,32 +39,20 @@ var testEvent = function (enableLocalStorage) {
   }
 
 
-  describe('Event ' + localEnabledStr, function () {
+  describe('Stream ' + localEnabledStr, function () {
 
+    var stream = new Pryv.Stream(connection, {name: 'test', id: 'test'});
+    var streamSerial = connection.serialId + '>S' + (connection._streamSerialCounter - 1);
+    it('serialId', function (done) {
 
-    var eventData =  {streamid: 'ArtMaceoThassilo',
-      type: 'note/txt',
-      content: 'test-content-1'};
-    var event = new Pryv.Event(connection,  eventData);
-    var eventSerial = connection.serialId + '>E' + (connection._eventSerialCounter - 1);
-
-    it('generate correct data()', function (done) {
-      event.getData().streamid.should.equal(eventData.streamid);
+      stream.serialId.should.equal(streamSerial);
       done();
     });
-
-
-    it('serialId ', function (done) {
-      event.serialId.should.equal(eventSerial);
-      done();
-    });
-
 
   });
 
 };
 
 
-testEvent(false);
-
-testEvent(true);
+testStream(false);
+testStream(true);

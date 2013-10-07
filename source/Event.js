@@ -12,7 +12,7 @@ var RW_PROPERTIES =
  */
 var Event = module.exports = function (connection, data) {
   this.connection = connection;
-  this._serialId = this.connection._eventSerialCounter++;
+  this.serialId = this.connection.serialId + '>E' + this.connection._eventSerialCounter++;
   _.extend(this, data);
 };
 
@@ -28,6 +28,7 @@ Event.prototype.getData = function () {
 };
 
 
+
 Object.defineProperty(Event.prototype, 'stream', {
   get: function () {
     if (! this.connection.datastore) {
@@ -36,9 +37,4 @@ Object.defineProperty(Event.prototype, 'stream', {
     return this.connection.datastore.getStreamById(this.streamId);
   },
   set: function () { throw new Error('Event.stream property is read only'); }
-});
-
-
-Object.defineProperty(Event.prototype, 'serialId', {
-  get: function () { return this.conn.serialId + '>E' + this._serialId; }
 });
