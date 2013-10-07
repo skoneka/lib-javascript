@@ -3,9 +3,12 @@ var Utility = require('../utility/Utility.js'),
   _ = require('underscore'),
   Event = require('../Event');
 
+
+
 var Events = module.exports = function (conn) {
   this.conn = conn;
 };
+
 
 Events.prototype.get = function (filter, deltaFilter, callback) {
   //TODO handle caching
@@ -25,22 +28,25 @@ Events.prototype._get = function (filter, deltaFilter, callback, context) {
 };
 
 
-//TODO check that we can really override method "create()" of object
+
+
 /**
- *
- * @param {Array} events
+ * TODO code it right
+ * @param eventsData Array of EventsData
+ * @param context
  */
-Events.prototype.create = function (events, callback, context) {
+Events.prototype.batch = function (eventsData, callback, context) {
+  if (!_.isArray(eventsData)) { eventsData = [eventsData]; }
   var url = '/events/batch';
-  _.each(events, function (event, index) {
+  _.each(eventsData, function (event, index) {
     event.tempRefId = 'temp_ref_id_' + index;
   });
   this.conn.request('POST', url, function (err, result) {
-    _.each(events, function (event) {
+    _.each(eventsData, function (event) {
       event.id = result[event.tempRefId].id;
     });
     callback(err, result);
-  }, events, context);
+  }, eventsData, context);
 };
 
 Events.prototype.update = function (event, callback, context) {
@@ -77,3 +83,6 @@ Events.prototype.monitor = function (filter, callback) {
 
   });
 };
+
+
+

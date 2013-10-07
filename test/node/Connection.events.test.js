@@ -105,7 +105,8 @@ var testEvents = function (enableLocalStorage) {
       });
     });
 
-    describe('create() ' + localEnabledStr, function () {
+
+    describe('batch() ' + localEnabledStr, function () {
       var events = [
         { content: 'test-content-1' },
         { content: 'test-content-2' }
@@ -119,7 +120,7 @@ var testEvents = function (enableLocalStorage) {
         nock('https://' + username + '.' + settings.domain)
           .post('/events/batch')
           .reply(201, response);
-        connection.events.create(events, function (err, result) {
+        connection.events.batch(events, function (err, result) {
           should.not.exist(err);
           should.exist(result);
           result.should.eql(response);
@@ -131,7 +132,7 @@ var testEvents = function (enableLocalStorage) {
         nock('https://' + username + '.' + settings.domain)
           .post('/events/batch')
           .reply(200, response);
-        connection.events.create(events, function (err, result) {
+        connection.events.batch(events, function (err, result) {
           events[0].tempRefId.should.eql('temp_ref_id_0');
           events[1].tempRefId.should.eql('temp_ref_id_1');
           events[0].id.should.eql('test_id_0');
