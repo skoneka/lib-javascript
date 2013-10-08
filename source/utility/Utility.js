@@ -1,5 +1,7 @@
 var _ = require('underscore');
 
+exports.SignalEmitter = require('./SignalEmitter.js');
+
 exports.mergeAndClean = function (sourceA, sourceB) {
   sourceA = sourceA || {};
   sourceB = sourceB || {};

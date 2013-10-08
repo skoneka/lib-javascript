@@ -2,7 +2,8 @@ var _ = require('underscore'),
   System = require('./system/System.js'),
   ConnectionEvents = require('./connection/Events.js'),
   ConnectionStreams = require('./connection/Streams.js'),
-  Datastore = require('./Datastore.js');
+  Datastore = require('./Datastore.js'),
+  Monitor = require('./connection/Monitor.js');
 
 /**
  * TODO
@@ -103,12 +104,29 @@ Connection.prototype.getServerTime = function (localTime) {
   return (localTime / 1000) - this.serverInfos.deltaTime;
 };
 
+
+// ------------- monitor this connection --------//
+
+Connection.prototype.monitor = function (filter) {
+  return new Monitor(this, filter);
+};
+
 // ------------- start / stop Monitoring is called by Monitor constructor / destructor -----//
 
+/**
+ *
+ * @private
+ */
 Connection.prototype._stopMonitoring = function (/*callback*/) {
 
 };
 
+/**
+ *
+ * @param callback
+ * @returns {*}
+ * @private
+ */
 Connection.prototype._startMonitoring = function (callback) {
 
   if (this.ioSocket) { return callback(null/*, ioSocket*/); }
@@ -124,6 +142,8 @@ Connection.prototype._startMonitoring = function (callback) {
   };
 
   this.ioSocket = System.ioConnect(settings);
+
+  callback(null);
 
   this.ioSocket.on('connect', function () {
     _.each(this._ioSocketMonitors, function (monitor) { monitor.onConnect(); });

@@ -7,7 +7,7 @@
 </head>
 <body>
 <h1>Access Infos</h1>
-<textarea id='accessInfo' rows=20 cols=100></textarea>
+<textarea id='accessInfo' rows=10 cols=100></textarea>
   <h1>Streams</h1>
   <textarea id='streams' rows=20 cols=100></textarea>
     <h1>Events</h1>
@@ -38,7 +38,11 @@
 
         var filter = new Pryv.Filter({limit : 20});
         api.events.get(filter, null, function(error, events) {
-          $events.value = JSON.stringify(events, null, 2);
+          var rawEvents = [];
+          for (var i = 0; i < events.length; i++) {
+            rawEvents.push(events[i].getData()); // get the Event with no circular reference
+          }
+          $events.value = JSON.stringify(rawEvents, null, 2);
         });
 
 

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Pryv Javascript Lib | Monitor</title>
+  <script src="../../dist/pryv.js"></script>
+
+</head>
+<body>
+<h1>Events Live</h1>
+<textarea id='events' rows=20 cols=100></textarea>
+
+<script type='text/javascript'>
+  // selectors
+  var $events = document.getElementById('events');
+
+  function addEventToView(event) {
+    var line = event.time + ' ' + event.type + ' ' + JSON.stringify(event.content).substring(0,80);
+    $events.value += line + '\n';
+    $events.scrollTop = $events.scrollHeight;
+  }
+
+
+
+
+
+  // load Pryv
+  var Pryv = require('pryv');
+  // .useStaging() only when debug / dev
+  var api = (new Pryv.Connection('perkikiki', 'TTZycvBTiq')).useStaging();
+
+
+  var filter = new Pryv.Filter();
+  var monitor = api.monitor(filter);
+  monitor.addEventListener(Pryv.Messages.Monitor.ON_LOAD, function(events) {
+    console.log('monitor loaded');
+    for (var i = 0; i < events.length; i++) {
+      addEventToView(events[i]);
+    }
+  });
+  monitor.start();
+
+
+
+
+
+</script>
+</body>
+</html>

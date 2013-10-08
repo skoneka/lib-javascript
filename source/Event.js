@@ -29,6 +29,7 @@ Event.prototype.getData = function () {
 
 
 
+
 Object.defineProperty(Event.prototype, 'stream', {
   get: function () {
     if (! this.connection.datastore) {
