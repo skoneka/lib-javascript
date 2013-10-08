@@ -44,6 +44,17 @@ var Connection = module.exports = function (username, auth, settings) {
 
 Connection._serialCounter = 0;
 
+
+/**
+ * Use pryv.in for development and debug.
+ * The Library will activate Structure Monitoring and
+ * @returns The connection
+ */
+Connection.prototype.useStaging = function () {
+  this.settings.domain = 'pryv.in';
+  return this;
+};
+
 /**
  * Use localStorage for caching.
  * The Library will activate Structure Monitoring and
@@ -57,6 +68,7 @@ Connection.prototype.useLocalStorage = function (callback) {
     if (error) { return callback(error); }
     this.datastore.init(callback);
   }.bind(this));
+  return this;
 };
 
 Connection.prototype.accessInfo = function (callback) {
@@ -87,7 +99,7 @@ Connection.prototype.getLocalTime = function (serverTime) {
  * @returns {number} timestamp (server dimension)
  */
 Connection.prototype.getServerTime = function (localTime) {
-  if (typeof localTime === 'undefined') { localTime = new Date().getTime(); }
+  if (typeof localTime === 'undefined') { localTime = new Date().getTime(); }
   return (localTime / 1000) - this.serverInfos.deltaTime;
 };
 

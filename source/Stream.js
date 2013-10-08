@@ -43,7 +43,7 @@ Object.defineProperty(Stream.prototype, 'children', {
 // TODO write test
 Object.defineProperty(Stream.prototype, 'ancestors', {
   get: function () {
-    if (! this.parentId || this.parent === null) { return []; }
+    if (! this.parentId || this.parent === null) { return []; }
     var result = this.parent.ancestors;
     result.push(this.parent);
     return result;

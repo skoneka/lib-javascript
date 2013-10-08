@@ -7,16 +7,9 @@ var Pryv = require('../../source/main'),
   responses = require('../data/responses.js');
 
 
-
-
-
-
-
 var testStreams = function (enableLocalStorage) {
 
   var localEnabledStr = enableLocalStorage ? ' + LocalStorage' : '';
-
-
 
   /**
    * Test a StreamTree
@@ -65,8 +58,6 @@ var testStreams = function (enableLocalStorage) {
     });
     return countTest;
   }
-
-
 
   describe('Connection.streams' + localEnabledStr, function () {
     var username = 'test-user',
