@@ -167,7 +167,6 @@ Connection.prototype.request = function (method, path, callback, jsonData, conte
   if (jsonData) {
     payload = JSON.stringify(jsonData);
     headers['Content-Type'] = 'application/json; charset=utf-8';
-    headers['Content-Length'] = payload.length;
   }
 
   System.request({

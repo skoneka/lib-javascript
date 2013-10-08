@@ -27,6 +27,23 @@ Events.prototype._get = function (filter, deltaFilter, callback, context) {
   this.conn.request('GET', url, callback, null, context);
 };
 
+/**
+ * @param eventData minimum {streamId, type }
+ * @param context
+ * @return event
+ */
+Events.prototype.create = function (eventData, callback, context) {
+  var event = new Event(this.conn, eventData);
+  var url = '/events';
+  this.conn.request('POST', url, function (err, result) {
+    if (result) {
+      _.extend(event, result);
+    }
+    callback(err, result);
+  }, event.getData(), context);
+  return event;
+};
+
 
 
 

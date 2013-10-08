@@ -42,14 +42,14 @@ var testEvent = function (enableLocalStorage) {
   describe('Event ' + localEnabledStr, function () {
 
 
-    var eventData =  {streamid: 'ArtMaceoThassilo',
+    var eventData =  {streamId: 'ArtMaceoThassilo',
       type: 'note/txt',
       content: 'test-content-1'};
     var event = new Pryv.Event(connection,  eventData);
     var eventSerial = connection.serialId + '>E' + (connection._eventSerialCounter - 1);
 
     it('generate correct data()', function (done) {
-      event.getData().streamid.should.equal(eventData.streamid);
+      event.getData().streamId.should.equal(eventData.streamId);
       done();
     });
 
@@ -59,8 +59,10 @@ var testEvent = function (enableLocalStorage) {
       done();
     });
 
-
   });
+
+
+
 
 };
 

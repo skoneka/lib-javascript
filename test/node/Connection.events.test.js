@@ -106,6 +106,32 @@ var testEvents = function (enableLocalStorage) {
     });
 
 
+    describe('create( eventData )' + localEnabledStr, function () {
+
+      var eventData = new Pryv.Event(
+        connection, {streamId : 'diary', type : 'note/txt', content: 'hello'});
+
+      var response = {id : 'Tet5slAP9q'};
+
+      it('should create an event', function (done) {
+        nock('https://' + username + '.' + settings.domain)
+          .post('/events')
+          .reply(201, response);
+
+        var event = null;
+        event = connection.events.create(eventData, function (err, resultJson) {
+          should.not.exist(err);
+          should.exist(resultJson);
+          resultJson.id.should.eql(response.id);
+          event.id.should.eql(response.id);
+          done();
+        });
+
+      });
+
+    });
+
+
     describe('batch() ' + localEnabledStr, function () {
       var events = [
         { content: 'test-content-1' },

@@ -21,6 +21,11 @@
  * ssl : boolean (default true)
  */
 exports.request = function (pack)  {
+  if (pack.payload) {
+    pack.headers['Content-Length'] = pack.payload.length;
+  }
+
+
   var httpOptions = {
     host: pack.host,
     port: pack.port,
@@ -37,6 +42,8 @@ exports.request = function (pack)  {
 
   var detail = 'Request: ' + httpOptions.method + ' ' +
     httpMode + '://' + httpOptions.host + ':' + httpOptions.port + '' + httpOptions.path;
+
+
 
 
   var onError = function (reason) {

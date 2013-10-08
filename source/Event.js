@@ -2,7 +2,7 @@
 var _ = require('underscore');
 
 var RW_PROPERTIES =
-  ['id', 'streamid', 'time', 'duration', 'type', 'content', 'tags', 'description',
+  ['id', 'streamId', 'time', 'duration', 'type', 'content', 'tags', 'description',
     'clientData', 'trashed', 'modified'];
 
 /**
@@ -26,6 +26,7 @@ Event.prototype.getData = function () {
   }.bind(this));
   return data;
 };
+
 
 
 
