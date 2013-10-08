@@ -54,7 +54,9 @@
 
 
 
-  monitor.start();
+  monitor.start(function (error){
+    console.log('monitor started ' + error);
+  });
 
   function createNoteEvent(content) {
     var eventData = {streamId : 'test', type: 'note/txt', content: content};

@@ -132,6 +132,7 @@ Connection.prototype._startMonitoring = function (callback) {
   if (this.ioSocket) { return callback(null/*, ioSocket*/); }
 
 
+
   var settings = {
     host : this.username + '.' + this.settings.domain,
     port : this.settings.port,
@@ -143,21 +144,19 @@ Connection.prototype._startMonitoring = function (callback) {
 
   this.ioSocket = System.ioConnect(settings);
 
-  callback(null);
-
   this.ioSocket.on('connect', function () {
     _.each(this._ioSocketMonitors, function (monitor) { monitor.onConnect(); });
-  });
+  }.bind(this));
   this.ioSocket.on('error', function (error) {
     _.each(this._ioSocketMonitors, function (monitor) { monitor.onError(error); });
-  });
+  }.bind(this));
   this.ioSocket.on('eventsChanged', function () {
     _.each(this._ioSocketMonitors, function (monitor) { monitor.onEventsChanged(); });
-  });
+  }.bind(this));
   this.ioSocket.on('streamsChanged', function () {
     _.each(this._ioSocketMonitors, function (monitor) { monitor.onStreamsChanged(); });
-  });
-
+  }.bind(this));
+  callback(null);
 };
 
 Connection.prototype.request = function (method, path, callback, jsonData, context) {

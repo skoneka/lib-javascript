@@ -27,12 +27,8 @@ Monitor.serial = 0;
 Monitor.prototype.start = function (done) {
   done = done || function () {};
 
-  this.connection.events.get(this.filter, null, function (error, events) {
-    if (error) {
-      this._fireEvent(MSGs.ON_ERROR, error);
-    }
-    this._fireEvent(MSGs.ON_LOAD, events);
-  }.bind(this));
+  this.lastSynchedST = -1000000000000;
+  this.refreshEvents();
 
   this.connection._ioSocketMonitors[this.id] = this;
   this.connection._startMonitoring(done);
@@ -42,11 +38,13 @@ Monitor.prototype.start = function (done) {
 
 
 Monitor.prototype.onConnect = function () {
-
+  console.log('Monitor onConnect');
 };
-Monitor.prototype.onError = function (/*error*/) { };
+Monitor.prototype.onError = function (error) {
+  console.log('Monitor onError' + error);
+};
 Monitor.prototype.onEventsChanged = function () {
-  console.log('Monitor onEvent Changed');
+  this.refreshEvents();
 
 };
 Monitor.prototype.onStreamsChanged = function () { };
@@ -59,36 +57,21 @@ Monitor.prototype.destroy = function () {
   }
 };
 
-/**
-//TODO: rewrite once API for monitoring is sorted out
-Events.prototype.monitor = function (filter, callback) {
-  var that = this;
-  var lastSynchedST = -1;
 
-  this.conn.monitor(filter, function (signal, payload) {
-    switch (signal) {
-      case 'connect':
-        // set current serverTime as last update
-        lastSynchedST = that.conn.getServerTime();
-        callback(signal, payload);
-        break;
-      case 'event' :
-        that.conn.events.get(filter, function (error, result) {
-          _.each(result, function (e) {
-            if (e.modified > lastSynchedST)  {
-              lastSynchedST = e.modified;
-            }
-          });
-          callback('events', result);
-        }, { modifiedSince : lastSynchedST});
-        break;
-      case 'error' :
-        callback(signal, payload);
-        break;
+Monitor.prototype.refreshEvents = function () {
+
+  var options = { modifiedSince : this.lastSynchedST};
+  this.lastSynchedST = this.connection.getServerTime();
+
+  this.connection.events.get(this.filter, options,
+    function (error, events) {
+    if (error) {
+      this._fireEvent(MSGs.ON_ERROR, error);
     }
+    this._fireEvent(MSGs.ON_LOAD, events);
+  }.bind(this));
 
-  });
-};   **/
+};
 
 
 
