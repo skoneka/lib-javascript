@@ -57,7 +57,10 @@
   monitor.start();
 
   function createNoteEvent(content) {
-    api.events.create({streamId : 'test', type: 'note/txt', content: content});
+    var eventData = {streamId : 'test', type: 'note/txt', content: content};
+    api.events.create(eventData, function () {
+      console.log('event created');
+    });
   }
 
   function addEventClicked() { // from the web page

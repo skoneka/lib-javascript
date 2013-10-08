@@ -41,9 +41,14 @@ Monitor.prototype.start = function (done) {
 
 
 
-Monitor.prototype.onConnect = function () { };
+Monitor.prototype.onConnect = function () {
+
+};
 Monitor.prototype.onError = function (/*error*/) { };
-Monitor.prototype.onEventsChanged = function () { };
+Monitor.prototype.onEventsChanged = function () {
+  console.log('Monitor onEvent Changed');
+
+};
 Monitor.prototype.onStreamsChanged = function () { };
 
 

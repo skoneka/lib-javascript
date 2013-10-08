@@ -161,6 +161,9 @@ Connection.prototype._startMonitoring = function (callback) {
 };
 
 Connection.prototype.request = function (method, path, callback, jsonData, context) {
+  if (! callback || ! _.isFunction(callback)) {
+    throw new Error('request\'s callback must be a function');
+  }
   var headers =  { 'authorization': this.auth };
   context = context ? context : this;
   var payload = null;
