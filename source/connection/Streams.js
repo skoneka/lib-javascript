@@ -7,6 +7,10 @@ var Streams = module.exports = function (connection) {
   this._streamsIndex = {};
 };
 
+
+//--- Many test on streams are made in Connection.streams.test.js
+
+
 /**
  * @param options {parentId: <parentId | null> , state: <all | null>}
  * @return Arrray of Pryv.Stream matching the options
@@ -98,33 +102,29 @@ Streams.prototype.walkTree = function (options, eachStream, done, context) {
   }, context);
 };
 
-Streams.prototype.getFlatenedObjects = function (callback, opts, context) {
-  this.get(function (error, result) {
+Streams.prototype.getFlatenedObjects = function (options, callback, context) {
+  var result = [];
+  this.walkTree(options,
+    function (stream) { // each stream
+    result.push(stream);
+  }, function (error) {  // done
     if (error) { return callback(error); }
-    callback(null, this.Utils.flatenTree(result, this.connection));
-  }.bind(this), opts, context);
+    callback(null, result);
+  }.bind(this), context);
+};
+
+
+/**
+ * Utility to debug a tree structure
+ */
+Streams.prototype.getDisplayTree = function (arrayOfSTream) {
+  return Streams.Utils._debugTree(arrayOfSTream);
 };
 
 
 // TODO Validate that it's the good place for them .. Could have been in Stream or Utility
 Streams.Utils = {
-  /**
-   * Flaten a streamTree obtained from the API. Replaces the children[] by a childrenIds[]
-   * @param streamTree
-   * @param andGetStreamObjects if true return Stream object as in the model
-   * @returns {Array} of streamData
-   */
-  flatenTree : function (streamTree, andMakeObjectWithConnection) {
-    var streams = [];
-    this.walkDataTree(streamTree, function (stream) {
-      if (andMakeObjectWithConnection) {
-        streams.push(new Stream(andMakeObjectWithConnection, stream));
-      } else {
-        streams.push(stream);
-      }
-    });
-    return streams;
-  },
+
 
   /**
    * Walk thru a streamArray of objects
@@ -160,6 +160,7 @@ Streams.Utils = {
       }
     }.bind(this));
   },
+
 
   /**
    * ShowTree

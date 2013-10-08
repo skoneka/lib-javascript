@@ -34,7 +34,7 @@ Object.defineProperty(Event.prototype, 'stream', {
     if (! this.connection.datastore) {
       throw new Error('Activate localStorage to get automatic stream mapping. Or use StreamId');
     }
-    return this.connection.datastore.getStreamById(this.streamId);
+    return this.connection.streams.getById(this.streamId);
   },
   set: function () { throw new Error('Event.stream property is read only'); }
 });

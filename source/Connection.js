@@ -11,10 +11,6 @@ var _ = require('underscore'),
  */
 var Connection = module.exports = function (username, auth, settings) {
   this._serialId = Connection._serialCounter++;
-  // protect against calls without `new`
-  if (! (this instanceof Connection)) {
-    return new Connection(username, auth, settings);
-  }
 
   this.username = username;
   this.auth = auth;
@@ -91,7 +87,7 @@ Connection.prototype.getLocalTime = function (serverTime) {
  * @returns {number} timestamp (server dimension)
  */
 Connection.prototype.getServerTime = function (localTime) {
-  localTime = localTime || new Date().getTime();
+  if (typeof localTime === 'undefined') { localTime = new Date().getTime(); }
   return (localTime / 1000) - this.serverInfos.deltaTime;
 };
 

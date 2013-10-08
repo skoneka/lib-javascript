@@ -24,7 +24,7 @@ var testStream = function (enableLocalStorage) {
     before(function (done) {
       nock('https://' + username + '.' + settings.domain)
         .get('/access-info')
-        .reply(200, responses.accessInfo);
+        .reply(200, responses.accessInfo, responses.headersAccessInfo);
 
 
       nock('https://' + username + '.' + settings.domain)
@@ -49,7 +49,11 @@ var testStream = function (enableLocalStorage) {
       done();
     });
 
+
+
   });
+
+
 
 };
 

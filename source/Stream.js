@@ -43,12 +43,14 @@ Object.defineProperty(Stream.prototype, 'children', {
 // TODO write test
 Object.defineProperty(Stream.prototype, 'ancestors', {
   get: function () {
-    if (! this.parentId) { return []; }
-
-    var result = [this.parent];
-    result.push(this.parent.ancestors);
+    if (! this.parentId || this.parent === null) { return []; }
+    var result = this.parent.ancestors;
+    result.push(this.parent);
     return result;
   },
   set: function () { throw new Error('Stream.ancestors property is read only'); }
 });
+
+
+
 

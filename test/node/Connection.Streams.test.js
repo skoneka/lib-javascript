@@ -1,14 +1,72 @@
 /* global before, describe, it */
 
 var Pryv = require('../../source/main'),
-    should = require('should'),
-    nock = require('nock'),
-    _ = require('underscore'),
-    responses = require('../data/responses.js');
+  should = require('should'),
+  nock = require('nock'),
+  _ = require('underscore'),
+  responses = require('../data/responses.js');
+
+
+
+
+
+
 
 var testStreams = function (enableLocalStorage) {
 
   var localEnabledStr = enableLocalStorage ? ' + LocalStorage' : '';
+
+
+
+  /**
+   * Test a StreamTree
+   * @param arrayOfStreams
+   * @param parent
+   * @param ancestors
+   * @returns {number}
+   */
+  function testTree(arrayOfStreams, parent, ancestors) {
+    var countTest = 0;
+    _.each(arrayOfStreams, function (stream) {
+      countTest++;
+      stream.should.be.instanceOf(Pryv.Stream);   // test object type
+      if (parent) {
+        stream.parent.should.be.equal(parent); // test parent
+      }
+
+      // test streamID my
+      var streamResult = null;
+      var streamError = null;
+      try {
+        streamResult = stream.connection.streams.getById(stream.id);
+      } catch (e) { streamError = e; }
+      if (enableLocalStorage) {
+        streamResult.should.equal(stream);
+        should.not.exists(streamError);
+      } else {
+        should.exists(streamError);
+        should.not.exists(streamResult);
+      }
+
+
+
+
+      var mancestors = null; // TODO write a good ancestors check for subtree
+      if (ancestors)  {
+        stream.ancestors.length.should.equal(ancestors.length); // test ancestors
+        for (var i = 0; i < stream.ancestors.length; i++) {
+          stream.ancestors[i].should.equal(ancestors[i]);
+        }
+        mancestors = ancestors.slice();
+        mancestors.push(stream);
+      }
+
+      countTest += testTree(stream.children, stream, mancestors);
+    });
+    return countTest;
+  }
+
+
 
   describe('Connection.streams' + localEnabledStr, function () {
     var username = 'test-user',
@@ -25,7 +83,7 @@ var testStreams = function (enableLocalStorage) {
       before(function (done) {
         nock('https://' + username + '.' + settings.domain)
           .get('/access-info')
-          .reply(200, responses.accessInfo);
+          .reply(200, responses.accessInfo, responses.headersAccessInfo);
 
 
         nock('https://' + username + '.' + settings.domain)
@@ -66,7 +124,9 @@ var testStreams = function (enableLocalStorage) {
 
     });
 
-    describe('get()', function () {
+
+
+    describe('get and walkTree with no arguments', function () {
       var opts = null;
 
       if (! enableLocalStorage) {
@@ -75,7 +135,7 @@ var testStreams = function (enableLocalStorage) {
           .reply(200, responses.streams);
       }
 
-      it('should return an object', function (done) {
+      it('get(): should return an root stream Tree', function (done) {
 
         connection.streams.get(opts, function (err, result) {
           should.not.exist(err);
@@ -83,21 +143,18 @@ var testStreams = function (enableLocalStorage) {
 
           result.should.be.instanceOf(Array);
 
-          var countTest = 0;
-          function testTree(arrayOfStreams) {
-            countTest++;
-            _.each(arrayOfStreams, function (stream) {
-              stream.should.be.instanceOf(Pryv.Stream);
-              testTree(stream.children);
-            });
-          }
+          var countTest = testTree(result, null, []);
+          countTest.should.equal(37);
 
-          testTree(result);
-          countTest.should.equal(38);
 
           done();
+
+          connection.streams.getDisplayTree(result); // just for code coverage
+
         });
+
       });
+
 
       it('walkTree should allow full view of object', function (done) {
         var count = 0;
@@ -113,12 +170,67 @@ var testStreams = function (enableLocalStorage) {
           done();
         }, this);
       });
+    });
+
+
+
+    describe('get({parentID = ....})', function () {
+
+      if (! enableLocalStorage) {
+        nock('https://' + username + '.' + settings.domain)
+          .get('/streams?parentId=PVxE_JMMzM').times(1)  // 3 requests when no localStorage
+          .reply(200, responses.streams[0].children);
+      }
+
+      it('opts: parentId should return an subTree', function (done) {
+        var opts = {parentId : 'PVxE_JMMzM'};
+        connection.streams.get(opts, function (err, result) {
+          should.not.exist(err);
+          should.exist(result);
+
+          result.should.be.instanceOf(Array);
+
+          var countTest = testTree(result, null, null);   // no ancestors check
+          countTest.should.equal(2);
+
+          done();
+        });
+      });
+    });
+
+
+    describe('flatenTree()' + localEnabledStr, function () {
+
+      if (! enableLocalStorage) {
+        nock('https://' + username + '.' + settings.domain)
+          .get('/streams?').times(1)  // 3 requests when no localStorage
+          .reply(200, responses.streams);
+      }
+
+      it('getFlatenTree(): should return a flat Tree', function (done) {
+        var opts = null;
+        connection.streams.getFlatenedObjects(opts, function (err, result) {
+          should.not.exist(err);
+          should.exist(result);
+
+          result.should.be.instanceOf(Array);
+          _.each(result, function (stream) {
+            stream.should.be.instanceOf(Pryv.Stream);   // test object type
+          });
+
+          result.length.should.equal(37);
+
+          done();
+        });
+
+      });
 
     });
 
+
     describe('create()' + localEnabledStr, function () {
       var response = {id : 'test-id'},
-          stream = {name : 'test-name'};
+        stream = {name : 'test-name'};
 
       it('should call proper the proper API method', function (done) {
         nock('https://' + username + '.' + settings.domain)
@@ -163,8 +275,10 @@ var testStreams = function (enableLocalStorage) {
           done();
         });
       });
-
     });
+
+
+
 
   });
 
