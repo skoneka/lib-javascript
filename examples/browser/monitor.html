@@ -8,24 +8,19 @@
 <body>
 
 
-<input type='button' value='add Event' onClick='addEventClicked()'>
-<input type='text' id='addContent' value='someText'>
+<input type='button' value='create note event with text:' onClick='addEventClicked()'>
+<input type='text' id='addContent' value='someText'> <br>
+<input type='button' value='put event in trash.' onClick='removeEventClicked()'>
+<input type='text' id='removeId' value='' placeholder='id of event'> <br>
+<input type='button' value='change content of id:' onClick='changeEventClicked()'>
+<input type='text' id='changeId' value='' placeholder='id of event'>
+<input type='text' id='changeContent' value='someotherText'> <br>
 
 <h1>Events Live</h1>
 <textarea id='events' rows=20 cols=100></textarea>
 
+
 <script type='text/javascript'>
-  // selectors
-  var $events = document.getElementById('events');
-  var $addContent = document.getElementById('addContent');
-
-  function logEventChange(action, event) {
-    var line = action +  ' ' + event.id +' '+
-      event.time + ' ' + event.type + ' ' + JSON.stringify(event.content).substring(0,80);
-    $events.value += line + '\n';
-    $events.scrollTop = $events.scrollHeight;
-  }
-
   // load Pryv
   var Pryv = require('pryv');
   // .useStaging() only when debug / dev
@@ -35,23 +30,25 @@
   var filter = new Pryv.Filter();
   var monitor = api.monitor(filter);
 
+
+  // ------ register an onLoad event that will be called once to initialize the data ----//
   function onLoad(events) {
     console.log('monitor loaded');
     for (var i = 0; i < events.length; i++) {
-      logEventChange('+', events[i]);
+      logEventChange('load','+', events[i]);
     }
   }
   monitor.addEventListener(Pryv.Messages.Monitor.ON_LOAD, onLoad);
 
-
+  // ------ register an onEventChange that will be called each time
+  //                                   events changed on the server ----//
   function onEventChange(changes) {
     console.log(changes);
     var states = {modified: '~', trashed: '-', created: '+'};
     for (var key in states) {
       if( states.hasOwnProperty( key ) ) {
-        console.log(key);
         for (var i = 0; i < changes[key].length; i++) {
-          logEventChange(states[key], changes[key][i]);
+          logEventChange('change', states[key], changes[key][i]);
         }
       }
     }
@@ -59,10 +56,30 @@
   monitor.addEventListener(Pryv.Messages.Monitor.ON_EVENT_CHANGE, onEventChange);
 
 
-
+  // ------ once all event listeners have been registered start the monitor
+  //
   monitor.start(function (error){
     console.log('monitor started ' + error);
   });
+
+
+  //--------------- UI FOR THE EXAMPLE ---------------------//
+
+  // selectors
+  var $events = document.getElementById('events');
+  var $addContent = document.getElementById('addContent');
+
+  var $removeId = document.getElementById('removeId');
+
+  //-- utility to log events changes on the console
+  function logEventChange(signal, action, event) {
+    var line = signal + '\t' + action +  '\t' + event.id +'\t'+
+      event.time + '\t' + event.type + '\t' + JSON.stringify(event.content).substring(0,80);
+    $events.value += line + '\n';
+    $events.scrollTop = $events.scrollHeight;
+  }
+
+  //-- commands
 
   function createNoteEvent(content) {
     var eventData = {streamId : 'test', type: 'note/txt', content: content};
@@ -71,8 +88,22 @@
     });
   }
 
+  function removeEvent(eventId) {
+    api.events.trashWithId(eventId, function () {
+      console.log('event deleted');
+    });
+  }
+
+
+  //-- UI events handlers
+
   function addEventClicked() { // from the web page
     createNoteEvent(addContent.value);
+  }
+
+
+  function removeEventClicked() { // from the web page
+    removeEvent(removeId.value);
   }
 
 </script>

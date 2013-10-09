@@ -44,6 +44,14 @@ Events.prototype.create = function (eventData, callback, context) {
   return event;
 };
 
+Events.prototype.trash = function (event, callback, context) {
+  this.deleteWithId(event.id, callback, context);
+};
+
+Events.prototype.trashWithId = function (eventId, callback, context) {
+  var url = '/events/' + eventId;
+  this.conn.request('DELETE', url, callback, null, context);
+};
 
 
 
