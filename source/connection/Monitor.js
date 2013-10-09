@@ -140,7 +140,7 @@ Monitor.prototype.reloadAllEventsAndCompare = function (signal, extracontent) {
 // -----------  filter changes ----------- //
 
 Monitor.prototype._onFilterChange = function (signal/*, content*/) {
-  this.reloadAllEventsAndCompare(MyMsgs.ON_FILTER_CHANGE, {filterSignal: signal});
+  this.reloadAllEventsAndCompare(MyMsgs.ON_FILTER_CHANGE, {filterMessage: signal});
 };
 
 

@@ -63,7 +63,7 @@
     for (var key in states) {
       if( states.hasOwnProperty( key ) ) {
         for (var i = 0; i < changes[key].length; i++) {
-          logEventChange('f.'+ changes.filterSignal + states[key], changes[key][i]);
+          logEventChange('f.'+ changes.filterMessage.signal + states[key], changes[key][i]);
         }
       }
     }
