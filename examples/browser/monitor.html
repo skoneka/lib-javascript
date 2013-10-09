@@ -35,7 +35,7 @@
   function onLoad(events) {
     console.log('monitor loaded');
     for (var i = 0; i < events.length; i++) {
-      logEventChange('load','+', events[i]);
+      logEventChange('load +', events[i]);
     }
   }
   monitor.addEventListener(Pryv.Messages.Monitor.ON_LOAD, onLoad);
@@ -43,12 +43,11 @@
   // ------ register an onEventChange that will be called each time
   //                                   events changed on the server ----//
   function onEventChange(changes) {
-    console.log(changes);
     var states = {modified: '~', trashed: '-', created: '+'};
     for (var key in states) {
       if( states.hasOwnProperty( key ) ) {
         for (var i = 0; i < changes[key].length; i++) {
-          logEventChange('change', states[key], changes[key][i]);
+          logEventChange('change ' + states[key], changes[key][i]);
         }
       }
     }
@@ -71,9 +70,12 @@
 
   var $removeId = document.getElementById('removeId');
 
+  var $changeId = document.getElementById('changeId');
+  var $changeContent = document.getElementById('changeContent');
+
   //-- utility to log events changes on the console
-  function logEventChange(signal, action, event) {
-    var line = signal + '\t' + action +  '\t' + event.id +'\t'+
+  function logEventChange(action, event) {
+    var line = action +  '\t' + event.id +'\t'+
       event.time + '\t' + event.type + '\t' + JSON.stringify(event.content).substring(0,80);
     $events.value += line + '\n';
     $events.scrollTop = $events.scrollHeight;
@@ -95,15 +97,27 @@
   }
 
 
+  function changeEvent(eventId, content) {
+    api.events.updateWithIdAndData(eventId, {content: content}, function () {
+      console.log('event changed');
+    });
+  }
+
+
   //-- UI events handlers
 
   function addEventClicked() { // from the web page
-    createNoteEvent(addContent.value);
+    createNoteEvent($addContent.value);
   }
 
 
   function removeEventClicked() { // from the web page
-    removeEvent(removeId.value);
+    removeEvent($removeId.value);
+  }
+
+
+  function changeEventClicked() { // from the web page
+    changeEvent($changeId.value, $changeContent.value);
   }
 
 </script>

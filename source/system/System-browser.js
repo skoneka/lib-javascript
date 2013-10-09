@@ -43,9 +43,9 @@ exports.request = function (pack)  {
   if (pack.method === 'POST' || pack.method === 'PUT') {// add json headers is POST or PUT
     pack.headers['Content-Type'] =
       pack.headers['Content-Type'] || 'application/json; charset=utf-8';
-  }
+  //}
 
-  if (pack.method === 'POST') {
+  //if (pack.method === 'POST') {
     if (pack.params) {
       pack.params = JSON.stringify(pack.params);
     } else {

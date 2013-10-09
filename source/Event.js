@@ -2,7 +2,7 @@
 var _ = require('underscore');
 
 var RW_PROPERTIES =
-  ['id', 'streamId', 'time', 'duration', 'type', 'content', 'tags', 'description',
+  ['streamId', 'time', 'duration', 'type', 'content', 'tags', 'description',
     'clientData', 'trashed', 'modified'];
 
 /**

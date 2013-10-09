@@ -75,8 +75,12 @@ Events.prototype.batch = function (eventsData, callback, context) {
 };
 
 Events.prototype.update = function (event, callback, context) {
-  var url = '/events/' + event.id;
-  this.conn.request('PUT', url, callback, null, context);
+  this.updateWithIdAndData(event.id, event.getData(), callback, context);
+};
+
+Events.prototype.updateWithIdAndData = function (eventId, data, callback, context) {
+  var url = '/events/' + eventId;
+  this.conn.request('PUT', url, callback, data, context);
 };
 
 

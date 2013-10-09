@@ -173,8 +173,8 @@ var testEvents = function (enableLocalStorage) {
     });
 
     describe('update() ' + localEnabledStr, function () {
-      var event = {
-          id : 'test-id',
+      var eventId = 'test-id',
+        data = {
           content: 'test-content'
         },
         response = {
@@ -183,9 +183,9 @@ var testEvents = function (enableLocalStorage) {
 
       it('should call the proper API method', function (done) {
         nock('https://' + username + '.' + settings.domain)
-          .put('/events/' + event.id)
+          .put('/events/' + eventId)
           .reply(200, response);
-        connection.events.update(event, function (err, result) {
+        connection.events.updateWithIdAndData(eventId, data, function (err, result) {
           should.not.exist(err);
           should.exist(result);
           result.should.eql(response);

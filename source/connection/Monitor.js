@@ -19,7 +19,6 @@ var Monitor = module.exports = function (connection, filter) {
   }
 
   this.filter.addOnChangeListener(this._onFilterChange);
-
   this._events = null;
 };
 
@@ -37,7 +36,6 @@ Monitor.prototype.start = function (done) {
 
   this.connection._ioSocketMonitors[this.id] = this;
   this.connection._startMonitoring(done);
-
 };
 
 
@@ -80,7 +78,6 @@ Monitor.prototype.loadAllEvents = function () {
 Monitor.prototype.checkEventsChanges = function (signal) {
   var options = { modifiedSince : this.lastSynchedST, state : 'all'};
   this.lastSynchedST = this.connection.getServerTime();
-
 
   var result = { created : [], trashed : [], modified: []};
 
