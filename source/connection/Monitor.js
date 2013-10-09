@@ -13,6 +13,11 @@ var Monitor = module.exports = function (connection, filter) {
   this.id = 'M' + Monitor.serial++;
 
   this.filter = filter;
+
+  if (this.filter.state) {
+    throw new Error('Monitors only work for default state, not trashed or all');
+  }
+
   this.filter.addOnChangeListener(this._onFilterChange);
 
   this._events = null;
@@ -28,7 +33,7 @@ Monitor.prototype.start = function (done) {
   done = done || function () {};
 
   this.lastSynchedST = -1000000000000;
-  this.refreshEvents();
+  this.loadAllEvents();
 
   this.connection._ioSocketMonitors[this.id] = this;
   this.connection._startMonitoring(done);
@@ -44,8 +49,7 @@ Monitor.prototype.onError = function (error) {
   console.log('Monitor onError' + error);
 };
 Monitor.prototype.onEventsChanged = function () {
-  this.refreshEvents();
-
+  this.checkEventsChanges(MSGs.ON_EVENT_CHANGE);
 };
 Monitor.prototype.onStreamsChanged = function () { };
 
@@ -58,19 +62,49 @@ Monitor.prototype.destroy = function () {
 };
 
 
-Monitor.prototype.refreshEvents = function () {
-
-  var options = { modifiedSince : this.lastSynchedST};
+Monitor.prototype.loadAllEvents = function () {
   this.lastSynchedST = this.connection.getServerTime();
+  this._events = { trashed: {}, active : {}};
+  this.connection.events.get(this.filter, {state : null},
+    function (error, events) {
+      if (error) { this._fireEvent(MSGs.ON_ERROR, error); }
+      _.each(events, function (event) {
+        this._events.active[event.id] = event;
+      }.bind(this));
+      this._fireEvent(MSGs.ON_LOAD, events);
+    }.bind(this));
+
+};
+
+
+Monitor.prototype.checkEventsChanges = function (signal) {
+  var options = { modifiedSince : this.lastSynchedST, state : 'all'};
+  this.lastSynchedST = this.connection.getServerTime();
+
+
+  var result = { created : [], trashed : [], modified: []};
 
   this.connection.events.get(this.filter, options,
     function (error, events) {
-    if (error) {
-      this._fireEvent(MSGs.ON_ERROR, error);
-    }
-    this._fireEvent(MSGs.ON_LOAD, events);
-  }.bind(this));
+      if (error) {
+        this._fireEvent(MSGs.ON_ERROR, error);
+      }
 
+      _.each(events, function (event) {
+        if (this._events.active[event.id]) {
+          if (event.trashed) { // trashed
+            result.trashed.push(event);
+            delete this._events.active[event.id];
+          } else {
+            result.modified.push(event);
+          }
+        } else {
+          result.created.push(event);
+        }
+      }.bind(this));
+
+      this._fireEvent(signal, result);
+    }.bind(this));
 };
 
 

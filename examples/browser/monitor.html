@@ -8,8 +8,8 @@
 <body>
 
 
-  <input type='button' value='add Event' onClick='addEventClicked()'>
-  <input type='text' id='addContent' value='someText'>
+<input type='button' value='add Event' onClick='addEventClicked()'>
+<input type='text' id='addContent' value='someText'>
 
 <h1>Events Live</h1>
 <textarea id='events' rows=20 cols=100></textarea>
@@ -20,7 +20,8 @@
   var $addContent = document.getElementById('addContent');
 
   function logEventChange(action, event) {
-    var line = action + ' '+ event.time + ' ' + event.type + ' ' + JSON.stringify(event.content).substring(0,80);
+    var line = action +  ' ' + event.id +' '+
+      event.time + ' ' + event.type + ' ' + JSON.stringify(event.content).substring(0,80);
     $events.value += line + '\n';
     $events.scrollTop = $events.scrollHeight;
   }
@@ -44,11 +45,16 @@
 
 
   function onEventChange(changes) {
-    _.each({change: '~', remove: '-', add: '+'}, function (key, actionStr) {
-      for (var i = 0; i < changes[key].length; i++) {
-        logEventChange(actionStr, events[key][i]);
+    console.log(changes);
+    var states = {modified: '~', trashed: '-', created: '+'};
+    for (var key in states) {
+      if( states.hasOwnProperty( key ) ) {
+        console.log(key);
+        for (var i = 0; i < changes[key].length; i++) {
+          logEventChange(states[key], changes[key][i]);
+        }
       }
-    });
+    }
   }
   monitor.addEventListener(Pryv.Messages.Monitor.ON_EVENT_CHANGE, onEventChange);
 
