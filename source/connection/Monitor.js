@@ -1,6 +1,10 @@
 var _ = require('underscore');
 var SignalEmitter = require('../Utility/SignalEmitter.js');
-var MSGs = require('../Messages.js').Monitor;
+var MSGs =  require('../Messages.js');
+var MyMsgs = MSGs.Monitor;
+
+
+var EXTRA_ALL_EVENTS = {state : 'all', modifiedSince : -100000000 };
 
 /**
  *
@@ -8,7 +12,7 @@ var MSGs = require('../Messages.js').Monitor;
  * @constructor
  */
 var Monitor = module.exports = function (connection, filter) {
-  SignalEmitter.extend(this, MSGs);
+  SignalEmitter.extend(this, MyMsgs);
   this.connection = connection;
   this.id = 'M' + Monitor.serial++;
 
@@ -18,12 +22,11 @@ var Monitor = module.exports = function (connection, filter) {
     throw new Error('Monitors only work for default state, not trashed or all');
   }
 
-  this.filter.addOnChangeListener(this._onFilterChange);
+  this.filter.addEventListener(MSGs.Filter.ON_CHANGE, this._onFilterChange.bind(this));
   this._events = null;
 };
 
 Monitor.serial = 0;
-
 
 
 // ----------- prototype ------------//
@@ -47,7 +50,7 @@ Monitor.prototype.onError = function (error) {
   console.log('Monitor onError' + error);
 };
 Monitor.prototype.onEventsChanged = function () {
-  this.checkEventsChanges(MSGs.ON_EVENT_CHANGE);
+  this.checkEventsChanges(MyMsgs.ON_EVENT_CHANGE);
 };
 Monitor.prototype.onStreamsChanged = function () { };
 
@@ -62,14 +65,14 @@ Monitor.prototype.destroy = function () {
 
 Monitor.prototype.loadAllEvents = function () {
   this.lastSynchedST = this.connection.getServerTime();
-  this._events = { trashed: {}, active : {}};
-  this.connection.events.get(this.filter, {state : null},
+  this._events = { active : {}};
+  this.connection.events.get(this.filter, EXTRA_ALL_EVENTS,
     function (error, events) {
-      if (error) { this._fireEvent(MSGs.ON_ERROR, error); }
+      if (error) { this._fireEvent(MyMsgs.ON_ERROR, error); }
       _.each(events, function (event) {
         this._events.active[event.id] = event;
       }.bind(this));
-      this._fireEvent(MSGs.ON_LOAD, events);
+      this._fireEvent(MyMsgs.ON_LOAD, events);
     }.bind(this));
 
 };
@@ -84,7 +87,7 @@ Monitor.prototype.checkEventsChanges = function (signal) {
   this.connection.events.get(this.filter, options,
     function (error, events) {
       if (error) {
-        this._fireEvent(MSGs.ON_ERROR, error);
+        this._fireEvent(MyMsgs.ON_ERROR, error);
       }
 
       _.each(events, function (event) {
@@ -105,10 +108,40 @@ Monitor.prototype.checkEventsChanges = function (signal) {
 };
 
 
+Monitor.prototype.reloadAllEventsAndCompare = function (signal, extracontent) {
+  this.lastSynchedST = this.connection.getServerTime();
 
 
-/**
- * TODO:
- * - expose events for data changes
- * - eventually expose getter/setter to update filter
- */
+  var result = { enter : [] };
+  _.extend(result, extracontent); // pass extracontent to receivers
+
+  var toremove = _.clone(this._events.active);
+
+  this.connection.events.get(this.filter, EXTRA_ALL_EVENTS,
+    function (error, events) {
+      if (error) { this._fireEvent(MyMsgs.ON_ERROR, error); }
+      _.each(events, function (event) {
+        if (this._events.active[event.id]) {  // already known event we don't care
+          delete toremove[event.id];
+        } else {
+          this._events.active[event.id] = event;
+          result.enter.push(event);
+        }
+      }.bind(this));
+      _.each(_.keys(toremove), function (streamid) {
+        delete this._events.active[streamid]; // cleanup not found streams
+      }.bind(this));
+      result.leave = _.values(toremove); // unmatched events are to be removed
+      this._fireEvent(signal, result);
+    }.bind(this));
+
+};
+
+// -----------  filter changes ----------- //
+
+Monitor.prototype._onFilterChange = function (signal/*, content*/) {
+  this.reloadAllEventsAndCompare(MyMsgs.ON_FILTER_CHANGE, {filterSignal: signal});
+};
+
+
+

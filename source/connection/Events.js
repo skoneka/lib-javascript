@@ -22,7 +22,7 @@ Events.prototype.get = function (filter, deltaFilter, callback) {
 };
 
 Events.prototype._get = function (filter, deltaFilter, callback, context) {
-  var tParams = Utility.mergeAndClean(filter.settings, deltaFilter);
+  var tParams = Utility.mergeAndClean(filter.getData(), deltaFilter);
   var url = '/events?' + Utility.getQueryParametersString(tParams);
   this.conn.request('GET', url, callback, null, context);
 };

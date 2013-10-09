@@ -8,5 +8,22 @@ Messages.Monitor = {
   /** content: { enter: [], leave: [], change } **/
   ON_EVENT_CHANGE : 'onEventChange',
   /** content: streams **/
-  ON_STRUCTURE_CHANGE : 'onStructureChange'
+  ON_STRUCTURE_CHANGE : 'onStructureChange',
+  /** content: streams **/
+  ON_FILTER_CHANGE : 'onFilterChange'
+};
+
+
+Messages.Filter = {
+  /**
+   * generic change event called on any change
+   * content: {filter, signal, content}
+   **/
+  ON_CHANGE : 'onChange',
+  /**
+   * called on streams changes
+   * content: streams
+   */
+  STREAMS_CHANGE : 'streamsChange'
+
 };

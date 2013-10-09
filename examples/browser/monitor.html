@@ -55,6 +55,21 @@
   monitor.addEventListener(Pryv.Messages.Monitor.ON_EVENT_CHANGE, onEventChange);
 
 
+  // ------ register an onFilterChange that will be called each time
+  //                                   events changed due to the filter ----//
+  function onFilterChange(changes) {
+    console.log(changes);
+    var states = {enter: ' +', leave: ' -'};
+    for (var key in states) {
+      if( states.hasOwnProperty( key ) ) {
+        for (var i = 0; i < changes[key].length; i++) {
+          logEventChange('f.'+ changes.filterSignal + states[key], changes[key][i]);
+        }
+      }
+    }
+  }
+  monitor.addEventListener(Pryv.Messages.Monitor.ON_FILTER_CHANGE, onFilterChange);
+
   // ------ once all event listeners have been registered start the monitor
   //
   monitor.start(function (error){
@@ -119,6 +134,7 @@
   function changeEventClicked() { // from the web page
     changeEvent($changeId.value, $changeContent.value);
   }
+
 
 </script>
 </body>
