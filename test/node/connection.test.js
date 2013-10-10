@@ -41,18 +41,18 @@ describe('Connection', function () {
 
   });
 
-  describe('shortId with connection not initialized', function () {
+  describe('displayId with connection not initialized', function () {
 
     it('should throw error', function (done) {
-      var shortId = null;
+      var displayId = null;
       var catchedError = null;
       try {
-        shortId = connection.shortId;
+        displayId = connection.displayId;
       } catch (error) {
         catchedError = error;
       }
       should.exist(catchedError);
-      should.not.exist(shortId);
+      should.not.exist(displayId);
       done();
     });
 
@@ -81,18 +81,18 @@ describe('Connection', function () {
 
   });
 
-  describe('shortId with connection initialized', function () {
+  describe('displayId with connection initialized', function () {
 
     it('should not throw error', function (done) {
-      var shortId = null;
+      var displayId = null;
       var catchedError = null;
       try {
-        shortId = connection.shortId;
+        displayId = connection.displayId;
       } catch (error) {
         catchedError = error;
       }
       should.not.exist(catchedError);
-      shortId.should.equal(generatedShortId);
+      displayId.should.equal(generatedShortId);
       done();
     });
 

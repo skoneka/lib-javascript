@@ -49,6 +49,11 @@ Monitor.prototype.destroy = function () {
   }
 };
 
+Monitor.prototype.getEvents = function () {
+  if (! this.events || ! this._events.active) {return []; }
+  return this._events.active;
+};
+
 // ------------ private ----------//
 
 // ----------- iOSocket ------//

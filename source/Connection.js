@@ -215,16 +215,16 @@ Object.defineProperty(Connection.prototype, 'id', {
 });
 
 //TODO rename in displayID
-Object.defineProperty(Connection.prototype, 'shortId', {
+Object.defineProperty(Connection.prototype, 'displayId', {
   get: function () {
     if (! this._accessInfo) {
-      throw new Error('connection must have been initialized to use shortId. ' +
+      throw new Error('connection must have been initialized to use displayId. ' +
         ' You can call accessInfo() for this');
     }
     var id = this.username + ':' + this._accessInfo.name;
     return id;
   },
-  set: function () { throw new Error('Connection.shortId property is read only'); }
+  set: function () { throw new Error('Connection.displayId property is read only'); }
 });
 
 
