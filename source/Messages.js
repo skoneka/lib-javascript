@@ -24,6 +24,12 @@ Messages.Filter = {
    * called on streams changes
    * content: streams
    */
-  STREAMS_CHANGE : 'streamsChange'
+  STREAMS_CHANGE : 'streamsChange',
+
+  /*
+  * called on date changes
+  * content: streams
+  */
+  DATE_CHANGE : 'dateChange'
 
 };

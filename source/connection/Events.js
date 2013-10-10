@@ -23,7 +23,7 @@ Events.prototype.get = function (filter, deltaFilter, callback) {
 
 Events.prototype._get = function (filter, deltaFilter, callback, context) {
   var tParams = Utility.mergeAndClean(filter.getData(), deltaFilter);
-  if (_.has(tParams, 'streams') && tParams.streams.length === 0) { // dead end filter..
+  if (_.has(tParams, 'streams') && tParams.streams.length === 0) { // dead end filter..
     return callback(null, []);
   }
   var url = '/events?' + Utility.getQueryParametersString(tParams);

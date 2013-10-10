@@ -129,6 +129,8 @@ Monitor.prototype._connectionEventsGetAllAndCompare = function (signal, extracon
   this.lastSynchedST = this.connection.getServerTime();
 
 
+  console.log(JSON.stringify(this.filter.getData()));
+
   var result = { enter : [] };
   _.extend(result, extracontent); // pass extracontent to receivers
 

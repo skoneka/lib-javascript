@@ -57,13 +57,13 @@
 
   // ------ register an onFilterChange that will be called each time
   //                                   events changed due to the filter ----//
-  function onFilterChange(changes) {
+  function onFilterChange(changes, signal) {
     console.log(changes);
     var states = {enter: ' +', leave: ' -'};
     for (var key in states) {
       if( states.hasOwnProperty( key ) ) {
         for (var i = 0; i < changes[key].length; i++) {
-          logEventChange('f.'+ changes.filterMessage.signal + states[key], changes[key][i]);
+          logEventChange('f.'+ changes.filterInfos.signal + states[key], changes[key][i]);
         }
       }
     }
