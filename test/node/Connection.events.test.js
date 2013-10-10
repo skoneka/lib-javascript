@@ -106,6 +106,22 @@ var testEvents = function (enableLocalStorage) {
     });
 
 
+    describe('get( with a DEAD end filter) ' + localEnabledStr, function () {
+      it('should get an empty list with no request', function (done) {
+        var deadEndFilter = new Pryv.Filter();
+        deadEndFilter.streamsIds = [];
+
+        connection.events.get(deadEndFilter, null, function (err, result) {
+          should.not.exist(err);
+          should.exist(result);
+          result.should.be.instanceOf(Array);
+          result.length.should.equal(0);
+          done();
+        });
+      });
+    });
+
+
     describe('create( eventData )' + localEnabledStr, function () {
 
       var eventData = new Pryv.Event(

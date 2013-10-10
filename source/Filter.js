@@ -3,7 +3,6 @@ var _ = require('underscore');
 var SignalEmitter = require('./Utility/SignalEmitter.js');
 var MSGs = require('./Messages.js').Filter;
 
-
 var Filter = module.exports = function (settings) {
   // protect against calls without `new`
   if (! (this instanceof Filter)) {
@@ -33,6 +32,10 @@ Filter.prototype._fireFilterChange = function (signal, content) {
   this._fireEvent(signal, content);
 };
 
+/**
+ * StreamIds ..
+ * setting them to "null" => ALL and to "[]" => NONE
+ */
 Object.defineProperty(Filter.prototype, 'streamsIds', {
   get: function () {
     return this._settings.streams;
