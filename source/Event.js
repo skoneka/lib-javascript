@@ -40,3 +40,14 @@ Object.defineProperty(Event.prototype, 'stream', {
   },
   set: function () { throw new Error('Event.stream property is read only'); }
 });
+
+
+Object.defineProperty(Event.prototype, 'attachmentsUrl', {
+  get: function () {
+    var url = this.connection.settings.ssl ? 'https://' : 'http://';
+    url += this.connection.username + '.' + this.connection.settings.domain + ':3443/events/' +
+      this.id + '.jpg?auth=' + this.connection.auth;
+    return url;
+  },
+  set: function () { throw new Error('Event.attachmentsUrl property is read only'); }
+});
