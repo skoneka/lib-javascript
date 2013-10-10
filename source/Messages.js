@@ -4,7 +4,7 @@ Messages.Monitor = {
   /** content: events **/
   ON_LOAD : 'onLoad',
   /** content: error **/
-  ON_ERROR : 'onError',
+  ON_ERROR : '_onIoError',
   /** content: { enter: [], leave: [], change } **/
   ON_EVENT_CHANGE : 'onEventChange',
   /** content: streams **/

@@ -29,30 +29,17 @@ var Monitor = module.exports = function (connection, filter) {
 Monitor.serial = 0;
 
 
-// ----------- prototype ------------//
+// ----------- prototype  public ------------//
 
 Monitor.prototype.start = function (done) {
   done = done || function () {};
 
   this.lastSynchedST = -1000000000000;
-  this.loadAllEvents();
+  this._connectionEventsGetAll();
 
   this.connection._ioSocketMonitors[this.id] = this;
   this.connection._startMonitoring(done);
 };
-
-
-
-Monitor.prototype.onConnect = function () {
-  console.log('Monitor onConnect');
-};
-Monitor.prototype.onError = function (error) {
-  console.log('Monitor onError' + error);
-};
-Monitor.prototype.onEventsChanged = function () {
-  this.checkEventsChanges(MyMsgs.ON_EVENT_CHANGE);
-};
-Monitor.prototype.onStreamsChanged = function () { };
 
 
 Monitor.prototype.destroy = function () {
@@ -62,8 +49,34 @@ Monitor.prototype.destroy = function () {
   }
 };
 
+// ------------ private ----------//
 
-Monitor.prototype.loadAllEvents = function () {
+// ----------- iOSocket ------//
+Monitor.prototype._onIoConnect = function () {
+  console.log('Monitor onConnect');
+};
+Monitor.prototype._onIoError = function (error) {
+  console.log('Monitor _onIoError' + error);
+};
+Monitor.prototype._onIoEventsChanged = function () {
+  this._connectionEventsGetChanges(MyMsgs.ON_EVENT_CHANGE);
+};
+Monitor.prototype._onIoStreamsChanged = function () { };
+
+
+
+// -----------  filter changes ----------- //
+
+Monitor.prototype._onFilterChange = function (signal/*, content*/) {
+  this._connectionEventsGetAllAndCompare(MyMsgs.ON_FILTER_CHANGE, {filterInfos: signal});
+};
+
+// ----------- internal ----------------- //
+
+/**
+ *
+ */
+Monitor.prototype._connectionEventsGetAll = function () {
   this.lastSynchedST = this.connection.getServerTime();
   this._events = { active : {}};
   this.connection.events.get(this.filter, EXTRA_ALL_EVENTS,
@@ -74,11 +87,10 @@ Monitor.prototype.loadAllEvents = function () {
       }.bind(this));
       this._fireEvent(MyMsgs.ON_LOAD, events);
     }.bind(this));
-
 };
 
 
-Monitor.prototype.checkEventsChanges = function (signal) {
+Monitor.prototype._connectionEventsGetChanges = function (signal) {
   var options = { modifiedSince : this.lastSynchedST, state : 'all'};
   this.lastSynchedST = this.connection.getServerTime();
 
@@ -108,7 +120,7 @@ Monitor.prototype.checkEventsChanges = function (signal) {
 };
 
 
-Monitor.prototype.reloadAllEventsAndCompare = function (signal, extracontent) {
+Monitor.prototype._connectionEventsGetAllAndCompare = function (signal, extracontent) {
   this.lastSynchedST = this.connection.getServerTime();
 
 
@@ -137,11 +149,6 @@ Monitor.prototype.reloadAllEventsAndCompare = function (signal, extracontent) {
 
 };
 
-// -----------  filter changes ----------- //
-
-Monitor.prototype._onFilterChange = function (signal/*, content*/) {
-  this.reloadAllEventsAndCompare(MyMsgs.ON_FILTER_CHANGE, {filterMessage: signal});
-};
 
 
 

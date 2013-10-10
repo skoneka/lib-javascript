@@ -145,16 +145,16 @@ Connection.prototype._startMonitoring = function (callback) {
   this.ioSocket = System.ioConnect(settings);
 
   this.ioSocket.on('connect', function () {
-    _.each(this._ioSocketMonitors, function (monitor) { monitor.onConnect(); });
+    _.each(this._ioSocketMonitors, function (monitor) { monitor._onIoConnect(); });
   }.bind(this));
   this.ioSocket.on('error', function (error) {
-    _.each(this._ioSocketMonitors, function (monitor) { monitor.onError(error); });
+    _.each(this._ioSocketMonitors, function (monitor) { monitor._onIoError(error); });
   }.bind(this));
   this.ioSocket.on('eventsChanged', function () {
-    _.each(this._ioSocketMonitors, function (monitor) { monitor.onEventsChanged(); });
+    _.each(this._ioSocketMonitors, function (monitor) { monitor._onIoEventsChanged(); });
   }.bind(this));
   this.ioSocket.on('streamsChanged', function () {
-    _.each(this._ioSocketMonitors, function (monitor) { monitor.onStreamsChanged(); });
+    _.each(this._ioSocketMonitors, function (monitor) { monitor._onIoStreamsChanged(); });
   }.bind(this));
   callback(null);
 };

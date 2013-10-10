@@ -24,13 +24,17 @@ var testMonitor = function (enableLocalStorage) {
       });
     }
 
-    var filter = new Pryv.Filter();
+    var filter = new Pryv.Filter({limit : 20 });
     var monitor = connection.monitor(filter);
 
+    var eventsListeners = {};
 
-    function onLoad(/*events*/) {
-      console.log('monitor loaded');
-    }
+    //it('signal: events loaded', function (done) {
+    eventsListeners.onLoad =  function (events) {
+      console.log('first event received :' + events.length);
+      //done();
+    };
+    //});
 
     function onEventChange(/*changes*/) {
       console.log('onEventChange');
@@ -42,13 +46,13 @@ var testMonitor = function (enableLocalStorage) {
     }
 
     it('add event listeners and start', function (done) {
-      monitor.addEventListener(Pryv.Messages.Monitor.ON_LOAD, onLoad);
+      monitor.addEventListener(Pryv.Messages.Monitor.ON_LOAD, eventsListeners.onLoad);
       monitor.addEventListener(Pryv.Messages.Monitor.ON_EVENT_CHANGE, onEventChange);
       monitor.addEventListener(Pryv.Messages.Monitor.ON_FILTER_CHANGE, onFilterChange);
-      // monitor.start(function (error) {
-      //console.log('monitor started ' + error);
-      done();
-      // });
+      monitor.start(function (error) {
+        console.log('monitor started ' + error);
+        done();
+      });
     });
 
   });
