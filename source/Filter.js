@@ -33,11 +33,11 @@ Filter.prototype._fireFilterChange = function (signal, content, batch) {
 };
 
 /**
- * Change sevral values of the filter in batch.. this wil group all events behind a batch id
+ * Change several values of the filter in batch.. this wil group all events behind a batch id
  * @param keyValueMap
  * @param batch
  */
-Filter.prototype.batchSet = function (keyValueMap, batch) {
+Filter.prototype.set = function (keyValueMap, batch) {
   var myBatch = false;
   if (! batch) { batch = this.startBatch(); myBatch = true; }
   _.each(keyValueMap, function (value, key) {
