@@ -15,7 +15,7 @@ var Streams = module.exports = function (connection) {
  * @param options {parentId: <parentId | null> , state: <all | null>}
  * @return Arrray of Pryv.Stream matching the options
  */
-Streams.prototype.get = function (options, callback, context) {
+Streams.prototype.get = function (options, callback) {
   if (this.connection.datastore) {
     var resultTree = [];
     if (options && _.has(options, 'parentId')) {
@@ -25,7 +25,7 @@ Streams.prototype.get = function (options, callback, context) {
     }
     callback(null, resultTree);
   } else {
-    this._getObjects(options, callback, context);
+    this._getObjects(options, callback);
   }
 };
 
@@ -44,7 +44,7 @@ Streams.prototype.getById = function (streamId) {
 /**
  * @private
  */
-Streams.prototype._getObjects = function (options, callback, context) {
+Streams.prototype._getObjects = function (options, callback) {
   options = options || {};
   options.parentId = options.parentId || null;
   var streamsIndex = {};
@@ -65,25 +65,25 @@ Streams.prototype._getObjects = function (options, callback, context) {
       }
     }.bind(this));
     callback(null, resultTree);
-  }.bind(this), context);
+  }.bind(this));
 };
 
-Streams.prototype._getData = function (opts, callback, context) {
+Streams.prototype._getData = function (opts, callback) {
   var url = opts ? '/streams?' + Utility.getQueryParametersString(opts) : '/streams';
-  this.connection.request('GET', url, callback, null, context);
+  this.connection.request('GET', url, callback, null);
 };
 
-Streams.prototype.create = function (stream, callback, context) {
+Streams.prototype.create = function (stream, callback) {
   var url = '/streams';
   this.connection.request('POST', url, function (err, result) {
     stream.id = result.id;
     callback(err, result);
-  }, stream, context);
+  }, stream);
 };
 
-Streams.prototype.update = function (stream, callback, context) {
+Streams.prototype.update = function (stream, callback) {
   var url = '/streams/' + stream.id;
-  this.connection.request('PUT', url, callback, null, context);
+  this.connection.request('PUT', url, callback, null);
 };
 
 /**
@@ -92,17 +92,16 @@ Streams.prototype.update = function (stream, callback, context) {
  * @param opts
  * @param eachStream
  * @param done
- * @param context
  */
-Streams.prototype.walkTree = function (options, eachStream, done, context) {
+Streams.prototype.walkTree = function (options, eachStream, done) {
   this.get(options, function (error, result) {
     if (error) { return done('Stream.walkTree failed: ' + error); }
     Streams.Utils.walkObjectTree(result, eachStream);
     if (done) { done(null); }
-  }, context);
+  });
 };
 
-Streams.prototype.getFlatenedObjects = function (options, callback, context) {
+Streams.prototype.getFlatenedObjects = function (options, callback) {
   var result = [];
   this.walkTree(options,
     function (stream) { // each stream
@@ -110,7 +109,7 @@ Streams.prototype.getFlatenedObjects = function (options, callback, context) {
   }, function (error) {  // done
     if (error) { return callback(error); }
     callback(null, result);
-  }.bind(this), context);
+  }.bind(this));
 };
 
 

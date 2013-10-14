@@ -159,12 +159,12 @@ Connection.prototype._startMonitoring = function (callback) {
   callback(null);
 };
 
-Connection.prototype.request = function (method, path, callback, jsonData, context) {
+Connection.prototype.request = function (method, path, callback, jsonData) {
   if (! callback || ! _.isFunction(callback)) {
     throw new Error('request\'s callback must be a function');
   }
   var headers =  { 'authorization': this.auth };
-  context = context ? context : this;
+
   var payload = null;
   if (jsonData) {
     payload = JSON.stringify(jsonData);
@@ -195,11 +195,11 @@ Connection.prototype.request = function (method, path, callback, jsonData, conte
       this.serverInfos.deltaTime = (this.serverInfos.lastSeenLT / 1000) -
         requestInfos.headers['server-time'];
     }
-    callback.call(context, null, result);
+    callback(null, result);
   }
 
   function onError(error /*, requestInfo*/) {
-    callback.call(context, error, null);
+    callback(error, null);
   }
 };
 

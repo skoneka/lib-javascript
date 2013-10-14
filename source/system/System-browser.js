@@ -82,7 +82,7 @@ exports.request = function (pack)  {
         detail: detail,
         id: 'INTERNAL_ERROR',
         xhr: xhr
-      }, pack.context);
+      });
     } else if (xhr.readyState === 4) {
       var result = null;
 
@@ -92,7 +92,7 @@ exports.request = function (pack)  {
           detail: xhr.responseText + '\n' + detail,
           id: 'RESULT_NOT_JSON',
           xhr: xhr
-        }, pack.context);
+        });
       }
       var requestInfo = {
         code : xhr.status,
@@ -127,7 +127,7 @@ exports.request = function (pack)  {
       detail: detail,
       id: 'INTERNAL_ERROR',
       error: e
-    }, pack.context);
+    });
   }
   return xhr;
 };

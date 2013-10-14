@@ -21,21 +21,20 @@ Events.prototype.get = function (filter, deltaFilter, callback) {
   }.bind(this));
 };
 
-Events.prototype._get = function (filter, deltaFilter, callback, context) {
+Events.prototype._get = function (filter, deltaFilter, callback) {
   var tParams = Utility.mergeAndClean(filter.getData(), deltaFilter);
   if (_.has(tParams, 'streams') && tParams.streams.length === 0) { // dead end filter..
     return callback(null, []);
   }
   var url = '/events?' + Utility.getQueryParametersString(tParams);
-  this.conn.request('GET', url, callback, null, context);
+  this.conn.request('GET', url, callback, null);
 };
 
 /**
  * @param eventData minimum {streamId, type }
- * @param context
  * @return event
  */
-Events.prototype.create = function (eventData, callback, context) {
+Events.prototype.create = function (eventData, callback) {
   var event = new Event(this.conn, eventData);
   var url = '/events';
   this.conn.request('POST', url, function (err, result) {
@@ -43,17 +42,17 @@ Events.prototype.create = function (eventData, callback, context) {
       _.extend(event, result);
     }
     callback(err, result);
-  }, event.getData(), context);
+  }, event.getData());
   return event;
 };
 
-Events.prototype.trash = function (event, callback, context) {
-  this.deleteWithId(event.id, callback, context);
+Events.prototype.trash = function (event, callback) {
+  this.deleteWithId(event.id, callback);
 };
 
-Events.prototype.trashWithId = function (eventId, callback, context) {
+Events.prototype.trashWithId = function (eventId, callback) {
   var url = '/events/' + eventId;
-  this.conn.request('DELETE', url, callback, null, context);
+  this.conn.request('DELETE', url, callback, null);
 };
 
 
@@ -61,9 +60,8 @@ Events.prototype.trashWithId = function (eventId, callback, context) {
 /**
  * TODO code it right
  * @param eventsData Array of EventsData
- * @param context
  */
-Events.prototype.batch = function (eventsData, callback, context) {
+Events.prototype.batch = function (eventsData, callback) {
   if (!_.isArray(eventsData)) { eventsData = [eventsData]; }
   var url = '/events/batch';
   _.each(eventsData, function (event, index) {
@@ -74,16 +72,16 @@ Events.prototype.batch = function (eventsData, callback, context) {
       event.id = result[event.tempRefId].id;
     });
     callback(err, result);
-  }, eventsData, context);
+  }, eventsData);
 };
 
-Events.prototype.update = function (event, callback, context) {
-  this.updateWithIdAndData(event.id, event.getData(), callback, context);
+Events.prototype.update = function (event, callback) {
+  this.updateWithIdAndData(event.id, event.getData(), callback);
 };
 
-Events.prototype.updateWithIdAndData = function (eventId, data, callback, context) {
+Events.prototype.updateWithIdAndData = function (eventId, data, callback) {
   var url = '/events/' + eventId;
-  this.conn.request('PUT', url, callback, data, context);
+  this.conn.request('PUT', url, callback, data);
 };
 
 

@@ -1,6 +1,6 @@
 //file: system node
 
-
+//TODO align with XHR error
 
 //TODO: sort out the callback convention
 
