@@ -23,8 +23,34 @@ var Filter = module.exports = function (settings) {
   }, settings);
 };
 
-Filter.prototype.getData = function () {
-  return this._settings;
+
+/**
+ * Create a clone of this filter and changes some properties
+ * @param properties
+ * @returns Pryv.Filter
+ */
+Filter.prototype.cloneWithDelta = function (properties) {
+  var newProps = _.clone(this._settings);
+  _.extend(newProps, properties);
+  return new Filter(newProps);
+};
+
+/**
+ *
+ * @param ignoreNulls (optional) boolean
+ * @param withDelta (optional) apply this differences on the datar
+ * @returns {*}
+ */
+Filter.prototype.getData = function (ignoreNulls, withDelta) {
+  ignoreNulls = ignoreNulls || false;
+  var result = _.clone(this._settings);
+  if (withDelta)  {
+    _.extend(result, withDelta);
+  }
+  _.each(_.keys(result), function (key) {
+    if (result[key] === null) { delete result[key]; }
+  });
+  return result;
 };
 
 Filter.prototype._fireFilterChange = function (signal, content, batch) {

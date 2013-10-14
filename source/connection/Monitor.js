@@ -84,7 +84,7 @@ Monitor.prototype._onFilterChange = function (signal/*, content*/) {
 Monitor.prototype._connectionEventsGetAll = function () {
   this.lastSynchedST = this.connection.getServerTime();
   this._events = { active : {}};
-  this.connection.events.get(this.filter, EXTRA_ALL_EVENTS,
+  this.connection.events.get(this.filter.getData(true, EXTRA_ALL_EVENTS),
     function (error, events) {
       if (error) { this._fireEvent(MyMsgs.ON_ERROR, error); }
       _.each(events, function (event) {
@@ -101,7 +101,7 @@ Monitor.prototype._connectionEventsGetChanges = function (signal) {
 
   var result = { created : [], trashed : [], modified: []};
 
-  this.connection.events.get(this.filter, options,
+  this.connection.events.get(this.filter.getData(true, options),
     function (error, events) {
       if (error) {
         this._fireEvent(MyMsgs.ON_ERROR, error);
@@ -136,7 +136,7 @@ Monitor.prototype._connectionEventsGetAllAndCompare = function (signal, extracon
 
   var toremove = _.clone(this._events.active);
 
-  this.connection.events.get(this.filter, EXTRA_ALL_EVENTS,
+  this.connection.events.get(this.filter.getData(true, EXTRA_ALL_EVENTS),
     function (error, events) {
       if (error) { this._fireEvent(MyMsgs.ON_ERROR, error); }
       _.each(events, function (event) {

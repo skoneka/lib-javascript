@@ -1,6 +1,7 @@
 
 var Utility = require('../utility/Utility.js'),
   _ = require('underscore'),
+  Filter = require('../Filter'),
   Event = require('../Event');
 
 
@@ -10,19 +11,27 @@ var Events = module.exports = function (conn) {
 };
 
 
-Events.prototype.get = function (filter, deltaFilter, callback) {
+/**
+ *
+ * @param filter Pryv.Filter object or a properties map
+ * @param doneCallback
+ * @param partialResultCallback
+ */
+Events.prototype.get = function (filter, doneCallback, partialResultCallback) {
   //TODO handle caching
   var result = [];
-  this._get(filter, deltaFilter, function (error, eventList) {
+  this._get(filter, function (error, eventList) {
     _.each(eventList, function (eventData) {
       result.push(new Event(this.conn, eventData));
     }.bind(this));
-    callback(error, result);
+    doneCallback(error, result);
+    if (partialResultCallback) { partialResultCallback(error, result); }
   }.bind(this));
 };
 
-Events.prototype._get = function (filter, deltaFilter, callback) {
-  var tParams = Utility.mergeAndClean(filter.getData(), deltaFilter);
+Events.prototype._get = function (filter, callback) {
+  var tParams = filter;
+  if (filter instanceof Filter) { tParams = filter.getData(true); }
   if (_.has(tParams, 'streams') && tParams.streams.length === 0) { // dead end filter..
     return callback(null, []);
   }

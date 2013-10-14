@@ -52,7 +52,7 @@ var testEvents = function (enableLocalStorage) {
         nock('https://' + username + '.' + settings.domain)
           .get('/events?' + Utility.getQueryParametersString(defaultFilter.settings))
           .reply(200, response);
-        connection.events._get(defaultFilter, null, function (err, result) {
+        connection.events._get(defaultFilter, function (err, result) {
           should.not.exist(err);
           should.exist(result);
           result.should.eql(response);
@@ -67,7 +67,7 @@ var testEvents = function (enableLocalStorage) {
         nock('https://' + username + '.' + settings.domain)
           .get('/events?' + Utility.getQueryParametersString(defaultFilter.settings))
           .reply(200, responses.events);
-        connection.events.get(defaultFilter, null, function (err, result) {
+        connection.events.get(defaultFilter, function (err, result) {
           should.not.exist(err);
           should.exist(result);
 
@@ -111,7 +111,7 @@ var testEvents = function (enableLocalStorage) {
         var deadEndFilter = new Pryv.Filter();
         deadEndFilter.streamsIds = [];
 
-        connection.events.get(deadEndFilter, null, function (err, result) {
+        connection.events.get(deadEndFilter, function (err, result) {
           should.not.exist(err);
           should.exist(result);
           result.should.be.instanceOf(Array);
