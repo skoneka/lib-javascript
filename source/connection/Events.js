@@ -25,7 +25,7 @@ Events.prototype.get = function (filter, doneCallback, partialResultCallback) {
       result.push(new Event(this.conn, eventData));
     }.bind(this));
     doneCallback(error, result);
-    if (partialResultCallback) { partialResultCallback(error, result); }
+    if (partialResultCallback) { partialResultCallback(error, result); }
   }.bind(this));
 };
 

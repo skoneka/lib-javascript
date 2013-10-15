@@ -42,7 +42,7 @@ Filter.prototype.cloneWithDelta = function (properties) {
  * @returns {*}
  */
 Filter.prototype.getData = function (ignoreNulls, withDelta) {
-  ignoreNulls = ignoreNulls || false;
+  ignoreNulls = ignoreNulls || false;
   var result = _.clone(this._settings);
   if (withDelta)  {
     _.extend(result, withDelta);
