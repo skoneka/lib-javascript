@@ -18,6 +18,8 @@ var Monitor = module.exports = function (connection, filter) {
 
   this.filter = filter;
 
+  this.lastUsedFilterSettings = null;
+
   if (this.filter.state) {
     throw new Error('Monitors only work for default state, not trashed or all');
   }
@@ -72,7 +74,19 @@ Monitor.prototype._onIoStreamsChanged = function () { };
 
 // -----------  filter changes ----------- //
 
+Monitor.prototype._onEachRequest = function() {
+
+}
+
+
 Monitor.prototype._onFilterChange = function (signal/*, content*/) {
+
+  if (signal === MSGs.DATE_CHANGE) {
+    console.log('** DATE CHANGE');
+
+  }
+
+
   this._connectionEventsGetAllAndCompare(MyMsgs.ON_FILTER_CHANGE, {filterInfos: signal});
 };
 
@@ -129,7 +143,6 @@ Monitor.prototype._connectionEventsGetAllAndCompare = function (signal, extracon
   this.lastSynchedST = this.connection.getServerTime();
 
 
-  console.log(JSON.stringify(this.filter.getData()));
 
   var result = { enter : [] };
   _.extend(result, extracontent); // pass extracontent to receivers
