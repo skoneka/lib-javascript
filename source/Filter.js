@@ -79,6 +79,8 @@ Filter.prototype.set = function (keyValueMap, batch) {
  * @private
  */
 Filter.prototype._setValue = function (key, newValue, batch) {
+  var waitForMe = batch ? batch.waitForMeToFinish() : null;
+
   if (key === 'limit') {
     this._settings.limit = newValue;
 
@@ -96,6 +98,7 @@ Filter.prototype._setValue = function (key, newValue, batch) {
       this._settings.toTime = newValue[1];
       this._fireFilterChange(MSGs.DATE_CHANGE, this.timeFrameST, batch);
     }
+    if (waitForMe) { waitForMe.done(); }
     return;
   }
 
@@ -112,11 +115,11 @@ Filter.prototype._setValue = function (key, newValue, batch) {
     console.log(JSON.stringify(newValue));
     this._settings.streams = newValue;
     this._fireFilterChange(MSGs.STREAMS_CHANGE, this.streams, batch);
-
+    if (waitForMe) { waitForMe.done(); }
     return;
   }
 
-
+  if (waitForMe) { waitForMe.done(); }
   throw new Error('Filter has no property : ' + key);
 };
 
