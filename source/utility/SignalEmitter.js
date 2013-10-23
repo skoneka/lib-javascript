@@ -10,12 +10,16 @@ var SignalEmitter = module.exports = function (messagesMap) {
 };
 
 
-SignalEmitter.extend = function (object, messagesMap) {
+SignalEmitter.extend = function (object, messagesMap, name) {
+  if (! name) {
+    throw new Error('"name" parameter must be set');
+  }
   object._signalEmitterEvents = {};
   _.each(_.values(messagesMap), function (value) {
     object._signalEmitterEvents[value] = [];
   });
   _.extend(object, SignalEmitter.prototype);
+  object._signalEmitterName = name;
 };
 
 
@@ -63,10 +67,13 @@ SignalEmitter.prototype.removeEventListener = function (signal, callback) {
 SignalEmitter.prototype._fireEvent = function (signal, content, batch) {
   var batchId = batch ? batch.id : null;
   if (! signal) { throw new Error(); }
-  console.log('FireEvent : ' + signal + ' batch: ' + batchId);
+
+  var batchStr = batchId ? ' batch: ' + batchId + ', ' + batch.batchName : '';
+  console.log('FireEvent-' + this._signalEmitterName  + ' : ' + signal + batchStr);
+
   _.each(this._signalEmitterEvents[signal], function (callback) {
     if (callback !== null &&
-      SignalEmitter.Messages.UNREGISTER_LISTENER === callback(content, batchId)) {
+      SignalEmitter.Messages.UNREGISTER_LISTENER === callback(content, batchId, batch)) {
       this.removeEventListener(signal, callback);
     }
   }, this);
@@ -76,21 +83,23 @@ SignalEmitter.prototype._fireEvent = function (signal, content, batch) {
 SignalEmitter.batchSerial = 0;
 /**
  * start a batch process
+ * @param eventual superBatch you can hook on. In this case it will call superBatch.waitForMe(..)
  * @return an object where you have to call stop when done
  */
-SignalEmitter.prototype.startBatch = function () {
+SignalEmitter.prototype.startBatch = function (batchName, orHookOnBatch) {
+  if (orHookOnBatch && orHookOnBatch.sender === this) { // test if this batch comes form me
+    return orHookOnBatch.waitForMeToFinish();
+  }
   var batch = {
-    id : 'C' + SignalEmitter.batchSerial++,
+    sender : this,
+    batchName : batchName || '',
+    id : this._signalEmitterName + SignalEmitter.batchSerial++,
     filter : this,
     waitFor : 1,
-    waitForMeToFinish : function (name) {
-      var batch = this;
+
+    waitForMeToFinish : function () {
       batch.waitFor++;
-      return {
-        done : function () {
-          batch.done(name);
-        }
-      };
+      return this;
     },
     done : function (name) {
       this.waitFor--;

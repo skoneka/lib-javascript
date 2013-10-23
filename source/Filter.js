@@ -8,7 +8,7 @@ var Filter = module.exports = function (settings) {
   if (! (this instanceof Filter)) {
     return new Filter(settings);
   }
-  SignalEmitter.extend(this, MSGs);
+  SignalEmitter.extend(this, MSGs, 'Filter');
 
   this._settings = _.extend({
     //TODO: set default values
@@ -64,11 +64,17 @@ Filter.prototype._fireFilterChange = function (signal, content, batch) {
  * @param batch
  */
 Filter.prototype.set = function (keyValueMap, batch) {
+
   var myBatch = false;
-  if (! batch) { batch = this.startBatch(); myBatch = true; }
+  if (! batch && _.keys(keyValueMap).length > 1) {
+    batch = this.startBatch('set');
+    myBatch = true;
+  }
+
   _.each(keyValueMap, function (value, key) {
     this._setValue(key, value, batch);
   }.bind(this));
+
   if (myBatch) { batch.done(); }
 };
 
@@ -112,7 +118,6 @@ Filter.prototype._setValue = function (key, newValue, batch) {
     }
 
     // TODO check that this stream is valid
-    console.log(JSON.stringify(newValue));
     this._settings.streams = newValue;
     this._fireFilterChange(MSGs.STREAMS_CHANGE, this.streams, batch);
     if (waitForMe) { waitForMe.done(); }

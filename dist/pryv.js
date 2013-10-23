@@ -634,7 +634,7 @@ var Filter = module.exports = function (settings) {
   if (! (this instanceof Filter)) {
     return new Filter(settings);
   }
-  SignalEmitter.extend(this, MSGs);
+  SignalEmitter.extend(this, MSGs, 'Filter');
 
   this._settings = _.extend({
     //TODO: set default values
@@ -668,7 +668,7 @@ Filter.prototype.cloneWithDelta = function (properties) {
  * @returns {*}
  */
 Filter.prototype.getData = function (ignoreNulls, withDelta) {
-  ignoreNulls = ignoreNulls || false;
+  ignoreNulls = ignoreNulls || false;
   var result = _.clone(this._settings);
   if (withDelta)  {
     _.extend(result, withDelta);
@@ -690,11 +690,17 @@ Filter.prototype._fireFilterChange = function (signal, content, batch) {
  * @param batch
  */
 Filter.prototype.set = function (keyValueMap, batch) {
+
   var myBatch = false;
-  if (! batch) { batch = this.startBatch(); myBatch = true; }
+  if (! batch && _.keys(keyValueMap).length > 1) {
+    batch = this.startBatch('set');
+    myBatch = true;
+  }
+
   _.each(keyValueMap, function (value, key) {
     this._setValue(key, value, batch);
   }.bind(this));
+
   if (myBatch) { batch.done(); }
 };
 
@@ -705,6 +711,8 @@ Filter.prototype.set = function (keyValueMap, batch) {
  * @private
  */
 Filter.prototype._setValue = function (key, newValue, batch) {
+  var waitForMe = batch ? batch.waitForMeToFinish() : null;
+
   if (key === 'limit') {
     this._settings.limit = newValue;
 
@@ -722,6 +730,7 @@ Filter.prototype._setValue = function (key, newValue, batch) {
       this._settings.toTime = newValue[1];
       this._fireFilterChange(MSGs.DATE_CHANGE, this.timeFrameST, batch);
     }
+    if (waitForMe) { waitForMe.done(); }
     return;
   }
 
@@ -735,14 +744,13 @@ Filter.prototype._setValue = function (key, newValue, batch) {
     }
 
     // TODO check that this stream is valid
-    console.log(JSON.stringify(newValue));
     this._settings.streams = newValue;
     this._fireFilterChange(MSGs.STREAMS_CHANGE, this.streams, batch);
-
+    if (waitForMe) { waitForMe.done(); }
     return;
   }
 
-
+  if (waitForMe) { waitForMe.done(); }
   throw new Error('Filter has no property : ' + key);
 };
 
@@ -6088,7 +6096,7 @@ Events.prototype.get = function (filter, doneCallback, partialResultCallback) {
       result.push(new Event(this.conn, eventData));
     }.bind(this));
     doneCallback(error, result);
-    if (partialResultCallback) { partialResultCallback(error, result); }
+    if (partialResultCallback) { partialResultCallback(error, result); }
   }.bind(this));
 };
 
@@ -6362,11 +6370,13 @@ var EXTRA_ALL_EVENTS = {state : 'all', modifiedSince : -100000000 };
  * @constructor
  */
 var Monitor = module.exports = function (connection, filter) {
-  SignalEmitter.extend(this, MyMsgs);
+  SignalEmitter.extend(this, MyMsgs, 'Monitor');
   this.connection = connection;
   this.id = 'M' + Monitor.serial++;
 
   this.filter = filter;
+
+  this.lastUsedFilterSettings = null;
 
   if (this.filter.state) {
     throw new Error('Monitors only work for default state, not trashed or all');
@@ -6422,8 +6432,20 @@ Monitor.prototype._onIoStreamsChanged = function () { };
 
 // -----------  filter changes ----------- //
 
-Monitor.prototype._onFilterChange = function (signal/*, content*/) {
-  this._connectionEventsGetAllAndCompare(MyMsgs.ON_FILTER_CHANGE, {filterInfos: signal});
+Monitor.prototype._onEachRequest = function () {
+
+};
+
+
+Monitor.prototype._onFilterChange = function (signal, batchId, batch) {
+
+  if (signal === MSGs.DATE_CHANGE) {
+    console.log('** DATE CHANGE');
+
+  }
+
+
+  this._connectionEventsGetAllAndCompare(MyMsgs.ON_FILTER_CHANGE, {filterInfos: signal}, batch);
 };
 
 // ----------- internal ----------------- //
@@ -6475,11 +6497,10 @@ Monitor.prototype._connectionEventsGetChanges = function (signal) {
 };
 
 
-Monitor.prototype._connectionEventsGetAllAndCompare = function (signal, extracontent) {
+Monitor.prototype._connectionEventsGetAllAndCompare = function (signal, extracontent, batch) {
   this.lastSynchedST = this.connection.getServerTime();
 
 
-  console.log(JSON.stringify(this.filter.getData()));
 
   var result = { enter : [] };
   _.extend(result, extracontent); // pass extracontent to receivers
@@ -6501,7 +6522,7 @@ Monitor.prototype._connectionEventsGetAllAndCompare = function (signal, extracon
         delete this._events.active[streamid]; // cleanup not found streams
       }.bind(this));
       result.leave = _.values(toremove); // unmatched events are to be removed
-      this._fireEvent(signal, result);
+      this._fireEvent(signal, result, batch);
     }.bind(this));
 
 };
@@ -6523,12 +6544,16 @@ var SignalEmitter = module.exports = function (messagesMap) {
 };
 
 
-SignalEmitter.extend = function (object, messagesMap) {
+SignalEmitter.extend = function (object, messagesMap, name) {
+  if (! name) {
+    throw new Error('"name" parameter must be set');
+  }
   object._signalEmitterEvents = {};
   _.each(_.values(messagesMap), function (value) {
     object._signalEmitterEvents[value] = [];
   });
   _.extend(object, SignalEmitter.prototype);
+  object._signalEmitterName = name;
 };
 
 
@@ -6576,10 +6601,13 @@ SignalEmitter.prototype.removeEventListener = function (signal, callback) {
 SignalEmitter.prototype._fireEvent = function (signal, content, batch) {
   var batchId = batch ? batch.id : null;
   if (! signal) { throw new Error(); }
-  console.log('FireEvent : ' + signal + ' batch: ' + batchId);
+
+  var batchStr = batchId ? ' batch: ' + batchId + ', ' + batch.batchName : '';
+  console.log('FireEvent-' + this._signalEmitterName  + ' : ' + signal + batchStr);
+
   _.each(this._signalEmitterEvents[signal], function (callback) {
     if (callback !== null &&
-      SignalEmitter.Messages.UNREGISTER_LISTENER === callback(content, batchId)) {
+      SignalEmitter.Messages.UNREGISTER_LISTENER === callback(content, batchId, batch)) {
       this.removeEventListener(signal, callback);
     }
   }, this);
@@ -6589,21 +6617,23 @@ SignalEmitter.prototype._fireEvent = function (signal, content, batch) {
 SignalEmitter.batchSerial = 0;
 /**
  * start a batch process
+ * @param eventual superBatch you can hook on. In this case it will call superBatch.waitForMe(..)
  * @return an object where you have to call stop when done
  */
-SignalEmitter.prototype.startBatch = function () {
+SignalEmitter.prototype.startBatch = function (batchName, orHookOnBatch) {
+  if (orHookOnBatch && orHookOnBatch.sender === this) { // test if this batch comes form me
+    return orHookOnBatch.waitForMeToFinish();
+  }
   var batch = {
-    id : 'C' + SignalEmitter.batchSerial++,
+    sender : this,
+    batchName : batchName || '',
+    id : this._signalEmitterName + SignalEmitter.batchSerial++,
     filter : this,
     waitFor : 1,
-    waitForMeToFinish : function (name) {
-      var batch = this;
+
+    waitForMeToFinish : function () {
       batch.waitFor++;
-      return {
-        done : function () {
-          batch.done(name);
-        }
-      };
+      return this;
     },
     done : function (name) {
       this.waitFor--;
@@ -6633,12 +6663,16 @@ var SignalEmitter = module.exports = function (messagesMap) {
 };
 
 
-SignalEmitter.extend = function (object, messagesMap) {
+SignalEmitter.extend = function (object, messagesMap, name) {
+  if (! name) {
+    throw new Error('"name" parameter must be set');
+  }
   object._signalEmitterEvents = {};
   _.each(_.values(messagesMap), function (value) {
     object._signalEmitterEvents[value] = [];
   });
   _.extend(object, SignalEmitter.prototype);
+  object._signalEmitterName = name;
 };
 
 
@@ -6686,10 +6720,13 @@ SignalEmitter.prototype.removeEventListener = function (signal, callback) {
 SignalEmitter.prototype._fireEvent = function (signal, content, batch) {
   var batchId = batch ? batch.id : null;
   if (! signal) { throw new Error(); }
-  console.log('FireEvent : ' + signal + ' batch: ' + batchId);
+
+  var batchStr = batchId ? ' batch: ' + batchId + ', ' + batch.batchName : '';
+  console.log('FireEvent-' + this._signalEmitterName  + ' : ' + signal + batchStr);
+
   _.each(this._signalEmitterEvents[signal], function (callback) {
     if (callback !== null &&
-      SignalEmitter.Messages.UNREGISTER_LISTENER === callback(content, batchId)) {
+      SignalEmitter.Messages.UNREGISTER_LISTENER === callback(content, batchId, batch)) {
       this.removeEventListener(signal, callback);
     }
   }, this);
@@ -6699,21 +6736,23 @@ SignalEmitter.prototype._fireEvent = function (signal, content, batch) {
 SignalEmitter.batchSerial = 0;
 /**
  * start a batch process
+ * @param eventual superBatch you can hook on. In this case it will call superBatch.waitForMe(..)
  * @return an object where you have to call stop when done
  */
-SignalEmitter.prototype.startBatch = function () {
+SignalEmitter.prototype.startBatch = function (batchName, orHookOnBatch) {
+  if (orHookOnBatch && orHookOnBatch.sender === this) { // test if this batch comes form me
+    return orHookOnBatch.waitForMeToFinish();
+  }
   var batch = {
-    id : 'C' + SignalEmitter.batchSerial++,
+    sender : this,
+    batchName : batchName || '',
+    id : this._signalEmitterName + SignalEmitter.batchSerial++,
     filter : this,
     waitFor : 1,
-    waitForMeToFinish : function (name) {
-      var batch = this;
+
+    waitForMeToFinish : function () {
       batch.waitFor++;
-      return {
-        done : function () {
-          batch.done(name);
-        }
-      };
+      return this;
     },
     done : function (name) {
       this.waitFor--;

@@ -12,7 +12,7 @@ var EXTRA_ALL_EVENTS = {state : 'all', modifiedSince : -100000000 };
  * @constructor
  */
 var Monitor = module.exports = function (connection, filter) {
-  SignalEmitter.extend(this, MyMsgs);
+  SignalEmitter.extend(this, MyMsgs, 'Monitor');
   this.connection = connection;
   this.id = 'M' + Monitor.serial++;
 
@@ -74,12 +74,12 @@ Monitor.prototype._onIoStreamsChanged = function () { };
 
 // -----------  filter changes ----------- //
 
-Monitor.prototype._onEachRequest = function() {
+Monitor.prototype._onEachRequest = function () {
 
-}
+};
 
 
-Monitor.prototype._onFilterChange = function (signal/*, content*/) {
+Monitor.prototype._onFilterChange = function (signal, batchId, batch) {
 
   if (signal === MSGs.DATE_CHANGE) {
     console.log('** DATE CHANGE');
@@ -87,7 +87,7 @@ Monitor.prototype._onFilterChange = function (signal/*, content*/) {
   }
 
 
-  this._connectionEventsGetAllAndCompare(MyMsgs.ON_FILTER_CHANGE, {filterInfos: signal});
+  this._connectionEventsGetAllAndCompare(MyMsgs.ON_FILTER_CHANGE, {filterInfos: signal}, batch);
 };
 
 // ----------- internal ----------------- //
@@ -139,7 +139,7 @@ Monitor.prototype._connectionEventsGetChanges = function (signal) {
 };
 
 
-Monitor.prototype._connectionEventsGetAllAndCompare = function (signal, extracontent) {
+Monitor.prototype._connectionEventsGetAllAndCompare = function (signal, extracontent, batch) {
   this.lastSynchedST = this.connection.getServerTime();
 
 
@@ -164,7 +164,7 @@ Monitor.prototype._connectionEventsGetAllAndCompare = function (signal, extracon
         delete this._events.active[streamid]; // cleanup not found streams
       }.bind(this));
       result.leave = _.values(toremove); // unmatched events are to be removed
-      this._fireEvent(signal, result);
+      this._fireEvent(signal, result, batch);
     }.bind(this));
 
 };
