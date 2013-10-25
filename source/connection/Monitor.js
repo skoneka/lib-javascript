@@ -18,7 +18,7 @@ var Monitor = module.exports = function (connection, filter) {
 
   this.filter = filter;
 
-  this.lastUsedFilterSettings = null;
+  this._lastUsedFilterData = null;
 
   if (this.filter.state) {
     throw new Error('Monitors only work for default state, not trashed or all');
@@ -78,11 +78,19 @@ Monitor.prototype._onEachRequest = function () {
 
 };
 
+Monitor.prototype._saveLastUsedFiler = function () {
+  this._lastUsedFilterData = this.filter._getData();
+};
+
 
 Monitor.prototype._onFilterChange = function (signal, batchId, batch) {
+  var changes = this.filter.compareToFilterData(this._lastUsedFilterData);
+  if (signal === MSGs.DATE_CHANGE) {  // only load events if date is wider
+    console.log('** DATE CHANGE ' + changes.timeFrame);
+  }
 
-  if (signal === MSGs.DATE_CHANGE) {
-    console.log('** DATE CHANGE');
+  if (signal === MSGs.STREAMS_CHANGE) {
+    console.log('** STREAMS_CHANGE');
 
   }
 

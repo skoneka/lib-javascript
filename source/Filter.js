@@ -24,6 +24,50 @@ var Filter = module.exports = function (settings) {
 };
 
 
+
+function _normalizeTimeFrameST(filterData) {
+  var result = [Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY];
+  if (filterData.fromTime || filterData.fromTime === 0) {
+    result[0] = filterData.fromTime;
+  }
+  if (filterData.toTime || filterData.toTime === 0) {
+    result[1] = filterData.toTime;
+  }
+  return result;
+}
+
+/**
+ * Compare this filter with data form anothe filter
+ * @param filterData data got with filter.getData
+ * @returns keymap { timeFrame : -1, 0 , 1 }
+ * (1 = more than test, -1 = less data than test, 0 == no changes)
+ */
+Filter.prototype.compareToFilterData = function (filterDataTest) {
+  var result = { timeFrame : 0};
+
+  var myTimeFrameST = _normalizeTimeFrameST(this._settings);
+  var testTimeFrameST = _normalizeTimeFrameST(filterDataTest);
+
+  console.log(myTimeFrameST);
+  console.log(testTimeFrameST);
+
+  if (myTimeFrameST[0] < testTimeFrameST[0]) {
+    result.timeFrame = 1;
+  } else if (myTimeFrameST[0] > testTimeFrameST[0]) {
+    result.timeFrame = -1;
+  }
+  if (result.timeFrame <= 0) {
+    if (myTimeFrameST[1] > testTimeFrameST[1]) {
+      result.timeFrame = 1;
+    } else  if (myTimeFrameST[1] < testTimeFrameST[1]) {
+      result.timeFrame = -1;
+    }
+  }
+
+
+  return result;
+};
+
 /**
  * Create a clone of this filter and changes some properties
  * @param properties

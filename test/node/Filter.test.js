@@ -21,5 +21,39 @@ describe('Filter', function () {
     done();
   });
 
+  it('Compare two filters', function (done) {
+    var filter1 = new Pryv.Filter();
+    filter1.timeFrameST = [0, 1];
+
+    var filter2 = new Pryv.Filter();
+    filter2.timeFrameST = [0, 1];
+
+    var comparison1 = filter1.compareToFilterData(filter2.getData());
+    comparison1.timeFrame.should.equal(0);
+
+    filter2.timeFrameST = [0, null];
+    var comparison2 = filter1.compareToFilterData(filter2.getData());
+    comparison2.timeFrame.should.equal(-1);
+
+    filter2.timeFrameST = [0, 2];  // <-- last change of f2
+    var comparison3 = filter1.compareToFilterData(filter2.getData());
+    comparison3.timeFrame.should.equal(-1);
+
+    filter1.timeFrameST = [1, 2];
+    var comparison4 = filter1.compareToFilterData(filter2.getData());
+    comparison4.timeFrame.should.equal(-1);
+
+    filter1.timeFrameST = [null, null];
+    var comparison5 = filter1.compareToFilterData(filter2.getData());
+    comparison5.timeFrame.should.equal(1);
+
+    filter2.timeFrameST = [0, 3];
+    var comparison6 = filter1.compareToFilterData(filter2.getData());
+    comparison6.timeFrame.should.equal(1);
+
+    done();
+  });
+
+
 });
 
