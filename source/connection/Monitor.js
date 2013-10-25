@@ -18,7 +18,7 @@ var Monitor = module.exports = function (connection, filter) {
 
   this.filter = filter;
 
-  this._lastUsedFilterData = null;
+  this._lastUsedFilterData = filter;
 
   if (this.filter.state) {
     throw new Error('Monitors only work for default state, not trashed or all');
@@ -74,31 +74,70 @@ Monitor.prototype._onIoStreamsChanged = function () { };
 
 // -----------  filter changes ----------- //
 
-Monitor.prototype._onEachRequest = function () {
 
-};
-
-Monitor.prototype._saveLastUsedFiler = function () {
-  this._lastUsedFilterData = this.filter._getData();
+Monitor.prototype._saveLastUsedFilter = function () {
+  this._lastUsedFilterData = this.filter.getData();
 };
 
 
 Monitor.prototype._onFilterChange = function (signal, batchId, batch) {
   var changes = this.filter.compareToFilterData(this._lastUsedFilterData);
-  if (signal === MSGs.DATE_CHANGE) {  // only load events if date is wider
+
+  var processLocalyOnly = 1;
+  var foundsignal = 0;
+  if (signal.signal === MSGs.Filter.DATE_CHANGE) {  // only load events if date is wider
+    foundsignal = 1;
     console.log('** DATE CHANGE ' + changes.timeFrame);
+    if (changes.timeFrame === 0) {
+      console.log('** NO changes');
+      return;
+    }
+    if (changes.timeFrame < 0) {  // new timeFrame contains more data
+      processLocalyOnly = 0;
+    }
+
   }
 
-  if (signal === MSGs.STREAMS_CHANGE) {
+  if (signal.signal === MSGs.Filter.STREAMS_CHANGE) {
+    foundsignal = 1;
     console.log('** STREAMS_CHANGE');
-
+    processLocalyOnly = 0;
   }
 
 
-  this._connectionEventsGetAllAndCompare(MyMsgs.ON_FILTER_CHANGE, {filterInfos: signal}, batch);
+  if (! foundsignal) {
+    throw new Error('Signal not found :' + signal.signal);
+  }
+
+  this._saveLastUsedFilter();
+
+
+
+
+  if (processLocalyOnly) {
+    this._refilterLocaly(MyMsgs.ON_FILTER_CHANGE, {filterInfos: signal}, batch);
+  } else {
+    this._connectionEventsGetAllAndCompare(MyMsgs.ON_FILTER_CHANGE, {filterInfos: signal}, batch);
+  }
 };
 
 // ----------- internal ----------------- //
+
+/**
+ * Process events locally
+ */
+Monitor.prototype._refilterLocaly = function (signal, extracontent, batch) {
+
+  var result = { enter : [], leave : [] };
+  _.extend(result, extracontent); // pass extracontent to receivers
+  _.each(_.clone(this._events.active), function (event) {
+    if (! this.filter.matchEvent(event)) {
+      result.leave.push(event);
+      delete this._events.active[event.id];
+    }
+  }.bind(this));
+  this._fireEvent(signal, result, batch);
+};
 
 /**
  *

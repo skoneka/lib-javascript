@@ -24,7 +24,8 @@ var Filter = module.exports = function (settings) {
 };
 
 
-
+// TODO
+// redundant with get
 function _normalizeTimeFrameST(filterData) {
   var result = [Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY];
   if (filterData.fromTime || filterData.fromTime === 0) {
@@ -36,6 +37,19 @@ function _normalizeTimeFrameST(filterData) {
   return result;
 }
 
+
+
+/**
+ * check if this event is in this filter
+ */
+Filter.prototype.matchEvent = function (event) {
+  if (event.time > this.toTimeSTNormalized) { return 0; }
+  if (event.time < this.fromTimeSTNormalized) { return 0; }
+
+  // TODO complete test
+  return 1;
+};
+
 /**
  * Compare this filter with data form anothe filter
  * @param filterData data got with filter.getData
@@ -45,9 +59,8 @@ function _normalizeTimeFrameST(filterData) {
 Filter.prototype.compareToFilterData = function (filterDataTest) {
   var result = { timeFrame : 0};
 
-  var myTimeFrameST = _normalizeTimeFrameST(this._settings);
+  var myTimeFrameST = [this.fromTimeSTNormalized, this.toTimeSTNormalized];
   var testTimeFrameST = _normalizeTimeFrameST(filterDataTest);
-
   console.log(myTimeFrameST);
   console.log(testTimeFrameST);
 
@@ -171,6 +184,31 @@ Filter.prototype._setValue = function (key, newValue, batch) {
   if (waitForMe) { waitForMe.done(); }
   throw new Error('Filter has no property : ' + key);
 };
+
+/**
+ * get toTime, return Number.POSITIVE_INFINITY if null
+ */
+Object.defineProperty(Filter.prototype, 'toTimeSTNormalized', {
+  get: function () {
+    if (this._settings.toTime || this._settings.toTime === 0) {
+      return this._settings.toTime;
+    }
+    return Number.POSITIVE_INFINITY;
+  }
+});
+
+/**
+ * get toTime, return Number.POSITIVE_INFINITY if null
+ */
+Object.defineProperty(Filter.prototype, 'fromTimeSTNormalized', {
+  get: function () {
+    if (this._settings.fromTime || this._settings.fromTime === 0) {
+      return this._settings.fromTime;
+    }
+    return Number.NEGATIVE_INFINITY;
+  }
+});
+
 
 
 /**

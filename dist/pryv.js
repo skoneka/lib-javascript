@@ -15,7 +15,7 @@ module.exports = {
   Messages: require('./Messages.js')
 };
 
-},{"./Access.js":6,"./Connection.js":1,"./Event.js":3,"./Filter.js":4,"./Messages.js":8,"./Stream.js":2,"./system/System.js":5,"./utility/Utility.js":7}],8:[function(require,module,exports){
+},{"./Access.js":6,"./Connection.js":1,"./Event.js":2,"./Filter.js":4,"./Messages.js":8,"./Stream.js":3,"./system/System.js":5,"./utility/Utility.js":7}],8:[function(require,module,exports){
 var Messages = module.exports = { };
 
 Messages.Monitor = {
@@ -514,6 +514,61 @@ Object.defineProperty(Connection.prototype, 'serialId', {
 
 var _ = require('underscore');
 
+var RW_PROPERTIES =
+  ['streamId', 'time', 'duration', 'type', 'content', 'tags', 'description',
+    'clientData', 'trashed', 'modified'];
+
+/**
+ *
+ * @type {Function}
+ * @constructor
+ */
+var Event = module.exports = function (connection, data) {
+  this.connection = connection;
+  this.serialId = this.connection.serialId + '>E' + this.connection._eventSerialCounter++;
+  _.extend(this, data);
+};
+
+/**
+ * get Json object ready to be posted on the API
+ */
+Event.prototype.getData = function () {
+  var data = {};
+  _.each(RW_PROPERTIES, function (key) { // only set non null values
+    if (_.has(this, key)) { data[key] = this[key]; }
+  }.bind(this));
+  return data;
+};
+
+
+
+
+
+Object.defineProperty(Event.prototype, 'stream', {
+  get: function () {
+    if (! this.connection.datastore) {
+      throw new Error('Activate localStorage to get automatic stream mapping. Or use StreamId');
+    }
+    return this.connection.streams.getById(this.streamId);
+  },
+  set: function () { throw new Error('Event.stream property is read only'); }
+});
+
+
+Object.defineProperty(Event.prototype, 'attachmentsUrl', {
+  get: function () {
+    var url = this.connection.settings.ssl ? 'https://' : 'http://';
+    url += this.connection.username + '.' + this.connection.settings.domain + ':3443/events/' +
+      this.id + '.jpg?auth=' + this.connection.auth;
+    return url;
+  },
+  set: function () { throw new Error('Event.attachmentsUrl property is read only'); }
+});
+
+},{"underscore":15}],3:[function(require,module,exports){
+
+var _ = require('underscore');
+
 var Stream = module.exports = function (connection, data) {
   this.connection = connection;
 
@@ -568,61 +623,6 @@ Object.defineProperty(Stream.prototype, 'ancestors', {
 
 
 
-},{"underscore":15}],3:[function(require,module,exports){
-
-var _ = require('underscore');
-
-var RW_PROPERTIES =
-  ['streamId', 'time', 'duration', 'type', 'content', 'tags', 'description',
-    'clientData', 'trashed', 'modified'];
-
-/**
- *
- * @type {Function}
- * @constructor
- */
-var Event = module.exports = function (connection, data) {
-  this.connection = connection;
-  this.serialId = this.connection.serialId + '>E' + this.connection._eventSerialCounter++;
-  _.extend(this, data);
-};
-
-/**
- * get Json object ready to be posted on the API
- */
-Event.prototype.getData = function () {
-  var data = {};
-  _.each(RW_PROPERTIES, function (key) { // only set non null values
-    if (_.has(this, key)) { data[key] = this[key]; }
-  }.bind(this));
-  return data;
-};
-
-
-
-
-
-Object.defineProperty(Event.prototype, 'stream', {
-  get: function () {
-    if (! this.connection.datastore) {
-      throw new Error('Activate localStorage to get automatic stream mapping. Or use StreamId');
-    }
-    return this.connection.streams.getById(this.streamId);
-  },
-  set: function () { throw new Error('Event.stream property is read only'); }
-});
-
-
-Object.defineProperty(Event.prototype, 'attachmentsUrl', {
-  get: function () {
-    var url = this.connection.settings.ssl ? 'https://' : 'http://';
-    url += this.connection.username + '.' + this.connection.settings.domain + ':3443/events/' +
-      this.id + '.jpg?auth=' + this.connection.auth;
-    return url;
-  },
-  set: function () { throw new Error('Event.attachmentsUrl property is read only'); }
-});
-
 },{"underscore":15}],4:[function(require,module,exports){
 var _ = require('underscore');
 
@@ -650,7 +650,8 @@ var Filter = module.exports = function (settings) {
 };
 
 
-
+// TODO
+// redundant with get
 function _normalizeTimeFrameST(filterData) {
   var result = [Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY];
   if (filterData.fromTime || filterData.fromTime === 0) {
@@ -662,6 +663,15 @@ function _normalizeTimeFrameST(filterData) {
   return result;
 }
 
+
+
+/**
+ * check if this event is in this filter
+ */
+Filter.prototype.matchEvent = function (event) {
+
+};
+
 /**
  * Compare this filter with data form anothe filter
  * @param filterData data got with filter.getData
@@ -671,9 +681,8 @@ function _normalizeTimeFrameST(filterData) {
 Filter.prototype.compareToFilterData = function (filterDataTest) {
   var result = { timeFrame : 0};
 
-  var myTimeFrameST = _normalizeTimeFrameST(this._settings);
+  var myTimeFrameST = [this.fromTimeSTNormalized, this.toTimeSTNormalized];
   var testTimeFrameST = _normalizeTimeFrameST(filterDataTest);
-
   console.log(myTimeFrameST);
   console.log(testTimeFrameST);
 
@@ -797,6 +806,31 @@ Filter.prototype._setValue = function (key, newValue, batch) {
   if (waitForMe) { waitForMe.done(); }
   throw new Error('Filter has no property : ' + key);
 };
+
+/**
+ * get toTime, return Number.POSITIVE_INFINITY if null
+ */
+Object.defineProperty(Filter.prototype, 'toTimeSTNormalized', {
+  get: function () {
+    if (this._settings.toTime || this._settings.toTime === 0) {
+      return this._settings.toTime;
+    }
+    return Number.POSITIVE_INFINITY;
+  }
+});
+
+/**
+ * get toTime, return Number.POSITIVE_INFINITY if null
+ */
+Object.defineProperty(Filter.prototype, 'fromTimeSTNormalized', {
+  get: function () {
+    if (this._settings.fromTime || this._settings.fromTime === 0) {
+      return this._settings.fromTime;
+    }
+    return Number.NEGATIVE_INFINITY;
+  }
+});
+
 
 
 /**
@@ -6211,7 +6245,7 @@ Events.prototype.updateWithIdAndData = function (eventId, data, callback) {
 
 
 
-},{"../Event":3,"../Filter":4,"../utility/Utility.js":7,"underscore":15}],12:[function(require,module,exports){
+},{"../Event":2,"../Filter":4,"../utility/Utility.js":7,"underscore":15}],12:[function(require,module,exports){
 var _ = require('underscore'),
     Utility = require('../utility/Utility.js'),
     Stream = require('../Stream.js');
@@ -6399,7 +6433,7 @@ Streams.Utils = {
 
 };
 
-},{"../Stream.js":2,"../utility/Utility.js":7,"underscore":15}],14:[function(require,module,exports){
+},{"../Stream.js":3,"../utility/Utility.js":7,"underscore":15}],14:[function(require,module,exports){
 var _ = require('underscore');
 var SignalEmitter = require('../Utility/SignalEmitter.js');
 var MSGs =  require('../Messages.js');
@@ -6420,7 +6454,7 @@ var Monitor = module.exports = function (connection, filter) {
 
   this.filter = filter;
 
-  this._lastUsedFilterData = null;
+  this._lastUsedFilterData = filter;
 
   if (this.filter.state) {
     throw new Error('Monitors only work for default state, not trashed or all');
@@ -6476,31 +6510,59 @@ Monitor.prototype._onIoStreamsChanged = function () { };
 
 // -----------  filter changes ----------- //
 
-Monitor.prototype._onEachRequest = function () {
 
-};
-
-Monitor.prototype._saveLastUsedFiler = function () {
-  this._lastUsedFilterData = this.filter._getData();
+Monitor.prototype._saveLastUsedFilter = function () {
+  this._lastUsedFilterData = this.filter.getData();
 };
 
 
 Monitor.prototype._onFilterChange = function (signal, batchId, batch) {
   var changes = this.filter.compareToFilterData(this._lastUsedFilterData);
+
+  var processLocalyOnly = 1;
+
   if (signal === MSGs.DATE_CHANGE) {  // only load events if date is wider
     console.log('** DATE CHANGE ' + changes.timeFrame);
+    processLocalyOnly = 0;
   }
 
   if (signal === MSGs.STREAMS_CHANGE) {
     console.log('** STREAMS_CHANGE');
-
+    if (changes.timeFrame === 0) {
+      console.log('** NO changes');
+      return;
+    }
+    if (changes.timeFrame < 0) {  // new timeFrame contains more data
+      processLocalyOnly = 0;
+    }
   }
 
+  this._saveLastUsedFilter();
 
-  this._connectionEventsGetAllAndCompare(MyMsgs.ON_FILTER_CHANGE, {filterInfos: signal}, batch);
+  if (processLocalyOnly) {
+    this._refilterLocaly(MyMsgs.ON_FILTER_CHANGE, {filterInfos: signal}, batch);
+  } else {
+    this._connectionEventsGetAllAndCompare(MyMsgs.ON_FILTER_CHANGE, {filterInfos: signal}, batch);
+  }
 };
 
 // ----------- internal ----------------- //
+
+/**
+ * Process events locally
+ */
+Monitor.prototype._refilterLocaly = function (signal, extracontent, batch) {
+
+  var result = { enter : [], leave : [] };
+  _.extend(result, extracontent); // pass extracontent to receivers
+  _.each(_.clone(this._events.active), function (event) {
+    if (! this.filter.matchEvent(event)) {
+      result.leave.push(event);
+      delete this._events.active[event.id];
+    }
+  });
+  this._fireEvent(signal, result, batch);
+};
 
 /**
  *
