@@ -26,6 +26,7 @@ var Monitor = module.exports = function (connection, filter) {
 
   this.filter.addEventListener(MSGs.Filter.ON_CHANGE, this._onFilterChange.bind(this));
   this._events = null;
+
 };
 
 Monitor.serial = 0;
@@ -218,6 +219,29 @@ Monitor.prototype._connectionEventsGetAllAndCompare = function (signal, extracon
       this._fireEvent(signal, result, batch);
     }.bind(this));
 
+};
+
+
+/**
+ * return informations on events
+ */
+Monitor.prototype.stats = function () {
+
+  var result = {
+    timeFrameST : [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY],
+    timeFrameLT : [null, null]
+  };
+  _.each(this._events.active, function (event) {
+    if (event.time < result.timeFrameST[0]) {
+      result.timeFrameST[0] = event.time;
+      result.timeFrameLT[0] = event.timeLT;
+    }
+    if (event.time > result.timeFrameST[1]) {
+      result.timeFrameST[1] = event.time;
+      result.timeFrameLT[1] = event.timeLT;
+    }
+  });
+  return result;
 };
 
 

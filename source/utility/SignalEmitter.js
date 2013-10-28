@@ -96,14 +96,26 @@ SignalEmitter.prototype.startBatch = function (batchName, orHookOnBatch) {
     id : this._signalEmitterName + SignalEmitter.batchSerial++,
     filter : this,
     waitFor : 1,
+    doneCallbacks : {},
 
     waitForMeToFinish : function () {
       batch.waitFor++;
       return this;
     },
+
+    /**
+     * listener are stored in key/map fashion, so addOnDoneListener('bob',..)
+     * may be called several time, callback 'bob', will be done just once
+     * @param key a unique key per callback
+     * @param callback
+     */
+    addOnDoneListener : function (key, callback) {
+      this.doneCallbacks[key] = callback;
+    },
     done : function (name) {
       this.waitFor--;
       if (this.waitFor === 0) {
+        _.each(this.doneCallbacks, function (callback) { callback(); });
         this.filter._fireEvent(SignalEmitter.Messages.BATCH_DONE, this.id, this);
       }
       if (this.waitFor < 0) {
