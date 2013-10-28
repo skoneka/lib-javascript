@@ -516,7 +516,7 @@ var _ = require('underscore');
 
 var RW_PROPERTIES =
   ['streamId', 'time', 'duration', 'type', 'content', 'tags', 'description',
-    'clientData', 'trashed', 'modified'];
+    'clientData', 'state', 'modified'];
 
 /**
  *
@@ -669,7 +669,17 @@ function _normalizeTimeFrameST(filterData) {
  * check if this event is in this filter
  */
 Filter.prototype.matchEvent = function (event) {
+  if (event.time > this.toTimeSTNormalized) { return 0; }
+  if (event.time < this.fromTimeSTNormalized) { return 0; }
 
+
+  if (this._settings.streams &&  this._settings.streams.indexOf(event.streamId) < 0) {
+    return 0;
+  }
+
+
+  // TODO complete test
+  return 1;
 };
 
 /**
@@ -679,8 +689,10 @@ Filter.prototype.matchEvent = function (event) {
  * (1 = more than test, -1 = less data than test, 0 == no changes)
  */
 Filter.prototype.compareToFilterData = function (filterDataTest) {
-  var result = { timeFrame : 0};
+  var result = { timeFrame : 0, streams : 0 };
 
+
+  // timeFrame
   var myTimeFrameST = [this.fromTimeSTNormalized, this.toTimeSTNormalized];
   var testTimeFrameST = _normalizeTimeFrameST(filterDataTest);
   console.log(myTimeFrameST);
@@ -699,6 +711,34 @@ Filter.prototype.compareToFilterData = function (filterDataTest) {
     }
   }
 
+  // streams
+  //TODO look if this processing can be optimized
+
+  var nullStream = 0;
+  if (! this._settings.streams) {
+    if (filterDataTest.streams) {
+      result.streams = 1;
+    }
+    nullStream = 1;
+  }
+  if (! filterDataTest.streams) {
+    if (this._settings.streams) {
+      result.streams = -1;
+    }
+    nullStream = 1;
+  }
+
+  if (! nullStream) {
+    var notinTest = _.difference(this._settings.streams, filterDataTest.streams);
+    if (notinTest.length > 0) {
+      result.streams = 1;
+    } else {
+      var notinLocal = _.difference(filterDataTest.streams, this._settings.streams);
+      if (notinLocal.length > 0) {
+        result.streams = -1;
+      }
+    }
+  }
 
   return result;
 };
@@ -2152,7 +2192,29 @@ Filter.prototype.focusedOnSingleStream = function () {
 }).call(this);
 
 })()
-},{}],7:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
+//TODO: consider merging System into Utility
+
+function isBrowser() {
+  return typeof(window) !== 'undefined';
+}
+
+var socketIO = require('socket.io-client');
+
+
+var System =
+  module.exports =  isBrowser() ?  require('./System-browser.js') : require('./System-node.js');
+
+System.ioConnect = function (settings) {
+  var httpMode = settings.ssl ? 'https' : 'http';
+  var url = httpMode + '://' + settings.host + ':' + settings.port + '' +
+    settings.path + '?auth=' + settings.auth + '&resource=' + settings.namespace;
+
+  return socketIO.connect(url, {'force new connection': true});
+};
+
+
+},{"./System-browser.js":9,"./System-node.js":10,"socket.io-client":17}],7:[function(require,module,exports){
 var _ = require('underscore');
 
 exports.SignalEmitter = require('./SignalEmitter.js');
@@ -2185,29 +2247,7 @@ exports.getQueryParametersString = function (data) {
   }, this).join('&');
 };
 
-},{"./SignalEmitter.js":17,"underscore":15}],5:[function(require,module,exports){
-//TODO: consider merging System into Utility
-
-function isBrowser() {
-  return typeof(window) !== 'undefined';
-}
-
-var socketIO = require('socket.io-client');
-
-
-var System =
-  module.exports =  isBrowser() ?  require('./System-browser.js') : require('./System-node.js');
-
-System.ioConnect = function (settings) {
-  var httpMode = settings.ssl ? 'https' : 'http';
-  var url = httpMode + '://' + settings.host + ':' + settings.port + '' +
-    settings.path + '?auth=' + settings.auth + '&resource=' + settings.namespace;
-
-  return socketIO.connect(url, {'force new connection': true});
-};
-
-
-},{"./System-browser.js":9,"./System-node.js":10,"socket.io-client":18}],13:[function(require,module,exports){
+},{"./SignalEmitter.js":18,"underscore":15}],13:[function(require,module,exports){
 var _ = require('underscore');
 
 var Datastore = module.exports = function (connection) {
@@ -2271,7 +2311,7 @@ Datastore.prototype.getStreamById = function (streamId, test) {
   return result;
 };
 
-},{"underscore":15}],18:[function(require,module,exports){
+},{"underscore":15}],17:[function(require,module,exports){
 (function(){/*! Socket.IO.js build:0.9.16, development. Copyright(c) 2011 LearnBoost <dev@learnboost.com> MIT Licensed */
 
 var io = ('undefined' === typeof module ? {} : module.exports);
@@ -6520,24 +6560,39 @@ Monitor.prototype._onFilterChange = function (signal, batchId, batch) {
   var changes = this.filter.compareToFilterData(this._lastUsedFilterData);
 
   var processLocalyOnly = 1;
-
-  if (signal === MSGs.DATE_CHANGE) {  // only load events if date is wider
-    console.log('** DATE CHANGE ' + changes.timeFrame);
-    processLocalyOnly = 0;
-  }
-
-  if (signal === MSGs.STREAMS_CHANGE) {
-    console.log('** STREAMS_CHANGE');
+  var foundsignal = 0;
+  if (signal.signal === MSGs.Filter.DATE_CHANGE) {  // only load events if date is wider
+    foundsignal = 1;
+    console.log('** DATE CHANGE ', changes.timeFrame);
     if (changes.timeFrame === 0) {
-      console.log('** NO changes');
       return;
     }
     if (changes.timeFrame < 0) {  // new timeFrame contains more data
       processLocalyOnly = 0;
     }
+
+  }
+
+  if (signal.signal === MSGs.Filter.STREAMS_CHANGE) {
+    foundsignal = 1;
+    console.log('** STREAMS_CHANGE', changes.streams);
+    if (changes.streams === 0) {
+      return;
+    }
+    if (changes.streams < 0) {  // new timeFrame contains more data
+      processLocalyOnly = 0;
+    }
+  }
+
+
+  if (! foundsignal) {
+    throw new Error('Signal not found :' + signal.signal);
   }
 
   this._saveLastUsedFilter();
+
+
+
 
   if (processLocalyOnly) {
     this._refilterLocaly(MyMsgs.ON_FILTER_CHANGE, {filterInfos: signal}, batch);
@@ -6560,7 +6615,7 @@ Monitor.prototype._refilterLocaly = function (signal, extracontent, batch) {
       result.leave.push(event);
       delete this._events.active[event.id];
     }
-  });
+  }.bind(this));
   this._fireEvent(signal, result, batch);
 };
 
@@ -6764,7 +6819,7 @@ SignalEmitter.prototype.startBatch = function (batchName, orHookOnBatch) {
 };
 
 })()
-},{"underscore":15}],17:[function(require,module,exports){
+},{"underscore":15}],18:[function(require,module,exports){
 (function(){/**
  * (event)Emitter renamed to avoid confusion with prvy's events
  */

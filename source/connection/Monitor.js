@@ -87,9 +87,8 @@ Monitor.prototype._onFilterChange = function (signal, batchId, batch) {
   var foundsignal = 0;
   if (signal.signal === MSGs.Filter.DATE_CHANGE) {  // only load events if date is wider
     foundsignal = 1;
-    console.log('** DATE CHANGE ' + changes.timeFrame);
+    console.log('** DATE CHANGE ', changes.timeFrame);
     if (changes.timeFrame === 0) {
-      console.log('** NO changes');
       return;
     }
     if (changes.timeFrame < 0) {  // new timeFrame contains more data
@@ -100,8 +99,13 @@ Monitor.prototype._onFilterChange = function (signal, batchId, batch) {
 
   if (signal.signal === MSGs.Filter.STREAMS_CHANGE) {
     foundsignal = 1;
-    console.log('** STREAMS_CHANGE');
-    processLocalyOnly = 0;
+    console.log('** STREAMS_CHANGE', changes.streams);
+    if (changes.streams === 0) {
+      return;
+    }
+    if (changes.streams < 0) {  // new timeFrame contains more data
+      processLocalyOnly = 0;
+    }
   }
 
 

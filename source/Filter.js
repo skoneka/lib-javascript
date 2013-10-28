@@ -46,6 +46,12 @@ Filter.prototype.matchEvent = function (event) {
   if (event.time > this.toTimeSTNormalized) { return 0; }
   if (event.time < this.fromTimeSTNormalized) { return 0; }
 
+
+  if (this._settings.streams &&  this._settings.streams.indexOf(event.streamId) < 0) {
+    return 0;
+  }
+
+
   // TODO complete test
   return 1;
 };
@@ -57,8 +63,10 @@ Filter.prototype.matchEvent = function (event) {
  * (1 = more than test, -1 = less data than test, 0 == no changes)
  */
 Filter.prototype.compareToFilterData = function (filterDataTest) {
-  var result = { timeFrame : 0};
+  var result = { timeFrame : 0, streams : 0 };
 
+
+  // timeFrame
   var myTimeFrameST = [this.fromTimeSTNormalized, this.toTimeSTNormalized];
   var testTimeFrameST = _normalizeTimeFrameST(filterDataTest);
   console.log(myTimeFrameST);
@@ -77,6 +85,34 @@ Filter.prototype.compareToFilterData = function (filterDataTest) {
     }
   }
 
+  // streams
+  //TODO look if this processing can be optimized
+
+  var nullStream = 0;
+  if (! this._settings.streams) {
+    if (filterDataTest.streams) {
+      result.streams = 1;
+    }
+    nullStream = 1;
+  }
+  if (! filterDataTest.streams) {
+    if (this._settings.streams) {
+      result.streams = -1;
+    }
+    nullStream = 1;
+  }
+
+  if (! nullStream) {
+    var notinTest = _.difference(this._settings.streams, filterDataTest.streams);
+    if (notinTest.length > 0) {
+      result.streams = 1;
+    } else {
+      var notinLocal = _.difference(filterDataTest.streams, this._settings.streams);
+      if (notinLocal.length > 0) {
+        result.streams = -1;
+      }
+    }
+  }
 
   return result;
 };
