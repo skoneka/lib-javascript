@@ -38,16 +38,17 @@ Monitor.prototype.start = function (done) {
   done = done || function () {};
 
   this.lastSynchedST = -1000000000000;
-  this._connectionEventsGetAll();
+  this._initEvents();
 
-  this.connection._ioSocketMonitors[this.id] = this;
+  //todo add a register monitor here ...
+  this.connection._monitors[this.id] = this;
   this.connection._startMonitoring(done);
 };
 
 
 Monitor.prototype.destroy = function () {
-  delete this.connection._ioSocketMonitors[this.id];
-  if (_.keys(this.connection._ioSocketMonitors).length === 0) {
+  delete this.connection._monitors[this.id];
+  if (_.keys(this.connection._monitors).length === 0) {
     this.connection._stopMonitoring();
   }
 };
@@ -84,7 +85,7 @@ Monitor.prototype._saveLastUsedFilter = function () {
 Monitor.prototype._onFilterChange = function (signal, batchId, batch) {
   var changes = this.filter.compareToFilterData(this._lastUsedFilterData);
 
-  var processLocalyOnly = 1;
+  var processLocalyOnly = 0;
   var foundsignal = 0;
   if (signal.signal === MSGs.Filter.DATE_CHANGE) {  // only load events if date is wider
     foundsignal = 1;
@@ -93,7 +94,7 @@ Monitor.prototype._onFilterChange = function (signal, batchId, batch) {
       return;
     }
     if (changes.timeFrame < 0) {  // new timeFrame contains more data
-      processLocalyOnly = 0;
+      processLocalyOnly = 1;
     }
 
   }
@@ -105,7 +106,7 @@ Monitor.prototype._onFilterChange = function (signal, batchId, batch) {
       return;
     }
     if (changes.streams < 0) {  // new timeFrame contains more data
-      processLocalyOnly = 0;
+      processLocalyOnly = 1;
     }
   }
 
@@ -115,7 +116,6 @@ Monitor.prototype._onFilterChange = function (signal, batchId, batch) {
   }
 
   this._saveLastUsedFilter();
-
 
 
 
@@ -147,7 +147,7 @@ Monitor.prototype._refilterLocaly = function (signal, extracontent, batch) {
 /**
  *
  */
-Monitor.prototype._connectionEventsGetAll = function () {
+Monitor.prototype._initEvents = function () {
   this.lastSynchedST = this.connection.getServerTime();
   this._events = { active : {}};
   this.connection.events.get(this.filter.getData(true, EXTRA_ALL_EVENTS),

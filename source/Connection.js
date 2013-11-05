@@ -40,13 +40,14 @@ var Connection = module.exports = function (username, auth, settings) {
   this.datastore = null;
 
   this._ioSocket = null;
-  this._ioSocketMonitors = {};
+  this._monitors = {};
 };
 
 Connection._serialCounter = 0;
 
 
 /**
+ * TODO ... move this as a setting parameter
  * Use pryv.in for development and debug.
  * The Library will activate Structure Monitoring and
  * @returns The connection
@@ -57,6 +58,7 @@ Connection.prototype.useStaging = function () {
 };
 
 /**
+ * TODO create an open() .. like access_info and add this as a setting
  * Use localStorage for caching.
  * The Library will activate Structure Monitoring and
  * @param callback
@@ -114,7 +116,7 @@ Connection.prototype.monitor = function (filter) {
 // ------------- start / stop Monitoring is called by Monitor constructor / destructor -----//
 
 /**
- *
+ * TODO
  * @private
  */
 Connection.prototype._stopMonitoring = function (/*callback*/) {
@@ -145,16 +147,16 @@ Connection.prototype._startMonitoring = function (callback) {
   this.ioSocket = System.ioConnect(settings);
 
   this.ioSocket.on('connect', function () {
-    _.each(this._ioSocketMonitors, function (monitor) { monitor._onIoConnect(); });
+    _.each(this._monitors, function (monitor) { monitor._onIoConnect(); });
   }.bind(this));
   this.ioSocket.on('error', function (error) {
-    _.each(this._ioSocketMonitors, function (monitor) { monitor._onIoError(error); });
+    _.each(this._monitors, function (monitor) { monitor._onIoError(error); });
   }.bind(this));
   this.ioSocket.on('eventsChanged', function () {
-    _.each(this._ioSocketMonitors, function (monitor) { monitor._onIoEventsChanged(); });
+    _.each(this._monitors, function (monitor) { monitor._onIoEventsChanged(); });
   }.bind(this));
   this.ioSocket.on('streamsChanged', function () {
-    _.each(this._ioSocketMonitors, function (monitor) { monitor._onIoStreamsChanged(); });
+    _.each(this._monitors, function (monitor) { monitor._onIoStreamsChanged(); });
   }.bind(this));
   callback(null);
 };

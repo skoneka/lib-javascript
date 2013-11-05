@@ -158,6 +158,7 @@ Filter.prototype._fireFilterChange = function (signal, content, batch) {
  */
 Filter.prototype.set = function (keyValueMap, batch) {
 
+
   var myBatch = false;
   if (! batch && _.keys(keyValueMap).length > 1) {
     batch = this.startBatch('set');
@@ -165,6 +166,7 @@ Filter.prototype.set = function (keyValueMap, batch) {
   }
 
   _.each(keyValueMap, function (value, key) {
+
     this._setValue(key, value, batch);
   }.bind(this));
 
@@ -202,8 +204,10 @@ Filter.prototype._setValue = function (key, newValue, batch) {
   }
 
   if (key === 'streamsIds') {
+
     if (newValue === null || typeof newValue === 'undefined') {
       if (this._settings.streams === null) {
+
         return;
       }
     } else if (! _.isArray(newValue)) {
