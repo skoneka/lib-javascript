@@ -1,5 +1,5 @@
 var _ = require('underscore');
-var SignalEmitter = require('../Utility/SignalEmitter.js');
+var SignalEmitter = require('../utility/SignalEmitter.js');
 var MSGs =  require('../Messages.js');
 var MyMsgs = MSGs.Monitor;
 
