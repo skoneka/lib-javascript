@@ -1,6 +1,6 @@
 require=(function(e,t,n){function i(n,s){if(!t[n]){if(!e[n]){var o=typeof require=="function"&&require;if(!s&&o)return o(n,!0);if(r)return r(n,!0);throw new Error("Cannot find module '"+n+"'")}var u=t[n]={exports:{}};e[n][0].call(u.exports,function(t){var r=e[n][1][t];return i(r?r:t)},u,u.exports)}return t[n].exports}var r=typeof require=="function"&&require;for(var s=0;s<n.length;s++)i(n[s]);return i})({"pryv":[function(require,module,exports){
-module.exports=require('Oe2HK+');
-},{}],"Oe2HK+":[function(require,module,exports){
+module.exports=require('om+jJw');
+},{}],"om+jJw":[function(require,module,exports){
 /**
  * The main file.
  */
@@ -15,7 +15,7 @@ module.exports = {
   Messages: require('./Messages.js')
 };
 
-},{"./Access.js":6,"./Connection.js":1,"./Event.js":2,"./Filter.js":4,"./Messages.js":8,"./Stream.js":3,"./system/System.js":5,"./utility/Utility.js":7}],8:[function(require,module,exports){
+},{"./Access.js":6,"./Connection.js":2,"./Event.js":3,"./Filter.js":8,"./Messages.js":7,"./Stream.js":1,"./system/System.js":5,"./utility/Utility.js":4}],7:[function(require,module,exports){
 var Messages = module.exports = { };
 
 Messages.Monitor = {
@@ -276,7 +276,7 @@ var _initXHR = function () {
 
 },{}],10:[function(require,module,exports){
 
-},{}],1:[function(require,module,exports){
+},{}],2:[function(require,module,exports){
 var _ = require('underscore'),
   System = require('./system/System.js'),
   ConnectionEvents = require('./connection/Events.js'),
@@ -319,13 +319,14 @@ var Connection = module.exports = function (username, auth, settings) {
   this.datastore = null;
 
   this._ioSocket = null;
-  this._ioSocketMonitors = {};
+  this._monitors = {};
 };
 
 Connection._serialCounter = 0;
 
 
 /**
+ * TODO ... move this as a setting parameter
  * Use pryv.in for development and debug.
  * The Library will activate Structure Monitoring and
  * @returns The connection
@@ -336,6 +337,7 @@ Connection.prototype.useStaging = function () {
 };
 
 /**
+ * TODO create an open() .. like access_info and add this as a setting
  * Use localStorage for caching.
  * The Library will activate Structure Monitoring and
  * @param callback
@@ -393,7 +395,7 @@ Connection.prototype.monitor = function (filter) {
 // ------------- start / stop Monitoring is called by Monitor constructor / destructor -----//
 
 /**
- *
+ * TODO
  * @private
  */
 Connection.prototype._stopMonitoring = function (/*callback*/) {
@@ -424,16 +426,16 @@ Connection.prototype._startMonitoring = function (callback) {
   this.ioSocket = System.ioConnect(settings);
 
   this.ioSocket.on('connect', function () {
-    _.each(this._ioSocketMonitors, function (monitor) { monitor._onIoConnect(); });
+    _.each(this._monitors, function (monitor) { monitor._onIoConnect(); });
   }.bind(this));
   this.ioSocket.on('error', function (error) {
-    _.each(this._ioSocketMonitors, function (monitor) { monitor._onIoError(error); });
+    _.each(this._monitors, function (monitor) { monitor._onIoError(error); });
   }.bind(this));
   this.ioSocket.on('eventsChanged', function () {
-    _.each(this._ioSocketMonitors, function (monitor) { monitor._onIoEventsChanged(); });
+    _.each(this._monitors, function (monitor) { monitor._onIoEventsChanged(); });
   }.bind(this));
   this.ioSocket.on('streamsChanged', function () {
-    _.each(this._ioSocketMonitors, function (monitor) { monitor._onIoStreamsChanged(); });
+    _.each(this._monitors, function (monitor) { monitor._onIoStreamsChanged(); });
   }.bind(this));
   callback(null);
 };
@@ -510,7 +512,7 @@ Object.defineProperty(Connection.prototype, 'displayId', {
 Object.defineProperty(Connection.prototype, 'serialId', {
   get: function () { return 'C' + this._serialId; }
 });
-},{"./Datastore.js":13,"./connection/Events.js":11,"./connection/Monitor.js":14,"./connection/Streams.js":12,"./system/System.js":5,"underscore":15}],2:[function(require,module,exports){
+},{"./Datastore.js":11,"./connection/Events.js":14,"./connection/Monitor.js":13,"./connection/Streams.js":12,"./system/System.js":5,"underscore":15}],3:[function(require,module,exports){
 
 var _ = require('underscore');
 
@@ -541,6 +543,15 @@ Event.prototype.getData = function () {
 };
 
 
+Object.defineProperty(Event.prototype, 'timeLT', {
+  get: function () {
+    return this.connection.getLocalTime(this.time);
+  },
+  set: function (newValue) {
+    this.time = this.connection.getServerTime(newValue);
+  }
+});
+
 
 
 
@@ -565,7 +576,7 @@ Object.defineProperty(Event.prototype, 'attachmentsUrl', {
   set: function () { throw new Error('Event.attachmentsUrl property is read only'); }
 });
 
-},{"underscore":15}],3:[function(require,module,exports){
+},{"underscore":15}],1:[function(require,module,exports){
 
 var _ = require('underscore');
 
@@ -623,10 +634,10 @@ Object.defineProperty(Stream.prototype, 'ancestors', {
 
 
 
-},{"underscore":15}],4:[function(require,module,exports){
+},{"underscore":15}],8:[function(require,module,exports){
 var _ = require('underscore');
 
-var SignalEmitter = require('./Utility/SignalEmitter.js');
+var SignalEmitter = require('./utility/SignalEmitter.js');
 var MSGs = require('./Messages.js').Filter;
 
 var Filter = module.exports = function (settings) {
@@ -673,9 +684,18 @@ Filter.prototype.matchEvent = function (event) {
   if (event.time < this.fromTimeSTNormalized) { return 0; }
 
 
-  if (this._settings.streams &&  this._settings.streams.indexOf(event.streamId) < 0) {
-    return 0;
+  if (this._settings.streams && this._settings.streams.indexOf(event.streamId) < 0) {
+    var found = false;
+    event.stream.ancestors.forEach(function (ancestor) {
+      if (this._settings.streams.indexOf(ancestor.id) >= 0) {
+        found = true;
+      }
+    }.bind(this));
+    if (!found) {
+      return 0;
+    }
   }
+
 
 
   // TODO complete test
@@ -784,6 +804,7 @@ Filter.prototype._fireFilterChange = function (signal, content, batch) {
  */
 Filter.prototype.set = function (keyValueMap, batch) {
 
+
   var myBatch = false;
   if (! batch && _.keys(keyValueMap).length > 1) {
     batch = this.startBatch('set');
@@ -791,6 +812,7 @@ Filter.prototype.set = function (keyValueMap, batch) {
   }
 
   _.each(keyValueMap, function (value, key) {
+
     this._setValue(key, value, batch);
   }.bind(this));
 
@@ -828,8 +850,10 @@ Filter.prototype._setValue = function (key, newValue, batch) {
   }
 
   if (key === 'streamsIds') {
+
     if (newValue === null || typeof newValue === 'undefined') {
       if (this._settings.streams === null) {
+
         return;
       }
     } else if (! _.isArray(newValue)) {
@@ -913,7 +937,7 @@ Filter.prototype.focusedOnSingleStream = function () {
   return null;
 };
 
-},{"./Messages.js":8,"./Utility/SignalEmitter.js":16,"underscore":15}],15:[function(require,module,exports){
+},{"./Messages.js":7,"./utility/SignalEmitter.js":16,"underscore":15}],15:[function(require,module,exports){
 (function(){//     Underscore.js 1.5.2
 //     http://underscorejs.org
 //     (c) 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -2214,7 +2238,7 @@ System.ioConnect = function (settings) {
 };
 
 
-},{"./System-browser.js":9,"./System-node.js":10,"socket.io-client":17}],7:[function(require,module,exports){
+},{"./System-browser.js":9,"./System-node.js":10,"socket.io-client":17}],4:[function(require,module,exports){
 var _ = require('underscore');
 
 exports.SignalEmitter = require('./SignalEmitter.js');
@@ -2247,71 +2271,7 @@ exports.getQueryParametersString = function (data) {
   }, this).join('&');
 };
 
-},{"./SignalEmitter.js":18,"underscore":15}],13:[function(require,module,exports){
-var _ = require('underscore');
-
-var Datastore = module.exports = function (connection) {
-  this.connection = connection;
-  this.streamsIndex = {}; // streams are linked to their object representation
-  this.rootStreams = [];
-
-};
-
-Datastore.prototype.init = function (callback) {
-  this.connection.streams._getObjects({state: 'all'}, function (error, result) {
-    if (error) { return callback('Datastore faild to init - '  + error); }
-    if (result) {
-      this._rebuildStreamIndex(result); // maybe done transparently
-    }
-    callback(null);
-  }.bind(this));
-
-  // activate monitoring
-
-};
-
-Datastore.prototype._rebuildStreamIndex = function (streamArray) {
-  this.streamsIndex = {};
-  this.rootStreams = [];
-  this._indexStreamArray(streamArray);
-};
-
-Datastore.prototype._indexStreamArray = function (streamArray) {
-  _.each(streamArray, function (stream) {
-    this.streamsIndex[stream.id] = stream;
-    if (! stream._parent) { this.rootStreams.push(stream); }
-    this._indexStreamArray(stream._children);
-    delete stream._children; // cleanup when in datastore mode
-    delete stream._parent;
-  }.bind(this));
-};
-
-
-/**
- *
- * @param streamId
- * @returns Stream or null if not found
- */
-Datastore.prototype.getStreams = function () {
-  return this.rootStreams;
-};
-
-
-/**
- *
- * @param streamId
- * @param test (do no throw error if Stream is not found
- * @returns Stream or null if not found
- */
-Datastore.prototype.getStreamById = function (streamId, test) {
-  var result = this.streamsIndex[streamId];
-  if (! test && ! result) {
-    throw new Error('Datastore.getStreamById cannot find stream with id: ' + streamId);
-  }
-  return result;
-};
-
-},{"underscore":15}],17:[function(require,module,exports){
+},{"./SignalEmitter.js":16,"underscore":15}],17:[function(require,module,exports){
 (function(){/*! Socket.IO.js build:0.9.16, development. Copyright(c) 2011 LearnBoost <dev@learnboost.com> MIT Licensed */
 
 var io = ('undefined' === typeof module ? {} : module.exports);
@@ -3924,7 +3884,7 @@ var io = ('undefined' === typeof module ? {} : module.exports);
     function complete (data) {
       if (data instanceof Error) {
         self.connecting = false;
-        self._onIoError(data.message);
+        self.onError(data.message);
       } else {
         fn.apply(null, data.split(':'));
       }
@@ -3963,10 +3923,10 @@ var io = ('undefined' === typeof module ? {} : module.exports);
           if (xhr.status == 200) {
             complete(xhr.responseText);
           } else if (xhr.status == 403) {
-            self._onIoError(xhr.responseText);
+            self.onError(xhr.responseText);
           } else {
             self.connecting = false;            
-            !self.reconnecting && self._onIoError(xhr.responseText);
+            !self.reconnecting && self.onError(xhr.responseText);
           }
         }
       };
@@ -4250,7 +4210,7 @@ var io = ('undefined' === typeof module ? {} : module.exports);
    * @api private
    */
 
-  Socket.prototype._onIoError = function (err) {
+  Socket.prototype.onError = function (err) {
     if (err && err.advice) {
       if (err.advice === 'reconnect' && (this.connected || this.connecting)) {
         this.disconnect();
@@ -4571,7 +4531,7 @@ var io = ('undefined' === typeof module ? {} : module.exports);
 
       case 'error':
         if (packet.advice){
-          this.socket._onIoError(packet);
+          this.socket.onError(packet);
         } else {
           if (packet.reason == 'unauthorized') {
             this.$emit('connect_failed', packet.reason);
@@ -4696,7 +4656,7 @@ var io = ('undefined' === typeof module ? {} : module.exports);
       self.socket.setBuffer(true);
     };
     this.websocket.onerror = function (e) {
-      self._onIoError(e);
+      self.onError(e);
     };
 
     return this;
@@ -4761,8 +4721,8 @@ var io = ('undefined' === typeof module ? {} : module.exports);
    * @api private
    */
 
-  WS.prototype._onIoError = function (e) {
-    this.socket._onIoError(e);
+  WS.prototype.onError = function (e) {
+    this.socket.onError(e);
   };
 
   /**
@@ -6187,6 +6147,452 @@ if (typeof define === "function" && define.amd) {
 })();
 })()
 },{}],11:[function(require,module,exports){
+var _ = require('underscore');
+
+var Datastore = module.exports = function (connection) {
+  this.connection = connection;
+  this.streamsIndex = {}; // streams are linked to their object representation
+  this.rootStreams = [];
+
+};
+
+Datastore.prototype.init = function (callback) {
+  this.connection.streams._getObjects({state: 'all'}, function (error, result) {
+    if (error) { return callback('Datastore faild to init - '  + error); }
+    if (result) {
+      this._rebuildStreamIndex(result); // maybe done transparently
+    }
+    callback(null);
+  }.bind(this));
+
+  // activate monitoring
+
+};
+
+Datastore.prototype._rebuildStreamIndex = function (streamArray) {
+  this.streamsIndex = {};
+  this.rootStreams = [];
+  this._indexStreamArray(streamArray);
+};
+
+Datastore.prototype._indexStreamArray = function (streamArray) {
+  _.each(streamArray, function (stream) {
+    this.streamsIndex[stream.id] = stream;
+    if (! stream._parent) { this.rootStreams.push(stream); }
+    this._indexStreamArray(stream._children);
+    delete stream._children; // cleanup when in datastore mode
+    delete stream._parent;
+  }.bind(this));
+};
+
+
+/**
+ *
+ * @param streamId
+ * @returns Stream or null if not found
+ */
+Datastore.prototype.getStreams = function () {
+  return this.rootStreams;
+};
+
+
+/**
+ *
+ * @param streamId
+ * @param test (do no throw error if Stream is not found
+ * @returns Stream or null if not found
+ */
+Datastore.prototype.getStreamById = function (streamId, test) {
+  var result = this.streamsIndex[streamId];
+  if (! test && ! result) {
+    throw new Error('Datastore.getStreamById cannot find stream with id: ' + streamId);
+  }
+  return result;
+};
+
+},{"underscore":15}],13:[function(require,module,exports){
+var _ = require('underscore');
+var SignalEmitter = require('../utility/SignalEmitter.js');
+var MSGs =  require('../Messages.js');
+var MyMsgs = MSGs.Monitor;
+
+
+var EXTRA_ALL_EVENTS = {state : 'all', modifiedSince : -100000000 };
+
+/**
+ *
+ * @type {Function}
+ * @constructor
+ */
+var Monitor = module.exports = function (connection, filter) {
+  SignalEmitter.extend(this, MyMsgs, 'Monitor');
+  this.connection = connection;
+  this.id = 'M' + Monitor.serial++;
+
+  this.filter = filter;
+
+  this._lastUsedFilterData = filter;
+
+  if (this.filter.state) {
+    throw new Error('Monitors only work for default state, not trashed or all');
+  }
+
+  this.filter.addEventListener(MSGs.Filter.ON_CHANGE, this._onFilterChange.bind(this));
+  this._events = null;
+
+};
+
+Monitor.serial = 0;
+
+
+// ----------- prototype  public ------------//
+
+Monitor.prototype.start = function (done) {
+  done = done || function () {};
+
+  this.lastSynchedST = -1000000000000;
+  this._initEvents();
+
+  //todo add a register monitor here ...
+  this.connection._monitors[this.id] = this;
+  this.connection._startMonitoring(done);
+};
+
+
+Monitor.prototype.destroy = function () {
+  delete this.connection._monitors[this.id];
+  if (_.keys(this.connection._monitors).length === 0) {
+    this.connection._stopMonitoring();
+  }
+};
+
+Monitor.prototype.getEvents = function () {
+  if (! this.events || ! this._events.active) {return []; }
+  return this._events.active;
+};
+
+// ------------ private ----------//
+
+// ----------- iOSocket ------//
+Monitor.prototype._onIoConnect = function () {
+  console.log('Monitor onConnect');
+};
+Monitor.prototype._onIoError = function (error) {
+  console.log('Monitor _onIoError' + error);
+};
+Monitor.prototype._onIoEventsChanged = function () {
+  this._connectionEventsGetChanges(MyMsgs.ON_EVENT_CHANGE);
+};
+Monitor.prototype._onIoStreamsChanged = function () { };
+
+
+
+// -----------  filter changes ----------- //
+
+
+Monitor.prototype._saveLastUsedFilter = function () {
+  this._lastUsedFilterData = this.filter.getData();
+};
+
+
+Monitor.prototype._onFilterChange = function (signal, batchId, batch) {
+  var changes = this.filter.compareToFilterData(this._lastUsedFilterData);
+
+  var processLocalyOnly = 0;
+  var foundsignal = 0;
+  if (signal.signal === MSGs.Filter.DATE_CHANGE) {  // only load events if date is wider
+    foundsignal = 1;
+    console.log('** DATE CHANGE ', changes.timeFrame);
+    if (changes.timeFrame === 0) {
+      return;
+    }
+    if (changes.timeFrame < 0) {  // new timeFrame contains more data
+      processLocalyOnly = 1;
+    }
+
+  }
+
+  if (signal.signal === MSGs.Filter.STREAMS_CHANGE) {
+    foundsignal = 1;
+    console.log('** STREAMS_CHANGE', changes.streams);
+    if (changes.streams === 0) {
+      return;
+    }
+    if (changes.streams < 0) {  // new timeFrame contains more data
+      processLocalyOnly = 1;
+    }
+  }
+
+
+  if (! foundsignal) {
+    throw new Error('Signal not found :' + signal.signal);
+  }
+
+  this._saveLastUsedFilter();
+
+
+
+  if (processLocalyOnly) {
+    this._refilterLocaly(MyMsgs.ON_FILTER_CHANGE, {filterInfos: signal}, batch);
+  } else {
+    this._connectionEventsGetAllAndCompare(MyMsgs.ON_FILTER_CHANGE, {filterInfos: signal}, batch);
+  }
+};
+
+// ----------- internal ----------------- //
+
+/**
+ * Process events locally
+ */
+Monitor.prototype._refilterLocaly = function (signal, extracontent, batch) {
+
+  var result = { enter : [], leave : [] };
+  _.extend(result, extracontent); // pass extracontent to receivers
+  _.each(_.clone(this._events.active), function (event) {
+    if (! this.filter.matchEvent(event)) {
+      result.leave.push(event);
+      delete this._events.active[event.id];
+    }
+  }.bind(this));
+  this._fireEvent(signal, result, batch);
+};
+
+/**
+ *
+ */
+Monitor.prototype._initEvents = function () {
+  this.lastSynchedST = this.connection.getServerTime();
+  this._events = { active : {}};
+  this.connection.events.get(this.filter.getData(true, EXTRA_ALL_EVENTS),
+    function (error, events) {
+      if (error) { this._fireEvent(MyMsgs.ON_ERROR, error); }
+      _.each(events, function (event) {
+        this._events.active[event.id] = event;
+      }.bind(this));
+      this._fireEvent(MyMsgs.ON_LOAD, events);
+    }.bind(this));
+};
+
+
+Monitor.prototype._connectionEventsGetChanges = function (signal) {
+  var options = { modifiedSince : this.lastSynchedST, state : 'all'};
+  this.lastSynchedST = this.connection.getServerTime();
+
+  var result = { created : [], trashed : [], modified: []};
+
+  this.connection.events.get(this.filter.getData(true, options),
+    function (error, events) {
+      if (error) {
+        this._fireEvent(MyMsgs.ON_ERROR, error);
+      }
+
+      _.each(events, function (event) {
+        if (this._events.active[event.id]) {
+          if (event.trashed) { // trashed
+            result.trashed.push(event);
+            delete this._events.active[event.id];
+          } else {
+            result.modified.push(event);
+          }
+        } else {
+          result.created.push(event);
+        }
+      }.bind(this));
+
+      this._fireEvent(signal, result);
+    }.bind(this));
+};
+
+
+Monitor.prototype._connectionEventsGetAllAndCompare = function (signal, extracontent, batch) {
+  this.lastSynchedST = this.connection.getServerTime();
+
+
+
+  var result = { enter : [] };
+  _.extend(result, extracontent); // pass extracontent to receivers
+
+  var toremove = _.clone(this._events.active);
+
+  this.connection.events.get(this.filter.getData(true, EXTRA_ALL_EVENTS),
+    function (error, events) {
+      if (error) { this._fireEvent(MyMsgs.ON_ERROR, error); }
+      _.each(events, function (event) {
+        if (this._events.active[event.id]) {  // already known event we don't care
+          delete toremove[event.id];
+        } else {
+          this._events.active[event.id] = event;
+          result.enter.push(event);
+        }
+      }.bind(this));
+      _.each(_.keys(toremove), function (streamid) {
+        delete this._events.active[streamid]; // cleanup not found streams
+      }.bind(this));
+      result.leave = _.values(toremove); // unmatched events are to be removed
+      this._fireEvent(signal, result, batch);
+    }.bind(this));
+
+};
+
+
+/**
+ * return informations on events
+ */
+Monitor.prototype.stats = function () {
+
+  var result = {
+    timeFrameST : [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY],
+    timeFrameLT : [null, null]
+  };
+  _.each(this._events.active, function (event) {
+    if (event.time < result.timeFrameST[0]) {
+      result.timeFrameST[0] = event.time;
+      result.timeFrameLT[0] = event.timeLT;
+    }
+    if (event.time > result.timeFrameST[1]) {
+      result.timeFrameST[1] = event.time;
+      result.timeFrameLT[1] = event.timeLT;
+    }
+  });
+  return result;
+};
+
+
+
+
+
+},{"../Messages.js":7,"../utility/SignalEmitter.js":16,"underscore":15}],16:[function(require,module,exports){
+(function(){/**
+ * (event)Emitter renamed to avoid confusion with prvy's events
+ */
+
+
+var _ = require('underscore');
+
+var SignalEmitter = module.exports = function (messagesMap) {
+  SignalEmitter.extend(this, messagesMap);
+};
+
+
+SignalEmitter.extend = function (object, messagesMap, name) {
+  if (! name) {
+    throw new Error('"name" parameter must be set');
+  }
+  object._signalEmitterEvents = {};
+  _.each(_.values(messagesMap), function (value) {
+    object._signalEmitterEvents[value] = [];
+  });
+  _.extend(object, SignalEmitter.prototype);
+  object._signalEmitterName = name;
+};
+
+
+SignalEmitter.Messages = {
+  /** called when a batch of changes is expected, content: <batchId> unique**/
+  BATCH_BEGIN : 'beginBatch',
+  /** called when a batch of changes is done, content: <batchId> unique**/
+  BATCH_DONE : 'doneBatch',
+  /** if an eventListener return this string, it will be removed automatically **/
+  UNREGISTER_LISTENER : 'unregisterMePlease'
+};
+
+/**
+ * Add an event listener
+ * @param signal one of  MSGs.SIGNAL.*.*
+ * @param callback function(content) .. content vary on each signal.
+ * If the callback returns SignalEmitter.Messages.UNREGISTER_LISTENER it will be removed
+ * @return the callback function for further reference
+ */
+SignalEmitter.prototype.addEventListener = function (signal, callback) {
+  this._signalEmitterEvents[signal].push(callback);
+  return callback;
+};
+
+
+/**
+ * remove the callback matching this signal
+ */
+SignalEmitter.prototype.removeEventListener = function (signal, callback) {
+  for (var i = 0; i < this._signalEmitterEvents[signal].length; i++) {
+    if (this._signalEmitterEvents[signal][i] === callback) {
+      this._signalEmitterEvents[signal][i] = null;
+    }
+  }
+};
+
+
+/**
+ * A changes occurred on the filter
+ * @param signal
+ * @param content
+ * @param batch
+ * @private
+ */
+SignalEmitter.prototype._fireEvent = function (signal, content, batch) {
+  var batchId = batch ? batch.id : null;
+  if (! signal) { throw new Error(); }
+
+  var batchStr = batchId ? ' batch: ' + batchId + ', ' + batch.batchName : '';
+  console.log('FireEvent-' + this._signalEmitterName  + ' : ' + signal + batchStr);
+
+  _.each(this._signalEmitterEvents[signal], function (callback) {
+    if (callback !== null &&
+      SignalEmitter.Messages.UNREGISTER_LISTENER === callback(content, batchId, batch)) {
+      this.removeEventListener(signal, callback);
+    }
+  }, this);
+};
+
+
+SignalEmitter.batchSerial = 0;
+/**
+ * start a batch process
+ * @param eventual superBatch you can hook on. In this case it will call superBatch.waitForMe(..)
+ * @return an object where you have to call stop when done
+ */
+SignalEmitter.prototype.startBatch = function (batchName, orHookOnBatch) {
+  if (orHookOnBatch && orHookOnBatch.sender === this) { // test if this batch comes form me
+    return orHookOnBatch.waitForMeToFinish();
+  }
+  var batch = {
+    sender : this,
+    batchName : batchName || '',
+    id : this._signalEmitterName + SignalEmitter.batchSerial++,
+    filter : this,
+    waitFor : 1,
+    doneCallbacks : {},
+
+    waitForMeToFinish : function () {
+      batch.waitFor++;
+      return this;
+    },
+
+    /**
+     * listener are stored in key/map fashion, so addOnDoneListener('bob',..)
+     * may be called several time, callback 'bob', will be done just once
+     * @param key a unique key per callback
+     * @param callback
+     */
+    addOnDoneListener : function (key, callback) {
+      this.doneCallbacks[key] = callback;
+    },
+    done : function (name) {
+      this.waitFor--;
+      if (this.waitFor === 0) {
+        _.each(this.doneCallbacks, function (callback) { callback(); });
+        this.filter._fireEvent(SignalEmitter.Messages.BATCH_DONE, this.id, this);
+      }
+      if (this.waitFor < 0) {
+        console.error('This batch has been done() to much :' + name);
+      }
+    }
+  };
+  this._fireEvent(SignalEmitter.Messages.BATCH_BEGIN, batch.id, batch);
+  return batch;
+};
+
+})()
+},{"underscore":15}],14:[function(require,module,exports){
 
 var Utility = require('../utility/Utility.js'),
   _ = require('underscore'),
@@ -6285,7 +6691,7 @@ Events.prototype.updateWithIdAndData = function (eventId, data, callback) {
 
 
 
-},{"../Event":2,"../Filter":4,"../utility/Utility.js":7,"underscore":15}],12:[function(require,module,exports){
+},{"../Event":3,"../Filter":8,"../utility/Utility.js":4,"underscore":15}],12:[function(require,module,exports){
 var _ = require('underscore'),
     Utility = require('../utility/Utility.js'),
     Stream = require('../Stream.js');
@@ -6473,470 +6879,5 @@ Streams.Utils = {
 
 };
 
-},{"../Stream.js":3,"../utility/Utility.js":7,"underscore":15}],14:[function(require,module,exports){
-var _ = require('underscore');
-var SignalEmitter = require('../Utility/SignalEmitter.js');
-var MSGs =  require('../Messages.js');
-var MyMsgs = MSGs.Monitor;
-
-
-var EXTRA_ALL_EVENTS = {state : 'all', modifiedSince : -100000000 };
-
-/**
- *
- * @type {Function}
- * @constructor
- */
-var Monitor = module.exports = function (connection, filter) {
-  SignalEmitter.extend(this, MyMsgs, 'Monitor');
-  this.connection = connection;
-  this.id = 'M' + Monitor.serial++;
-
-  this.filter = filter;
-
-  this._lastUsedFilterData = filter;
-
-  if (this.filter.state) {
-    throw new Error('Monitors only work for default state, not trashed or all');
-  }
-
-  this.filter.addEventListener(MSGs.Filter.ON_CHANGE, this._onFilterChange.bind(this));
-  this._events = null;
-};
-
-Monitor.serial = 0;
-
-
-// ----------- prototype  public ------------//
-
-Monitor.prototype.start = function (done) {
-  done = done || function () {};
-
-  this.lastSynchedST = -1000000000000;
-  this._connectionEventsGetAll();
-
-  this.connection._ioSocketMonitors[this.id] = this;
-  this.connection._startMonitoring(done);
-};
-
-
-Monitor.prototype.destroy = function () {
-  delete this.connection._ioSocketMonitors[this.id];
-  if (_.keys(this.connection._ioSocketMonitors).length === 0) {
-    this.connection._stopMonitoring();
-  }
-};
-
-Monitor.prototype.getEvents = function () {
-  if (! this.events || ! this._events.active) {return []; }
-  return this._events.active;
-};
-
-// ------------ private ----------//
-
-// ----------- iOSocket ------//
-Monitor.prototype._onIoConnect = function () {
-  console.log('Monitor onConnect');
-};
-Monitor.prototype._onIoError = function (error) {
-  console.log('Monitor _onIoError' + error);
-};
-Monitor.prototype._onIoEventsChanged = function () {
-  this._connectionEventsGetChanges(MyMsgs.ON_EVENT_CHANGE);
-};
-Monitor.prototype._onIoStreamsChanged = function () { };
-
-
-
-// -----------  filter changes ----------- //
-
-
-Monitor.prototype._saveLastUsedFilter = function () {
-  this._lastUsedFilterData = this.filter.getData();
-};
-
-
-Monitor.prototype._onFilterChange = function (signal, batchId, batch) {
-  var changes = this.filter.compareToFilterData(this._lastUsedFilterData);
-
-  var processLocalyOnly = 1;
-  var foundsignal = 0;
-  if (signal.signal === MSGs.Filter.DATE_CHANGE) {  // only load events if date is wider
-    foundsignal = 1;
-    console.log('** DATE CHANGE ', changes.timeFrame);
-    if (changes.timeFrame === 0) {
-      return;
-    }
-    if (changes.timeFrame < 0) {  // new timeFrame contains more data
-      processLocalyOnly = 0;
-    }
-
-  }
-
-  if (signal.signal === MSGs.Filter.STREAMS_CHANGE) {
-    foundsignal = 1;
-    console.log('** STREAMS_CHANGE', changes.streams);
-    if (changes.streams === 0) {
-      return;
-    }
-    if (changes.streams < 0) {  // new timeFrame contains more data
-      processLocalyOnly = 0;
-    }
-  }
-
-
-  if (! foundsignal) {
-    throw new Error('Signal not found :' + signal.signal);
-  }
-
-  this._saveLastUsedFilter();
-
-
-
-
-  if (processLocalyOnly) {
-    this._refilterLocaly(MyMsgs.ON_FILTER_CHANGE, {filterInfos: signal}, batch);
-  } else {
-    this._connectionEventsGetAllAndCompare(MyMsgs.ON_FILTER_CHANGE, {filterInfos: signal}, batch);
-  }
-};
-
-// ----------- internal ----------------- //
-
-/**
- * Process events locally
- */
-Monitor.prototype._refilterLocaly = function (signal, extracontent, batch) {
-
-  var result = { enter : [], leave : [] };
-  _.extend(result, extracontent); // pass extracontent to receivers
-  _.each(_.clone(this._events.active), function (event) {
-    if (! this.filter.matchEvent(event)) {
-      result.leave.push(event);
-      delete this._events.active[event.id];
-    }
-  }.bind(this));
-  this._fireEvent(signal, result, batch);
-};
-
-/**
- *
- */
-Monitor.prototype._connectionEventsGetAll = function () {
-  this.lastSynchedST = this.connection.getServerTime();
-  this._events = { active : {}};
-  this.connection.events.get(this.filter.getData(true, EXTRA_ALL_EVENTS),
-    function (error, events) {
-      if (error) { this._fireEvent(MyMsgs.ON_ERROR, error); }
-      _.each(events, function (event) {
-        this._events.active[event.id] = event;
-      }.bind(this));
-      this._fireEvent(MyMsgs.ON_LOAD, events);
-    }.bind(this));
-};
-
-
-Monitor.prototype._connectionEventsGetChanges = function (signal) {
-  var options = { modifiedSince : this.lastSynchedST, state : 'all'};
-  this.lastSynchedST = this.connection.getServerTime();
-
-  var result = { created : [], trashed : [], modified: []};
-
-  this.connection.events.get(this.filter.getData(true, options),
-    function (error, events) {
-      if (error) {
-        this._fireEvent(MyMsgs.ON_ERROR, error);
-      }
-
-      _.each(events, function (event) {
-        if (this._events.active[event.id]) {
-          if (event.trashed) { // trashed
-            result.trashed.push(event);
-            delete this._events.active[event.id];
-          } else {
-            result.modified.push(event);
-          }
-        } else {
-          result.created.push(event);
-        }
-      }.bind(this));
-
-      this._fireEvent(signal, result);
-    }.bind(this));
-};
-
-
-Monitor.prototype._connectionEventsGetAllAndCompare = function (signal, extracontent, batch) {
-  this.lastSynchedST = this.connection.getServerTime();
-
-
-
-  var result = { enter : [] };
-  _.extend(result, extracontent); // pass extracontent to receivers
-
-  var toremove = _.clone(this._events.active);
-
-  this.connection.events.get(this.filter.getData(true, EXTRA_ALL_EVENTS),
-    function (error, events) {
-      if (error) { this._fireEvent(MyMsgs.ON_ERROR, error); }
-      _.each(events, function (event) {
-        if (this._events.active[event.id]) {  // already known event we don't care
-          delete toremove[event.id];
-        } else {
-          this._events.active[event.id] = event;
-          result.enter.push(event);
-        }
-      }.bind(this));
-      _.each(_.keys(toremove), function (streamid) {
-        delete this._events.active[streamid]; // cleanup not found streams
-      }.bind(this));
-      result.leave = _.values(toremove); // unmatched events are to be removed
-      this._fireEvent(signal, result, batch);
-    }.bind(this));
-
-};
-
-
-
-
-
-},{"../Messages.js":8,"../Utility/SignalEmitter.js":16,"underscore":15}],16:[function(require,module,exports){
-(function(){/**
- * (event)Emitter renamed to avoid confusion with prvy's events
- */
-
-
-var _ = require('underscore');
-
-var SignalEmitter = module.exports = function (messagesMap) {
-  SignalEmitter.extend(this, messagesMap);
-};
-
-
-SignalEmitter.extend = function (object, messagesMap, name) {
-  if (! name) {
-    throw new Error('"name" parameter must be set');
-  }
-  object._signalEmitterEvents = {};
-  _.each(_.values(messagesMap), function (value) {
-    object._signalEmitterEvents[value] = [];
-  });
-  _.extend(object, SignalEmitter.prototype);
-  object._signalEmitterName = name;
-};
-
-
-SignalEmitter.Messages = {
-  /** called when a batch of changes is expected, content: <batchId> unique**/
-  BATCH_BEGIN : 'beginBatch',
-  /** called when a batch of changes is done, content: <batchId> unique**/
-  BATCH_DONE : 'doneBatch',
-  /** if an eventListener return this string, it will be removed automatically **/
-  UNREGISTER_LISTENER : 'unregisterMePlease'
-};
-
-/**
- * Add an event listener
- * @param signal one of  MSGs.SIGNAL.*.*
- * @param callback function(content) .. content vary on each signal.
- * If the callback returns SignalEmitter.Messages.UNREGISTER_LISTENER it will be removed
- * @return the callback function for further reference
- */
-SignalEmitter.prototype.addEventListener = function (signal, callback) {
-  this._signalEmitterEvents[signal].push(callback);
-  return callback;
-};
-
-
-/**
- * remove the callback matching this signal
- */
-SignalEmitter.prototype.removeEventListener = function (signal, callback) {
-  for (var i = 0; i < this._signalEmitterEvents[signal].length; i++) {
-    if (this._signalEmitterEvents[signal][i] === callback) {
-      this._signalEmitterEvents[signal][i] = null;
-    }
-  }
-};
-
-
-/**
- * A changes occurred on the filter
- * @param signal
- * @param content
- * @param batch
- * @private
- */
-SignalEmitter.prototype._fireEvent = function (signal, content, batch) {
-  var batchId = batch ? batch.id : null;
-  if (! signal) { throw new Error(); }
-
-  var batchStr = batchId ? ' batch: ' + batchId + ', ' + batch.batchName : '';
-  console.log('FireEvent-' + this._signalEmitterName  + ' : ' + signal + batchStr);
-
-  _.each(this._signalEmitterEvents[signal], function (callback) {
-    if (callback !== null &&
-      SignalEmitter.Messages.UNREGISTER_LISTENER === callback(content, batchId, batch)) {
-      this.removeEventListener(signal, callback);
-    }
-  }, this);
-};
-
-
-SignalEmitter.batchSerial = 0;
-/**
- * start a batch process
- * @param eventual superBatch you can hook on. In this case it will call superBatch.waitForMe(..)
- * @return an object where you have to call stop when done
- */
-SignalEmitter.prototype.startBatch = function (batchName, orHookOnBatch) {
-  if (orHookOnBatch && orHookOnBatch.sender === this) { // test if this batch comes form me
-    return orHookOnBatch.waitForMeToFinish();
-  }
-  var batch = {
-    sender : this,
-    batchName : batchName || '',
-    id : this._signalEmitterName + SignalEmitter.batchSerial++,
-    filter : this,
-    waitFor : 1,
-
-    waitForMeToFinish : function () {
-      batch.waitFor++;
-      return this;
-    },
-    done : function (name) {
-      this.waitFor--;
-      if (this.waitFor === 0) {
-        this.filter._fireEvent(SignalEmitter.Messages.BATCH_DONE, this.id, this);
-      }
-      if (this.waitFor < 0) {
-        console.error('This batch has been done() to much :' + name);
-      }
-    }
-  };
-  this._fireEvent(SignalEmitter.Messages.BATCH_BEGIN, batch.id, batch);
-  return batch;
-};
-
-})()
-},{"underscore":15}],18:[function(require,module,exports){
-(function(){/**
- * (event)Emitter renamed to avoid confusion with prvy's events
- */
-
-
-var _ = require('underscore');
-
-var SignalEmitter = module.exports = function (messagesMap) {
-  SignalEmitter.extend(this, messagesMap);
-};
-
-
-SignalEmitter.extend = function (object, messagesMap, name) {
-  if (! name) {
-    throw new Error('"name" parameter must be set');
-  }
-  object._signalEmitterEvents = {};
-  _.each(_.values(messagesMap), function (value) {
-    object._signalEmitterEvents[value] = [];
-  });
-  _.extend(object, SignalEmitter.prototype);
-  object._signalEmitterName = name;
-};
-
-
-SignalEmitter.Messages = {
-  /** called when a batch of changes is expected, content: <batchId> unique**/
-  BATCH_BEGIN : 'beginBatch',
-  /** called when a batch of changes is done, content: <batchId> unique**/
-  BATCH_DONE : 'doneBatch',
-  /** if an eventListener return this string, it will be removed automatically **/
-  UNREGISTER_LISTENER : 'unregisterMePlease'
-};
-
-/**
- * Add an event listener
- * @param signal one of  MSGs.SIGNAL.*.*
- * @param callback function(content) .. content vary on each signal.
- * If the callback returns SignalEmitter.Messages.UNREGISTER_LISTENER it will be removed
- * @return the callback function for further reference
- */
-SignalEmitter.prototype.addEventListener = function (signal, callback) {
-  this._signalEmitterEvents[signal].push(callback);
-  return callback;
-};
-
-
-/**
- * remove the callback matching this signal
- */
-SignalEmitter.prototype.removeEventListener = function (signal, callback) {
-  for (var i = 0; i < this._signalEmitterEvents[signal].length; i++) {
-    if (this._signalEmitterEvents[signal][i] === callback) {
-      this._signalEmitterEvents[signal][i] = null;
-    }
-  }
-};
-
-
-/**
- * A changes occurred on the filter
- * @param signal
- * @param content
- * @param batch
- * @private
- */
-SignalEmitter.prototype._fireEvent = function (signal, content, batch) {
-  var batchId = batch ? batch.id : null;
-  if (! signal) { throw new Error(); }
-
-  var batchStr = batchId ? ' batch: ' + batchId + ', ' + batch.batchName : '';
-  console.log('FireEvent-' + this._signalEmitterName  + ' : ' + signal + batchStr);
-
-  _.each(this._signalEmitterEvents[signal], function (callback) {
-    if (callback !== null &&
-      SignalEmitter.Messages.UNREGISTER_LISTENER === callback(content, batchId, batch)) {
-      this.removeEventListener(signal, callback);
-    }
-  }, this);
-};
-
-
-SignalEmitter.batchSerial = 0;
-/**
- * start a batch process
- * @param eventual superBatch you can hook on. In this case it will call superBatch.waitForMe(..)
- * @return an object where you have to call stop when done
- */
-SignalEmitter.prototype.startBatch = function (batchName, orHookOnBatch) {
-  if (orHookOnBatch && orHookOnBatch.sender === this) { // test if this batch comes form me
-    return orHookOnBatch.waitForMeToFinish();
-  }
-  var batch = {
-    sender : this,
-    batchName : batchName || '',
-    id : this._signalEmitterName + SignalEmitter.batchSerial++,
-    filter : this,
-    waitFor : 1,
-
-    waitForMeToFinish : function () {
-      batch.waitFor++;
-      return this;
-    },
-    done : function (name) {
-      this.waitFor--;
-      if (this.waitFor === 0) {
-        this.filter._fireEvent(SignalEmitter.Messages.BATCH_DONE, this.id, this);
-      }
-      if (this.waitFor < 0) {
-        console.error('This batch has been done() to much :' + name);
-      }
-    }
-  };
-  this._fireEvent(SignalEmitter.Messages.BATCH_BEGIN, batch.id, batch);
-  return batch;
-};
-
-})()
-},{"underscore":15}]},{},["Oe2HK+"])
+},{"../Stream.js":1,"../utility/Utility.js":4,"underscore":15}]},{},["om+jJw"])
 ;
