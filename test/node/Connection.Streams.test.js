@@ -219,15 +219,15 @@ var testStreams = function (preFetchStructure) {
     });
 
 
-    describe('create()' + localEnabledStr, function () {
+    describe('_createWithData(streamData)' + localEnabledStr, function () {
       var response = {id : 'test-id'},
-        stream = {name : 'test-name'};
+        streamData = {name : 'test-name'};
 
       it('should call proper the proper API method', function (done) {
         nock('https://' + username + '.' + settings.domain)
           .post('/streams')
           .reply(201, response);
-        connection.streams.create(stream, function (err, result) {
+        connection.streams._createWithData(streamData, function (err, result) {
           should.not.exist(err);
           should.exist(result);
           result.should.eql(response);
@@ -239,17 +239,17 @@ var testStreams = function (preFetchStructure) {
         nock('https://' + username + '.' + settings.domain)
           .post('/streams')
           .reply(201, response);
-        connection.streams.create(stream, function (err, result) {
-          should.exist(stream.id);
-          stream.id.should.eql(result.id);
+        connection.streams._createWithData(streamData, function (err, result) {
+          should.exist(streamData.id);
+          streamData.id.should.eql(result.id);
           done();
         });
       });
 
     });
 
-    describe('update()' + localEnabledStr, function () {
-      var stream = {
+    describe('_updateWithData()' + localEnabledStr, function () {
+      var streamData = {
         id : 'test-id',
         content : 'test-content'
       };
@@ -257,9 +257,9 @@ var testStreams = function (preFetchStructure) {
 
       it('should call the proper API method', function (done) {
         nock('https://' + username + '.' + settings.domain)
-          .put('/streams/' + stream.id)
+          .put('/streams/' + streamData.id)
           .reply(200, response);
-        connection.streams.update(stream, function (err, result) {
+        connection.streams._updateWithData(streamData, function (err, result) {
           should.not.exist(err);
           should.exist(result);
           result.should.eql(response);

@@ -14,13 +14,16 @@ function Streams(connection) {
 }
 
 
-//--- Many test on streams are made in Connection.streams.test.js
+
+/**
+ * @typedef {Object} Pryv.Streams~options parameters than can be passed allong a Stream request
+ * @property {string} parentId  if parentId is null you will get all the "root" streams.
+ * @property {string} [state] 'all' || null  - if null you get only "active" streams
+ **/
 
 
 /**
- * @param {Object} options
- * @param {string} [parentId] if parentId is null you will get all the "root" streams.
- * @param {string} [state = all || null]
+ * @param {Pryv.Streams~options} options
  * @param {Pryv.Streams~getCallback} callback - handles the response
  */
 Streams.prototype.get = function (options, callback) {
@@ -39,7 +42,9 @@ Streams.prototype.get = function (options, callback) {
 
 /**
  * Get a Stream by it's Id.
- * Works only if localStorage is activated
+ * Works only if fetchStructure has been done once.
+ * @param {string} streamId
+ * @throws {Error} Pryv.Connection.fetchStructure must have been called before.
  */
 Streams.prototype.getById = function (streamId) {
   if (! this.connection.datastore) {
@@ -49,8 +54,51 @@ Streams.prototype.getById = function (streamId) {
 };
 
 
+// ------------- Raw calls to the API ----------- //
+
+/**
+ * get streams on the API
+ * @private
+ * @param {Pryv.Streams~options} opts
+ * @param callback
+ */
+Streams.prototype._getData = function (opts, callback) {
+  var url = opts ? '/streams?' + Utility.getQueryParametersString(opts) : '/streams';
+  this.connection.request('GET', url, callback, null);
+};
+
+/**
+ * Create a stream on the API with a jsonObject
+ * @private
+ * @param {Object} streamData an object array.. typically one that can be obtained with
+ * stream.getData()
+ * @param callback
+ */
+Streams.prototype._createWithData = function (streamData, callback) {
+  var url = '/streams';
+  this.connection.request('POST', url, function (err, resultData) {
+    streamData.id = resultData.id;
+    callback(err, resultData);
+  }, streamData);
+};
+
+/**
+ * Update a stream on the API with a jsonObject
+ * @private
+ * @param {Object} streamData an object array.. typically one that can be obtained with
+ * stream.getData()
+ * @param callback
+ */
+Streams.prototype._updateWithData = function (streamData, callback) {
+  var url = '/streams/' + streamData.id;
+  this.connection.request('PUT', url, callback, null);
+};
+
+// -- helper for get --- //
+
 /**
  * @private
+ * @param {Pryv.Streams~options} options
  */
 Streams.prototype._getObjects = function (options, callback) {
   options = options || {};
@@ -76,30 +124,23 @@ Streams.prototype._getObjects = function (options, callback) {
   }.bind(this));
 };
 
-Streams.prototype._getData = function (opts, callback) {
-  var url = opts ? '/streams?' + Utility.getQueryParametersString(opts) : '/streams';
-  this.connection.request('GET', url, callback, null);
-};
-
-Streams.prototype.create = function (stream, callback) {
-  var url = '/streams';
-  this.connection.request('POST', url, function (err, result) {
-    stream.id = result.id;
-    callback(err, result);
-  }, stream);
-};
-
-Streams.prototype.update = function (stream, callback) {
-  var url = '/streams/' + stream.id;
-  this.connection.request('PUT', url, callback, null);
-};
 
 /**
- * Walk the tree structure..
- * parents are always announced before childrens
- * @param opts
- * @param eachStream
- * @param done
+ * Called once per streams
+ * @callback Pryv.Streams~walkTreeEachStreams
+ * @param {Pryv.Stream} stream
+ */
+
+/**
+ * Called when walk is done
+ * @callback Pryv.Streams~walkTreeDone
+ */
+
+/**
+ * Walk the tree structure.. parents are always announced before childrens
+ * @param {Pryv.Streams~options} options
+ * @param {Pryv.Streams~walkTreeEachStreams} eachStream
+ * @param {Pryv.Streams~walkTreeDone} done
  */
 Streams.prototype.walkTree = function (options, eachStream, done) {
   this.get(options, function (error, result) {
@@ -109,6 +150,18 @@ Streams.prototype.walkTree = function (options, eachStream, done) {
   });
 };
 
+
+/**
+ * Called when tree has been flatened
+ * @callback Pryv.Streams~getFlatenedObjectsDone
+ * @param {Streams[]} streams
+ */
+
+/**
+ * Get the all the streams of the Tree in a list.. parents firsts
+ * @param {Pryv.Streams~options} options
+ * @param {Pryv.Streams~getFlatenedObjectsDone} done
+ */
 Streams.prototype.getFlatenedObjects = function (options, callback) {
   var result = [];
   this.walkTree(options,
@@ -123,9 +176,10 @@ Streams.prototype.getFlatenedObjects = function (options, callback) {
 
 /**
  * Utility to debug a tree structure
+ * @param {Streams[]} arrayOfStreams
  */
-Streams.prototype.getDisplayTree = function (arrayOfSTream) {
-  return Streams.Utils._debugTree(arrayOfSTream);
+Streams.prototype.getDisplayTree = function (arrayOfStreams) {
+  return Streams.Utils._debugTree(arrayOfStreams);
 };
 
 
@@ -201,3 +255,4 @@ module.exports = Streams;
  * @param {Object} error - eventual error
  * @param {Pryv.Stream[]} result - array of Pryv.Streams
  */
+
