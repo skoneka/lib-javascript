@@ -35,7 +35,7 @@ Streams.prototype.get = function (options, callback) {
  */
 Streams.prototype.getById = function (streamId) {
   if (! this.connection.datastore) {
-    throw new Error('Activate localStorage to get automatic stream mapping');
+    throw new Error('Call connection.fetchStructure before, to get automatic stream mapping');
   }
   return this.connection.datastore.getStreamById(streamId);
 };

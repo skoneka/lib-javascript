@@ -67,7 +67,7 @@ Connection._serialCounter = 0;
  * @param callback
  * @returns {*}
  */
-Connection.prototype.useLocalStorage = function (callback) {
+Connection.prototype.fetchStructure = function (callback /*, keepItUpToDate*/) {
   if (this.datastore) { return this.datastore.init(callback); }
   this.datastore = new Datastore(this);
   this.accessInfo(function (error) {

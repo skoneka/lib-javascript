@@ -7,9 +7,9 @@ var Pryv = require('../../source/main'),
   responses = require('../data/responses.js');
 
 
-var testEvents = function (enableLocalStorage) {
+var testEvents = function (preFetchStructure) {
 
-  var localEnabledStr = enableLocalStorage ? ' + LocalStorage' : '';
+  var localEnabledStr = preFetchStructure ? ' + LocalStorage' : '';
 
   describe('Connection.events' + localEnabledStr, function () {
 
@@ -25,7 +25,7 @@ var testEvents = function (enableLocalStorage) {
 
     var connection = new Pryv.Connection(username, auth, settings);
 
-    if (enableLocalStorage) {
+    if (preFetchStructure) {
       before(function (done) {
         nock('https://' + username + '.' + settings.domain)
           .get('/access-info')
@@ -38,7 +38,7 @@ var testEvents = function (enableLocalStorage) {
           .get('/streams?state=all')
           .reply(200, responses.streams);
 
-        connection.useLocalStorage(function (error) {
+        connection.fetchStructure(function (error) {
           should.not.exist(error);
           done();
         });
@@ -81,7 +81,7 @@ var testEvents = function (enableLocalStorage) {
 
             var error = null;
             var stream = null;
-            if (enableLocalStorage) {
+            if (preFetchStructure) {
               stream = event.stream;
               stream.should.be.instanceOf(Pryv.Stream);
             } else { // stream property is not accessible

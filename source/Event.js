@@ -43,7 +43,8 @@ Object.defineProperty(Event.prototype, 'timeLT', {
 Object.defineProperty(Event.prototype, 'stream', {
   get: function () {
     if (! this.connection.datastore) {
-      throw new Error('Activate localStorage to get automatic stream mapping. Or use StreamId');
+      throw new Error('call connection.fetchStructure before to get automatic stream mapping.' +
+        ' Or use StreamId');
     }
     return this.connection.streams.getById(this.streamId);
   },

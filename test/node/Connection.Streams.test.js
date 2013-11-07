@@ -7,9 +7,9 @@ var Pryv = require('../../source/main'),
   responses = require('../data/responses.js');
 
 
-var testStreams = function (enableLocalStorage) {
+var testStreams = function (preFetchStructure) {
 
-  var localEnabledStr = enableLocalStorage ? ' + LocalStorage' : '';
+  var localEnabledStr = preFetchStructure ? ' + LocalStorage' : '';
 
   /**
    * Test a StreamTree
@@ -33,7 +33,7 @@ var testStreams = function (enableLocalStorage) {
       try {
         streamResult = stream.connection.streams.getById(stream.id);
       } catch (e) { streamError = e; }
-      if (enableLocalStorage) {
+      if (preFetchStructure) {
         streamResult.should.equal(stream);
         should.not.exists(streamError);
       } else {
@@ -70,7 +70,7 @@ var testStreams = function (enableLocalStorage) {
       connection = new Pryv.Connection(username, auth, settings);
 
 
-    if (enableLocalStorage) {
+    if (preFetchStructure) {
       before(function (done) {
         nock('https://' + username + '.' + settings.domain)
           .get('/access-info')
@@ -81,7 +81,7 @@ var testStreams = function (enableLocalStorage) {
           .get('/streams?state=all')
           .reply(200, responses.streams);
 
-        connection.useLocalStorage(function (error) {
+        connection.fetchStructure(function (error) {
           should.not.exist(error);
           done();
         });
@@ -120,7 +120,7 @@ var testStreams = function (enableLocalStorage) {
     describe('get and walkTree with no arguments', function () {
       var opts = null;
 
-      if (! enableLocalStorage) {
+      if (! preFetchStructure) {
         nock('https://' + username + '.' + settings.domain)
           .get('/streams?').times(2)  // 3 requests when no localStorage
           .reply(200, responses.streams);
@@ -167,7 +167,7 @@ var testStreams = function (enableLocalStorage) {
 
     describe('get({parentID = ....})', function () {
 
-      if (! enableLocalStorage) {
+      if (! preFetchStructure) {
         nock('https://' + username + '.' + settings.domain)
           .get('/streams?parentId=PVxE_JMMzM').times(1)  // 3 requests when no localStorage
           .reply(200, responses.streams[0].children);
@@ -192,7 +192,7 @@ var testStreams = function (enableLocalStorage) {
 
     describe('flatenTree()' + localEnabledStr, function () {
 
-      if (! enableLocalStorage) {
+      if (! preFetchStructure) {
         nock('https://' + username + '.' + settings.domain)
           .get('/streams?').times(1)  // 3 requests when no localStorage
           .reply(200, responses.streams);

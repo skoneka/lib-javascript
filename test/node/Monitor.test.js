@@ -5,9 +5,9 @@ var Pryv = require('../../source/main'),
 
 // !! Monitor tests are made online
 
-var testMonitor = function (enableLocalStorage) {
+var testMonitor = function (preFetchStructure) {
 
-  var localEnabledStr = enableLocalStorage ? ' + LocalStorage' : '';
+  var localEnabledStr = preFetchStructure ? ' + LocalStorage' : '';
 
   describe('Monitor' + localEnabledStr, function () {
     var username = 'perkikiki',
@@ -15,9 +15,9 @@ var testMonitor = function (enableLocalStorage) {
       connection = new Pryv.Connection(username, auth, {staging: true});
 
 
-    if (enableLocalStorage) {
+    if (preFetchStructure) {
       before(function (done) {
-        connection.useLocalStorage(function (error) {
+        connection.fetchStructure(function (error) {
           should.not.exist(error);
           done();
         });
