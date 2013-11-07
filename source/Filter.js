@@ -47,9 +47,18 @@ Filter.prototype.matchEvent = function (event) {
   if (event.time < this.fromTimeSTNormalized) { return 0; }
 
 
-  if (this._settings.streams &&  this._settings.streams.indexOf(event.streamId) < 0) {
-    return 0;
+  if (this._settings.streams && this._settings.streams.indexOf(event.streamId) < 0) {
+    var found = false;
+    event.stream.ancestors.forEach(function (ancestor) {
+      if (this._settings.streams.indexOf(ancestor.id) >= 0) {
+        found = true;
+      }
+    }.bind(this));
+    if (!found) {
+      return 0;
+    }
   }
+
 
 
   // TODO complete test
