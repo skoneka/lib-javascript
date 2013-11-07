@@ -6,11 +6,22 @@ var _ = require('underscore'),
   Monitor = require('./connection/Monitor.js');
 
 /**
- * TODO
+ * Create an instance of Connection to Pryv API.
+ * The connection will be opened on
+ * http[s]://<username>.<domain>:<port>/<extrapath>?auth=<auth>
  *
  * @constructor
+ * @this {Connection}
+ * @param {string} username
+ * @param {string} auth the authorization token for this username
+ * @param {Object} [settings]
+ * @param {number} [settings.port = 443]
+ * @param {string} [settings.domain = 'pryv.io'] change the domain. use "settings.staging = true" to
+ * activate 'pryv.in' staging domain.
+ * @param {boolean} [settings.ssl = true] Use ssl (https) or no
+ * @param {string} [settings.extraPath = ''] append to the connections
  */
-var Connection = module.exports = function (username, auth, settings) {
+var Connection = function (username, auth, settings) {
   this._serialId = Connection._serialCounter++;
 
   this.username = username;
@@ -19,8 +30,11 @@ var Connection = module.exports = function (username, auth, settings) {
   this.settings = _.extend({
     port: 443,
     ssl: true,
-    domain: 'pryv.io'
+    domain: 'pryv.io',
+    extraPath: ''
   }, settings);
+
+  if (settings && settings.staging) { this.settings.domain = 'pryv.in'; }
 
   this.serverInfos = {
     // nowLocalTime - nowServerTime
@@ -45,17 +59,6 @@ var Connection = module.exports = function (username, auth, settings) {
 
 Connection._serialCounter = 0;
 
-
-/**
- * TODO ... move this as a setting parameter
- * Use pryv.in for development and debug.
- * The Library will activate Structure Monitoring and
- * @returns The connection
- */
-Connection.prototype.useStaging = function () {
-  this.settings.domain = 'pryv.in';
-  return this;
-};
 
 /**
  * TODO create an open() .. like access_info and add this as a setting
@@ -139,7 +142,7 @@ Connection.prototype._startMonitoring = function (callback) {
     host : this.username + '.' + this.settings.domain,
     port : this.settings.port,
     ssl : this.settings.ssl,
-    path : '/' + this.username,
+    path : this.settings.extraPath + '/' + this.username,
     namespace : '/' + this.username,
     auth : this.auth
   };
@@ -178,7 +181,7 @@ Connection.prototype.request = function (method, path, callback, jsonData) {
     host : this.username + '.' + this.settings.domain,
     port : this.settings.port,
     ssl : this.settings.ssl,
-    path : path,
+    path : this.settings.extraPath + path,
     headers : headers,
     payload : payload,
     //TODO: decide what callback convention to use (Node or jQuery)
@@ -233,3 +236,7 @@ Object.defineProperty(Connection.prototype, 'displayId', {
 Object.defineProperty(Connection.prototype, 'serialId', {
   get: function () { return 'C' + this._serialId; }
 });
+
+
+
+module.exports = Connection;

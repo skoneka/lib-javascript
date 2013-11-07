@@ -12,7 +12,7 @@ var testMonitor = function (enableLocalStorage) {
   describe('Monitor' + localEnabledStr, function () {
     var username = 'perkikiki',
       auth = 'TTZycvBTiq',
-      connection = (new Pryv.Connection(username, auth)).useStaging();
+      connection = new Pryv.Connection(username, auth, {staging: true});
 
 
     if (enableLocalStorage) {
