@@ -8,20 +8,22 @@ var _ = require('underscore'),
 /**
  * Create an instance of Connection to Pryv API.
  * The connection will be opened on
- * http[s]://<username>.<domain>:<port>/<extrapath>?auth=<auth>
+ * http[s]://<username>.<domain>:<port>/<extraPath>?auth=<auth>
  *
+ * @class Pryv.Connection
  * @constructor
  * @this {Connection}
  * @param {string} username
- * @param {string} auth the authorization token for this username
+ * @param {string} auth - the authorization token for this username
  * @param {Object} [settings]
+ * @param {boolean} [settings.staging = false] use Pryv's staging servers
  * @param {number} [settings.port = 443]
  * @param {string} [settings.domain = 'pryv.io'] change the domain. use "settings.staging = true" to
  * activate 'pryv.in' staging domain.
  * @param {boolean} [settings.ssl = true] Use ssl (https) or no
- * @param {string} [settings.extraPath = ''] append to the connections
+ * @param {string} [settings.extraPath = ''] append to the connections. Must start with a '/'
  */
-var Connection = function (username, auth, settings) {
+function Connection(username, auth, settings) {
   this._serialId = Connection._serialCounter++;
 
   this.username = username;
@@ -53,19 +55,21 @@ var Connection = function (username, auth, settings) {
 
   this.datastore = null;
 
-  this._ioSocket = null;
   this._monitors = {};
-};
+}
 
 Connection._serialCounter = 0;
 
 
 /**
- * TODO create an open() .. like access_info and add this as a setting
- * Use localStorage for caching.
- * The Library will activate Structure Monitoring and
- * @param callback
- * @returns {*}
+ * In order to access some properties such as event.stream and get a {Stream} object, you
+ * need to fetch the structure at least once. For now, there is now way to be sure that the
+ * structure is up to date. Soon we will implement an optional parameter "keepItUpToDate", that
+ * will do that for you.
+ *
+ * TODO implements "keepItUpToDate" logic.
+ * @param {Pryv.Streams~getCallback} callback - array of "root" Streams
+ * @returns {Pryv.Connection} this
  */
 Connection.prototype.fetchStructure = function (callback /*, keepItUpToDate*/) {
   if (this.datastore) { return this.datastore.init(callback); }
@@ -77,6 +81,11 @@ Connection.prototype.fetchStructure = function (callback /*, keepItUpToDate*/) {
   return this;
 };
 
+/**
+ * Get access information related this connection. This is also the best way to test
+ * that the combination username/token is valid.
+ * @param {Pryv.Connection~accessInfoCallback} callback
+ */
 Connection.prototype.accessInfo = function (callback) {
   if (this._accessInfo) { return this._accessInfo; }
   var url = '/access-info';
@@ -91,8 +100,8 @@ Connection.prototype.accessInfo = function (callback) {
 /**
  * Translate this timestamp (server dimension) to local system dimension
  * This could have been named to "translate2LocalTime"
- * @param serverTime timestamp  (server dimension)
- * @returns {number} timestamp (local dimension)
+ * @param {number} serverTime timestamp  (server dimension)
+ * @returns {number} timestamp (local dimension) same time space as (new Date()).getTime();
  */
 Connection.prototype.getLocalTime = function (serverTime) {
   return (serverTime + this.serverInfos.deltaTime) * 1000;
@@ -101,7 +110,7 @@ Connection.prototype.getLocalTime = function (serverTime) {
 /**
  * Translate this timestamp (local system dimension) to server dimension
  * This could have been named to "translate2ServerTime"
- * @param localTime timestamp  (local dimension)
+ * @param {number} localTime timestamp  (local dimension) same time space as (new Date()).getTime();
  * @returns {number} timestamp (server dimension)
  */
 Connection.prototype.getServerTime = function (localTime) {
@@ -112,6 +121,13 @@ Connection.prototype.getServerTime = function (localTime) {
 
 // ------------- monitor this connection --------//
 
+/**
+ * Start monitoring this Connection. Any change that occurs on the connection (add, delete, change)
+ * will trigger an event. Changes to the filter will also trigger events if they have an impact on
+ * the monitored data.
+ * @param {Pryv.Filter} filter - changes to this filter will be monitored.
+ * @returns {Pryv.Monitor}
+ */
 Connection.prototype.monitor = function (filter) {
   return new Monitor(this, filter);
 };
@@ -127,16 +143,14 @@ Connection.prototype._stopMonitoring = function (/*callback*/) {
 };
 
 /**
- *
+ * Internal for Connection.Monitor
+ * Maybe moved in Monitor by the way
  * @param callback
- * @returns {*}
  * @private
  */
 Connection.prototype._startMonitoring = function (callback) {
 
   if (this.ioSocket) { return callback(null/*, ioSocket*/); }
-
-
 
   var settings = {
     host : this.username + '.' + this.settings.domain,
@@ -164,6 +178,14 @@ Connection.prototype._startMonitoring = function (callback) {
   callback(null);
 };
 
+/**
+ * Do a direct request to Pryv's API.
+ * Even if exposed there must be an abstraction for every API call in this library.
+ * @param {string} method - GET | POST | PUT | DELETE
+ * @param {string} path - to resource, starting with '/' like '/events'
+ * @param {Pryv.Connection~requestCallback} callback
+ * @param {Object} jsonData - data to POST or PUT
+ */
 Connection.prototype.request = function (method, path, callback, jsonData) {
   if (! callback || ! _.isFunction(callback)) {
     throw new Error('request\'s callback must be a function');
@@ -209,17 +231,24 @@ Connection.prototype.request = function (method, path, callback, jsonData) {
 };
 
 
+
+/**
+ * @property {string} Pryv.Connection.id an unique id that contains all needed information to access
+ * this Pryv data source. http[s]://<username>.<domain>:<port>[/extraPath]/?auth=<auth token>
+ */
 Object.defineProperty(Connection.prototype, 'id', {
   get: function () {
     var id = this.settings.ssl ? 'https://' : 'http://';
     id += this.username + '.' + this.settings.domain + ':' +
-      this.settings.port + '/?auth=' + this.auth;
+      this.settings.port + this.settings.extraPath + '/?auth=' + this.auth;
     return id;
   },
   set: function () { throw new Error('ConnectionNode.id property is read only'); }
 });
 
-//TODO rename in displayID
+/**
+ * @property {string} Pryv.Connection.displayId an id easily readable <username>:<access name>
+ */
 Object.defineProperty(Connection.prototype, 'displayId', {
   get: function () {
     if (! this._accessInfo) {
@@ -232,11 +261,27 @@ Object.defineProperty(Connection.prototype, 'displayId', {
   set: function () { throw new Error('Connection.displayId property is read only'); }
 });
 
-
+/**
+ * @property {string} Pryv.Connection.serialId a unique id for this instance of {Pryv}. This can be
+ * also see as a **clientSideId**
+ */
 Object.defineProperty(Connection.prototype, 'serialId', {
   get: function () { return 'C' + this._serialId; }
 });
 
-
-
 module.exports = Connection;
+
+
+/**
+ * Called with the desired Streams as result.
+ * @callback Pryv.Connection~accessInfoCallback
+ * @param {Object} error - eventual error
+ * @param {Object} result - @see http://api.pryv.com/reference.html#data-structure-access
+ */
+
+/**
+ * Called with the result of the request
+ * @callback Pryv.Connection~requestCallback
+ * @param {Object} error - eventual error
+ * @param {Object} result - jSonEncoded result
+ */

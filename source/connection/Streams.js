@@ -2,18 +2,26 @@ var _ = require('underscore'),
     Utility = require('../utility/Utility.js'),
     Stream = require('../Stream.js');
 
-var Streams = module.exports = function (connection) {
+
+/**
+ * @class Pryv.Streams
+ * @param connection
+ * @constructor
+ */
+function Streams(connection) {
   this.connection = connection;
   this._streamsIndex = {};
-};
+}
 
 
 //--- Many test on streams are made in Connection.streams.test.js
 
 
 /**
- * @param options {parentId: <parentId | null> , state: <all | null>}
- * @return Arrray of Pryv.Stream matching the options
+ * @param {Object} options
+ * @param {string} [parentId] if parentId is null you will get all the "root" streams.
+ * @param {string} [state = all || null]
+ * @param {Pryv.Streams~getCallback} callback - handles the response
  */
 Streams.prototype.get = function (options, callback) {
   if (this.connection.datastore) {
@@ -184,3 +192,12 @@ Streams.Utils = {
   }
 
 };
+
+module.exports = Streams;
+
+/**
+ * Called with the desired Streams as result.
+ * @callback Pryv.Streams~getCallback
+ * @param {Object} error - eventual error
+ * @param {Pryv.Stream[]} result - array of Pryv.Streams
+ */

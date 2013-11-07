@@ -13,7 +13,7 @@ Datastore.prototype.init = function (callback) {
     if (result) {
       this._rebuildStreamIndex(result); // maybe done transparently
     }
-    callback(null);
+    callback(null, result);
   }.bind(this));
 
   // activate monitoring
@@ -60,3 +60,4 @@ Datastore.prototype.getStreamById = function (streamId, test) {
   }
   return result;
 };
+
