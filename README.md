@@ -24,8 +24,11 @@ TODO: description
 
 ### if you known the username and token
 	
-	`var connection = new Pryv
+	```
+	var connection = new Pryv
 
+
+  ```
 
 
 # Development environement

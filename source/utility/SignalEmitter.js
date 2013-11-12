@@ -115,7 +115,7 @@ SignalEmitter.prototype.startBatch = function (batchName, orHookOnBatch) {
     done : function (name) {
       this.waitFor--;
       if (this.waitFor === 0) {
-        _.each(this.doneCallbacks, function (callback) { callback(); });
+        _.each(this.doneCallbacks, function (callback) { callback(); });
         this.filter._fireEvent(SignalEmitter.Messages.BATCH_DONE, this.id, this);
       }
       if (this.waitFor < 0) {

@@ -28,10 +28,10 @@ var Filter = module.exports = function (settings) {
 // redundant with get
 function _normalizeTimeFrameST(filterData) {
   var result = [Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY];
-  if (filterData.fromTime || filterData.fromTime === 0) {
+  if (filterData.fromTime || filterData.fromTime === 0) {
     result[0] = filterData.fromTime;
   }
-  if (filterData.toTime || filterData.toTime === 0) {
+  if (filterData.toTime || filterData.toTime === 0) {
     result[1] = filterData.toTime;
   }
   return result;
@@ -208,7 +208,7 @@ Filter.prototype._setValue = function (key, newValue, batch) {
       this._settings.toTime = newValue[1];
       this._fireFilterChange(MSGs.DATE_CHANGE, this.timeFrameST, batch);
     }
-    if (waitForMe) { waitForMe.done(); }
+    if (waitForMe) { waitForMe.done(); }
     return;
   }
 
@@ -226,11 +226,11 @@ Filter.prototype._setValue = function (key, newValue, batch) {
     // TODO check that this stream is valid
     this._settings.streams = newValue;
     this._fireFilterChange(MSGs.STREAMS_CHANGE, this.streams, batch);
-    if (waitForMe) { waitForMe.done(); }
+    if (waitForMe) { waitForMe.done(); }
     return;
   }
 
-  if (waitForMe) { waitForMe.done(); }
+  if (waitForMe) { waitForMe.done(); }
   throw new Error('Filter has no property : ' + key);
 };
 
@@ -239,7 +239,7 @@ Filter.prototype._setValue = function (key, newValue, batch) {
  */
 Object.defineProperty(Filter.prototype, 'toTimeSTNormalized', {
   get: function () {
-    if (this._settings.toTime || this._settings.toTime === 0) {
+    if (this._settings.toTime || this._settings.toTime === 0) {
       return this._settings.toTime;
     }
     return Number.POSITIVE_INFINITY;
@@ -251,7 +251,7 @@ Object.defineProperty(Filter.prototype, 'toTimeSTNormalized', {
  */
 Object.defineProperty(Filter.prototype, 'fromTimeSTNormalized', {
   get: function () {
-    if (this._settings.fromTime || this._settings.fromTime === 0) {
+    if (this._settings.fromTime || this._settings.fromTime === 0) {
       return this._settings.fromTime;
     }
     return Number.NEGATIVE_INFINITY;

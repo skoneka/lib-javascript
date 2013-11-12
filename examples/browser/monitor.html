@@ -24,7 +24,7 @@
   // load Pryv
   var Pryv = require('pryv');
   // .useStaging() only when debug / dev
-  var api = (new Pryv.Connection('perkikiki', 'TTZycvBTiq')).useStaging();
+  var api = new Pryv.Connection('perkikiki', 'TTZycvBTiq', {staging: true});
 
 
   var filter = new Pryv.Filter();

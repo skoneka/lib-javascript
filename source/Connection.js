@@ -36,7 +36,7 @@ function Connection(username, auth, settings) {
     extraPath: ''
   }, settings);
 
-  if (settings && settings.staging) { this.settings.domain = 'pryv.in'; }
+  if (settings && settings.staging) { this.settings.domain = 'pryv.in'; }
 
   this.serverInfos = {
     // nowLocalTime - nowServerTime

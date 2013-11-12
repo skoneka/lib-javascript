@@ -22,7 +22,7 @@
         // load Pryv
         var Pryv = require('pryv');
         // .useStaging() only when debug / dev
-        var api = (new Pryv.Connection('perkikiki', 'TTZycvBTiq')).useStaging();
+        var api = new Pryv.Connection('perkikiki', 'TTZycvBTiq', {staging: true});
 
         api.accessInfo(function(error, infos) {
           $accessInfo.value = JSON.stringify(infos, null, 2);
@@ -37,7 +37,7 @@
 
 
         var filter = new Pryv.Filter({limit : 20});
-        api.events.get(filter, null, function(error, events) {
+        api.events.get(filter, function(error, events) {
           var rawEvents = [];
           for (var i = 0; i < events.length; i++) {
             rawEvents.push(events[i].getData()); // get the Event with no circular reference
