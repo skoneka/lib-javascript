@@ -19,16 +19,21 @@ TODO: description
 	 </body>
 	</html>
 	
-## Open a connection
+## Open a connection and add an event
 
 
 ### if you known the username and token
 	
 	```
-	var connection = new Pryv
-
-
-  ```
+	// open a connection
+	var connection = new Pryv.Connection('perkikiki', 'TTZycvBTiq');
+	
+	// create a event 
+	var eventData = {streamId : 'diary', type: 'note/txt', content: 'I track, so I am'};
+	connection.events.createWithData(eventData, function(error) { 
+	   console.log('event created');
+	});
+    ```
 
 
 # Development environement

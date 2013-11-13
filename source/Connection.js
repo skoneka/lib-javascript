@@ -33,7 +33,8 @@ function Connection(username, auth, settings) {
     port: 443,
     ssl: true,
     domain: 'pryv.io',
-    extraPath: ''
+    extraPath: '',
+    staging: false
   }, settings);
 
   if (settings && settings.staging) { this.settings.domain = 'pryv.in'; }

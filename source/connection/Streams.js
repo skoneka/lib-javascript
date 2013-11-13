@@ -5,6 +5,15 @@ var _ = require('underscore'),
 
 /**
  * @class Pryv.Streams
+ *
+ * Coverage of the API
+ *  GET /streams -- 100%
+ *  POST /streams -- only data (no object)
+ *  PUT /streams -- 0%
+ *  DELETE /streams/{stream-id} -- 0%
+ *
+ *
+ *
  * @param connection
  * @constructor
  */
@@ -39,6 +48,7 @@ Streams.prototype.get = function (options, callback) {
     this._getObjects(options, callback);
   }
 };
+
 
 /**
  * Get a Stream by it's Id.
@@ -253,6 +263,6 @@ module.exports = Streams;
  * Called with the desired Streams as result.
  * @callback Pryv.Streams~getCallback
  * @param {Object} error - eventual error
- * @param {Pryv.Stream[]} result - array of Pryv.Streams
+ * @param {Pryv.Stream[]} result
  */
 

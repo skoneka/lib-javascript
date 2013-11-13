@@ -122,7 +122,7 @@ var testEvents = function (preFetchStructure) {
     });
 
 
-    describe('create( eventData )' + localEnabledStr, function () {
+    describe('createWithData( eventData )' + localEnabledStr, function () {
 
       var eventData = new Pryv.Event(
         connection, {streamId : 'diary', type : 'note/txt', content: 'hello'});
@@ -135,7 +135,7 @@ var testEvents = function (preFetchStructure) {
           .reply(201, response);
 
         var event = null;
-        event = connection.events.create(eventData, function (err, resultJson) {
+        event = connection.events.createWithData(eventData, function (err, resultJson) {
           should.not.exist(err);
           should.exist(resultJson);
           resultJson.id.should.eql(response.id);
@@ -148,41 +148,37 @@ var testEvents = function (preFetchStructure) {
     });
 
 
-    describe('batch() ' + localEnabledStr, function () {
-      var events = [
+    describe('batchWithData() ' + localEnabledStr, function () {
+      var eventsData = [
         { content: 'test-content-1' },
         { content: 'test-content-2' }
       ];
-      response = {
-        'temp_ref_id_0' : { 'id' : 'test_id_0'},
-        'temp_ref_id_1' : { 'id' : 'test_id_1'}
-      };
 
-      it('should call the proper API method', function (done) {
-        nock('https://' + username + '.' + settings.domain)
-          .post('/events/batch')
-          .reply(201, response);
-        connection.events.batch(events, function (err, result) {
-          should.not.exist(err);
-          should.exist(result);
-          result.should.eql(response);
-          done();
-        });
-      });
 
       it('should add received id to the events', function (done) {
-        nock('https://' + username + '.' + settings.domain)
-          .post('/events/batch')
-          .reply(200, response);
-        connection.events.batch(events, function (err, result) {
-          events[0].tempRefId.should.eql('temp_ref_id_0');
-          events[1].tempRefId.should.eql('temp_ref_id_1');
-          events[0].id.should.eql('test_id_0');
-          events[1].id.should.eql('test_id_1');
+
+        connection.events.batchWithData(eventsData, function (err, result) {
+          //console.log(result);
           should.not.exist(err);
           should.exist(result);
-          result.should.eql(response);
+          result.should.be.instanceOf(Array);
+          result.length.should.equal(2);
+          result[0].id.should.equal('test_id0');
           done();
+        }, function (events) {
+          // as we can't known the tempRefIf (serialID) before
+          // we create the response from the events created
+
+          var response = {};
+          var i = 0;
+          _.each(events, function (event) {
+            response[event.serialId] = { 'id' : 'test_id' + (i++) };
+          });
+
+
+          nock('https://' + username + '.' + settings.domain)
+            .post('/events/batch')
+            .reply(201, response);
         });
       });
 
