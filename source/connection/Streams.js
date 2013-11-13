@@ -5,12 +5,13 @@ var _ = require('underscore'),
 
 /**
  * @class Streams
+ * @classdesc
+ * ##Coverage of the API
  *
- * Coverage of the API
- *  GET /streams -- 100%
- *  POST /streams -- only data (no object)
- *  PUT /streams -- 0%
- *  DELETE /streams/{stream-id} -- 0%
+ *  * GET /streams -- 100%
+ *  * POST /streams -- only data (no object)
+ *  * PUT /streams -- 0%
+ *  * DELETE /streams/{stream-id} -- 0%
  *
  *
  *

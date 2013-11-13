@@ -6,7 +6,11 @@ module.exports = function (grunt) {
         src: ['Readme.md', 'source/**/*.*'],
         options : {
           destination : 'doc',
-          private: false
+          private: false,
+          plugins: [ 'plugins/markdown' ],
+          markdown: {
+            parser: 'gfm'
+          }
         }
       }
     },
