@@ -113,7 +113,7 @@
 
 
   function changeEvent(eventId, content) {
-    api.events.updateWithIdAndData(eventId, {content: content}, function () {
+    api.events._updateWithIdAndData(eventId, {content: content}, function () {
       console.log('event changed');
     });
   }

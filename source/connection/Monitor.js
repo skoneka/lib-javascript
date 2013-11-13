@@ -7,11 +7,11 @@ var MyMsgs = MSGs.Monitor;
 var EXTRA_ALL_EVENTS = {state : 'all', modifiedSince : -100000000 };
 
 /**
- *
+ * Monitoring
  * @type {Function}
  * @constructor
  */
-var Monitor = module.exports = function (connection, filter) {
+function Monitor (connection, filter) {
   SignalEmitter.extend(this, MyMsgs, 'Monitor');
   this.connection = connection;
   this.id = 'M' + Monitor.serial++;
@@ -244,6 +244,6 @@ Monitor.prototype.stats = function () {
   return result;
 };
 
-
+module.exports = Monitor;
 
 

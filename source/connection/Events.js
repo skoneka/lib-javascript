@@ -50,7 +50,7 @@ Events.prototype.get = function (filter, doneCallback, partialResultCallback) {
  * @param {Pryv.Connection~requestCallback} callback
  */
 Events.prototype.update = function (event, callback) {
-  this.updateWithIdAndData(event.id, event.getData(), callback);
+  this._updateWithIdAndData(event.id, event.getData(), callback);
 };
 
 /**
@@ -141,10 +141,13 @@ Events.prototype._get = function (filter, callback) {
 };
 
 
-
-
-
-Events.prototype.updateWithIdAndData = function (eventId, data, callback) {
+/**
+ * @param {String} eventId
+ * @param {Object} data
+ * @param  {Pryv.Connection~requestCallback} callback
+ * @private
+ */
+Events.prototype._updateWithIdAndData = function (eventId, data, callback) {
   var url = '/events/' + eventId;
   this.connection.request('PUT', url, callback, data);
 };

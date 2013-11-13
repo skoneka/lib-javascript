@@ -197,7 +197,7 @@ var testEvents = function (preFetchStructure) {
         nock('https://' + username + '.' + settings.domain)
           .put('/events/' + eventId)
           .reply(200, response);
-        connection.events.updateWithIdAndData(eventId, data, function (err, result) {
+        connection.events._updateWithIdAndData(eventId, data, function (err, result) {
           should.not.exist(err);
           should.exist(result);
           result.should.eql(response);
