@@ -1,9 +1,7 @@
-
 var Utility = require('../utility/Utility.js'),
   _ = require('underscore'),
   Filter = require('../Filter'),
   Event = require('../Event');
-
 
 /**
  * @class Events
@@ -54,7 +52,7 @@ Events.prototype.update = function (event, callback) {
 };
 
 /**
- * @param {Event} event
+ * @param {Event | eventId} event
  * @param {Connection~requestCallback} callback
  */
 Events.prototype.trash = function (event, callback) {
@@ -71,14 +69,27 @@ Events.prototype.trashWithId = function (eventId, callback) {
 };
 
 /**
- * This is the preferred method to create an even.
+ * This is the preferred method to create an event, or to create it on the API.
  * The function return the newly created object.. It will be updated when posted on the API.
- * @param {Object} eventData -- minimum {streamId, type }
+ * @param {NewEventLike} event -- minimum {streamId, type } -- if typeof Event, must belong to
+ * the same connection and not exists on the API.
  * @param {Events~eventCreatedOnTheAPI} callback
  * @return {Event} event
  */
-Events.prototype.createWithData = function (eventData, callback) {
-  var event = new Event(this.connection, eventData);
+Events.prototype.create = function (newEventlike, callback) {
+  var event = null;
+  if (newEventlike instanceof Event) {
+    if (newEventlike.connection !== this.connection) {
+      return callback(new Error('event.connection does not match current connection'));
+    }
+    if (newEventlike.id) {
+      return callback(new Error('cannot create an event already existing on the API'));
+    }
+    event = newEventlike;
+  } else {
+    event = new Event(this.connection, event);
+  }
+
   var url = '/events';
   this.connection.request('POST', url, function (err, result) {
     if (result) {
@@ -90,7 +101,8 @@ Events.prototype.createWithData = function (eventData, callback) {
 };
 
 /**
- * This is the preffered method to create events in batch
+ * //TODO make it NewEventLike compatible
+ * This is the prefered method to create events in batch
  * @param {Object[]} eventsData -- minimum {streamId, type }
  * @param {Events~eventBatchCreatedOnTheAPI}
  * @param {function} [callBackWithEventsBeforeRequest] mostly for testing purposes

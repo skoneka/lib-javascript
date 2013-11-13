@@ -30,7 +30,7 @@ TODO: description
 	
 	// create a event 
 	var eventData = {streamId : 'diary', type: 'note/txt', content: 'I track, so I am'};
-	connection.events.createWithData(eventData, function(error) { 
+	connection.events.create(eventData, function(error) { 
 	   console.log('event created');
 	});
     ```

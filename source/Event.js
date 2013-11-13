@@ -61,3 +61,12 @@ Object.defineProperty(Event.prototype, 'attachmentsUrl', {
   },
   set: function () { throw new Error('Event.attachmentsUrl property is read only'); }
 });
+
+/**
+ * An newly created Event (no id, not synched with API)
+ * or an object with sufficient properties to be considered as an Event.
+ * @typedef {(Event|Object)} NewEventLike
+ * @property {String} streamId
+ * @property {String} type
+ * @property {number} [time]
+ */

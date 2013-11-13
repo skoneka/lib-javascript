@@ -5,7 +5,7 @@ var _ = require('underscore'),
 
 /**
  * @class Streams
- * @classdesc
+ * @description
  * ##Coverage of the API
  *
  *  * GET /streams -- 100%

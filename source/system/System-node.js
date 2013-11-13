@@ -86,4 +86,6 @@ exports.request = function (pack)  {
 
   if (pack.payload) { req.write(pack.payload); }
   req.end();
+
+  return req;
 };

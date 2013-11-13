@@ -5,6 +5,7 @@ var _ = require('underscore'),
   Datastore = require('./Datastore.js'),
   Monitor = require('./connection/Monitor.js');
 
+
 /**
  * Create an instance of Connection to Pryv API.
  * The connection will be opened on
@@ -86,6 +87,7 @@ Connection.prototype.fetchStructure = function (callback /*, keepItUpToDate*/) {
  * Get access information related this connection. This is also the best way to test
  * that the combination username/token is valid.
  * @param {Connection~accessInfoCallback} callback
+ * @returns {Connection} this
  */
 Connection.prototype.accessInfo = function (callback) {
   if (this._accessInfo) { return this._accessInfo; }
@@ -96,6 +98,7 @@ Connection.prototype.accessInfo = function (callback) {
     }
     return callback(error, result);
   }.bind(this));
+  return this;
 };
 
 /**
@@ -148,6 +151,7 @@ Connection.prototype._stopMonitoring = function (/*callback*/) {
  * Maybe moved in Monitor by the way
  * @param callback
  * @private
+ * @return {Object} XHR or Node http request
  */
 Connection.prototype._startMonitoring = function (callback) {
 
@@ -199,7 +203,7 @@ Connection.prototype.request = function (method, path, callback, jsonData) {
     headers['Content-Type'] = 'application/json; charset=utf-8';
   }
 
-  System.request({
+  var request = System.request({
     method : method,
     host : this.username + '.' + this.settings.domain,
     port : this.settings.port,
@@ -229,6 +233,7 @@ Connection.prototype.request = function (method, path, callback, jsonData) {
   function onError(error /*, requestInfo*/) {
     callback(error, null);
   }
+  return request;
 };
 
 

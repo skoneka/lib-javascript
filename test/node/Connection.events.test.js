@@ -122,9 +122,9 @@ var testEvents = function (preFetchStructure) {
     });
 
 
-    describe('createWithData( eventData )' + localEnabledStr, function () {
+    describe('create( event )' + localEnabledStr, function () {
 
-      var eventData = new Pryv.Event(
+      var event = new Pryv.Event(
         connection, {streamId : 'diary', type : 'note/txt', content: 'hello'});
 
       var response = {id : 'Tet5slAP9q'};
@@ -134,8 +134,32 @@ var testEvents = function (preFetchStructure) {
           .post('/events')
           .reply(201, response);
 
+        event = connection.events.create(event, function (err, resultJson) {
+          should.not.exist(err);
+          should.exist(resultJson);
+          resultJson.id.should.eql(response.id);
+          event.id.should.eql(response.id);
+          done();
+        });
+
+      });
+
+    });
+
+
+    describe('create( eventData )' + localEnabledStr, function () {
+
+      var eventData = {streamId : 'diary', type : 'note/txt', content: 'hello'};
+
+      var response = {id : 'Tet5slAP9q'};
+
+      it('should create an event', function (done) {
+        nock('https://' + username + '.' + settings.domain)
+          .post('/events')
+          .reply(201, response);
+
         var event = null;
-        event = connection.events.createWithData(eventData, function (err, resultJson) {
+        event = connection.events.create(eventData, function (err, resultJson) {
           should.not.exist(err);
           should.exist(resultJson);
           resultJson.id.should.eql(response.id);

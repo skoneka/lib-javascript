@@ -4,13 +4,15 @@ module.exports = function (grunt) {
     jsdoc : {
       dist : {
         src: ['Readme.md', 'source/**/*.*'],
+
         options : {
           destination : 'doc',
           private: false,
           plugins: [ 'plugins/markdown' ],
           markdown: {
-            parser: 'gfm'
+            parser: 'evilstreak'
           }
+
         }
       }
     },
