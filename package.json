@@ -9,8 +9,7 @@
     "type": "git",
     "url": "ssh://git@github.com:pryv/lib-javascript.git"
   },
-  "engines": {
-  },
+  "engines": {},
   "main": "source/main.js",
   "dependencies": {
     "socket.io-client": "~0.9.16",
@@ -26,7 +25,8 @@
     "grunt-mocha-test": "latest",
     "grunt-shell": "~0.2.2",
     "should": "latest",
-    "nock": "latest"
+    "nock": "latest",
+    "grunt-jsdoc": "~0.4.1"
   },
   "optionalDependencies": {}
 }

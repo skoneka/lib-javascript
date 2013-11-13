@@ -10,7 +10,7 @@ var _ = require('underscore'),
  * The connection will be opened on
  * http[s]://<username>.<domain>:<port>/<extraPath>?auth=<auth>
  *
- * @class Pryv.Connection
+ * @class Connection
  * @constructor
  * @this {Connection}
  * @param {string} username
@@ -69,8 +69,8 @@ Connection._serialCounter = 0;
  * will do that for you.
  *
  * TODO implements "keepItUpToDate" logic.
- * @param {Pryv.Streams~getCallback} callback - array of "root" Streams
- * @returns {Pryv.Connection} this
+ * @param {Streams~getCallback} callback - array of "root" Streams
+ * @returns {Connection} this
  */
 Connection.prototype.fetchStructure = function (callback /*, keepItUpToDate*/) {
   if (this.datastore) { return this.datastore.init(callback); }
@@ -85,7 +85,7 @@ Connection.prototype.fetchStructure = function (callback /*, keepItUpToDate*/) {
 /**
  * Get access information related this connection. This is also the best way to test
  * that the combination username/token is valid.
- * @param {Pryv.Connection~accessInfoCallback} callback
+ * @param {Connection~accessInfoCallback} callback
  */
 Connection.prototype.accessInfo = function (callback) {
   if (this._accessInfo) { return this._accessInfo; }
@@ -126,8 +126,8 @@ Connection.prototype.getServerTime = function (localTime) {
  * Start monitoring this Connection. Any change that occurs on the connection (add, delete, change)
  * will trigger an event. Changes to the filter will also trigger events if they have an impact on
  * the monitored data.
- * @param {Pryv.Filter} filter - changes to this filter will be monitored.
- * @returns {Pryv.Monitor}
+ * @param {Filter} filter - changes to this filter will be monitored.
+ * @returns {Monitor}
  */
 Connection.prototype.monitor = function (filter) {
   return new Monitor(this, filter);
@@ -184,7 +184,7 @@ Connection.prototype._startMonitoring = function (callback) {
  * Even if exposed there must be an abstraction for every API call in this library.
  * @param {string} method - GET | POST | PUT | DELETE
  * @param {string} path - to resource, starting with '/' like '/events'
- * @param {Pryv.Connection~requestCallback} callback
+ * @param {Connection~requestCallback} callback
  * @param {Object} jsonData - data to POST or PUT
  */
 Connection.prototype.request = function (method, path, callback, jsonData) {
@@ -234,7 +234,7 @@ Connection.prototype.request = function (method, path, callback, jsonData) {
 
 
 /**
- * @property {string} Pryv.Connection.id an unique id that contains all needed information to access
+ * @property {string} Connection.id an unique id that contains all needed information to access
  * this Pryv data source. http[s]://<username>.<domain>:<port>[/extraPath]/?auth=<auth token>
  */
 Object.defineProperty(Connection.prototype, 'id', {
@@ -248,7 +248,7 @@ Object.defineProperty(Connection.prototype, 'id', {
 });
 
 /**
- * @property {string} Pryv.Connection.displayId an id easily readable <username>:<access name>
+ * @property {string} Connection.displayId an id easily readable <username>:<access name>
  */
 Object.defineProperty(Connection.prototype, 'displayId', {
   get: function () {
@@ -263,7 +263,7 @@ Object.defineProperty(Connection.prototype, 'displayId', {
 });
 
 /**
- * @property {string} Pryv.Connection.serialId a unique id for this instance of {Pryv}. This can be
+ * @property {string} Connection.serialId a unique id for this instance of {Pryv}. This can be
  * also see as a **clientSideId**
  */
 Object.defineProperty(Connection.prototype, 'serialId', {
@@ -275,14 +275,14 @@ module.exports = Connection;
 
 /**
  * Called with the desired Streams as result.
- * @callback Pryv.Connection~accessInfoCallback
+ * @callback Connection~accessInfoCallback
  * @param {Object} error - eventual error
  * @param {Object} result - @see http://api.pryv.com/reference.html#data-structure-access
  */
 
 /**
  * Called with the result of the request
- * @callback Pryv.Connection~requestCallback
+ * @callback Connection~requestCallback
  * @param {Object} error - eventual error
  * @param {Object} result - jSonEncoded result
  */

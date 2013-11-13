@@ -67,8 +67,8 @@ Filter.prototype.matchEvent = function (event) {
 
 /**
  * Compare this filter with data form anothe filter
- * @param filterData data got with filter.getData
- * @returns keymap { timeFrame : -1, 0 , 1 }
+ * @param {Object} filterDataTest data got with filter.getData
+ * @returns keymap \{ timeFrame : -1, 0 , 1 \}
  * (1 = more than test, -1 = less data than test, 0 == no changes)
  */
 Filter.prototype.compareToFilterData = function (filterDataTest) {

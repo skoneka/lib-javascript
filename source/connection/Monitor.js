@@ -11,7 +11,7 @@ var EXTRA_ALL_EVENTS = {state : 'all', modifiedSince : -100000000 };
  * @type {Function}
  * @constructor
  */
-function Monitor (connection, filter) {
+function Monitor(connection, filter) {
   SignalEmitter.extend(this, MyMsgs, 'Monitor');
   this.connection = connection;
   this.id = 'M' + Monitor.serial++;
@@ -27,7 +27,7 @@ function Monitor (connection, filter) {
   this.filter.addEventListener(MSGs.Filter.ON_CHANGE, this._onFilterChange.bind(this));
   this._events = null;
 
-};
+}
 
 Monitor.serial = 0;
 
@@ -144,9 +144,7 @@ Monitor.prototype._refilterLocaly = function (signal, extracontent, batch) {
   this._fireEvent(signal, result, batch);
 };
 
-/**
- *
- */
+
 Monitor.prototype._initEvents = function () {
   this.lastSynchedST = this.connection.getServerTime();
   this._events = { active : {}};

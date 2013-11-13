@@ -6,7 +6,7 @@ var Utility = require('../utility/Utility.js'),
 
 
 /**
- * @class Pryv.Events
+ * @class Events
  *
  * Coverage of the API
  *  GET /events -- 100%
@@ -17,10 +17,10 @@ var Utility = require('../utility/Utility.js'),
  *  DELETE /events/{event-id} -- only data (no object)
  *  POST /events/batch -- only data (no object)
  *
- *  attached files manipulations are covered by Pryv.Event
+ *  attached files manipulations are covered by Event
  *
  *
- * @param {Pryv.Connection} connection
+ * @param {Connection} connection
  * @constructor
  */
 function Events(connection) {
@@ -29,9 +29,9 @@ function Events(connection) {
 
 
 /**
- * @param {Pryv.Filter} filter
- * @param {Pryv.Events~getCallback} doneCallback
- * @param {Pryv.Events~partialResultCallback} partialResultCallback
+ * @param {Filter} filter
+ * @param {Events~getCallback} doneCallback
+ * @param {Events~partialResultCallback} partialResultCallback
  */
 Events.prototype.get = function (filter, doneCallback, partialResultCallback) {
   //TODO handle caching
@@ -46,16 +46,16 @@ Events.prototype.get = function (filter, doneCallback, partialResultCallback) {
 };
 
 /**
- * @param {Pryv.Event} event
- * @param {Pryv.Connection~requestCallback} callback
+ * @param {Event} event
+ * @param {Connection~requestCallback} callback
  */
 Events.prototype.update = function (event, callback) {
   this._updateWithIdAndData(event.id, event.getData(), callback);
 };
 
 /**
- * @param {Pryv.Event} event
- * @param {Pryv.Connection~requestCallback} callback
+ * @param {Event} event
+ * @param {Connection~requestCallback} callback
  */
 Events.prototype.trash = function (event, callback) {
   this.trashWithId(event.id, callback);
@@ -63,7 +63,7 @@ Events.prototype.trash = function (event, callback) {
 
 /**
  * @param {String} eventId
- * @param {Pryv.Connection~requestCallback} callback
+ * @param {Connection~requestCallback} callback
  */
 Events.prototype.trashWithId = function (eventId, callback) {
   var url = '/events/' + eventId;
@@ -74,8 +74,8 @@ Events.prototype.trashWithId = function (eventId, callback) {
  * This is the preferred method to create an even.
  * The function return the newly created object.. It will be updated when posted on the API.
  * @param {Object} eventData -- minimum {streamId, type }
- * @param {Pryv.Events~eventCreatedOnTheAPI} callback
- * @return {Pryv.Event} event
+ * @param {Events~eventCreatedOnTheAPI} callback
+ * @return {Event} event
  */
 Events.prototype.createWithData = function (eventData, callback) {
   var event = new Event(this.connection, eventData);
@@ -92,9 +92,9 @@ Events.prototype.createWithData = function (eventData, callback) {
 /**
  * This is the preffered method to create events in batch
  * @param {Object[]} eventsData -- minimum {streamId, type }
- * @param {Pryv.Events~eventBatchCreatedOnTheAPI}
+ * @param {Events~eventBatchCreatedOnTheAPI}
  * @param {function} [callBackWithEventsBeforeRequest] mostly for testing purposes
- * @return {Pryv.Event[]} events
+ * @return {Event[]} events
  */
 Events.prototype.batchWithData = function (eventsData, callback, callBackWithEventsBeforeRequest) {
   if (!_.isArray(eventsData)) { eventsData = [eventsData]; }
@@ -126,8 +126,8 @@ Events.prototype.batchWithData = function (eventsData, callback, callBackWithEve
 // --- raw access to the API
 
 /**
- * @param {Pryv.Filter} filter
- * @param {Pryv.Connection~requestCallback} callback
+ * @param {Filter} filter
+ * @param {Connection~requestCallback} callback
  * @private
  */
 Events.prototype._get = function (filter, callback) {
@@ -144,7 +144,7 @@ Events.prototype._get = function (filter, callback) {
 /**
  * @param {String} eventId
  * @param {Object} data
- * @param  {Pryv.Connection~requestCallback} callback
+ * @param  {Connection~requestCallback} callback
  * @private
  */
 Events.prototype._updateWithIdAndData = function (eventId, data, callback) {
@@ -157,29 +157,29 @@ module.exports = Events;
 
 /**
  * Called with the desired Events as result.
- * @callback Pryv.Events~getCallback
+ * @callback Events~getCallback
  * @param {Object} error - eventual error
- * @param {Pryv.Event[]} result
+ * @param {Event[]} result
  */
 
 
 /**
  * Called each time a "part" of the result is received
- * @callback Pryv.Events~partialResultCallback
- * @param {Pryv.Event[]} result
+ * @callback Events~partialResultCallback
+ * @param {Event[]} result
  */
 
 
 /**
  * Called when an event is created on the API
- * @callback Pryv.Events~eventCreatedOnTheAPI
+ * @callback Events~eventCreatedOnTheAPI
  * @param {Object} error - eventual error
- * @param {Pryv.Event} event
+ * @param {Event} event
  */
 
 /**
  * Called when batch create an array of events on the API
- * @callback Pryv.Events~eventBatchCreatedOnTheAPI
+ * @callback Events~eventBatchCreatedOnTheAPI
  * @param {Object} error - eventual error
- * @param {Pryv.Event[]} events
+ * @param {Event[]} events
  */

@@ -4,7 +4,7 @@ var _ = require('underscore'),
 
 
 /**
- * @class Pryv.Streams
+ * @class Streams
  *
  * Coverage of the API
  *  GET /streams -- 100%
@@ -25,15 +25,15 @@ function Streams(connection) {
 
 
 /**
- * @typedef {Object} Pryv.Streams~options parameters than can be passed allong a Stream request
+ * @typedef {Object} Streams~options parameters than can be passed allong a Stream request
  * @property {string} parentId  if parentId is null you will get all the "root" streams.
  * @property {string} [state] 'all' || null  - if null you get only "active" streams
  **/
 
 
 /**
- * @param {Pryv.Streams~options} options
- * @param {Pryv.Streams~getCallback} callback - handles the response
+ * @param {Streams~options} options
+ * @param {Streams~getCallback} callback - handles the response
  */
 Streams.prototype.get = function (options, callback) {
   if (this.connection.datastore) {
@@ -54,7 +54,7 @@ Streams.prototype.get = function (options, callback) {
  * Get a Stream by it's Id.
  * Works only if fetchStructure has been done once.
  * @param {string} streamId
- * @throws {Error} Pryv.Connection.fetchStructure must have been called before.
+ * @throws {Error} Connection.fetchStructure must have been called before.
  */
 Streams.prototype.getById = function (streamId) {
   if (! this.connection.datastore) {
@@ -69,7 +69,7 @@ Streams.prototype.getById = function (streamId) {
 /**
  * get streams on the API
  * @private
- * @param {Pryv.Streams~options} opts
+ * @param {Streams~options} opts
  * @param callback
  */
 Streams.prototype._getData = function (opts, callback) {
@@ -108,7 +108,7 @@ Streams.prototype._updateWithData = function (streamData, callback) {
 
 /**
  * @private
- * @param {Pryv.Streams~options} options
+ * @param {Streams~options} options
  */
 Streams.prototype._getObjects = function (options, callback) {
   options = options || {};
@@ -137,20 +137,20 @@ Streams.prototype._getObjects = function (options, callback) {
 
 /**
  * Called once per streams
- * @callback Pryv.Streams~walkTreeEachStreams
- * @param {Pryv.Stream} stream
+ * @callback Streams~walkTreeEachStreams
+ * @param {Stream} stream
  */
 
 /**
  * Called when walk is done
- * @callback Pryv.Streams~walkTreeDone
+ * @callback Streams~walkTreeDone
  */
 
 /**
  * Walk the tree structure.. parents are always announced before childrens
- * @param {Pryv.Streams~options} options
- * @param {Pryv.Streams~walkTreeEachStreams} eachStream
- * @param {Pryv.Streams~walkTreeDone} done
+ * @param {Streams~options} options
+ * @param {Streams~walkTreeEachStreams} eachStream
+ * @param {Streams~walkTreeDone} done
  */
 Streams.prototype.walkTree = function (options, eachStream, done) {
   this.get(options, function (error, result) {
@@ -163,14 +163,14 @@ Streams.prototype.walkTree = function (options, eachStream, done) {
 
 /**
  * Called when tree has been flatened
- * @callback Pryv.Streams~getFlatenedObjectsDone
+ * @callback Streams~getFlatenedObjectsDone
  * @param {Streams[]} streams
  */
 
 /**
  * Get the all the streams of the Tree in a list.. parents firsts
- * @param {Pryv.Streams~options} options
- * @param {Pryv.Streams~getFlatenedObjectsDone} done
+ * @param {Streams~options} options
+ * @param {Streams~getFlatenedObjectsDone} done
  */
 Streams.prototype.getFlatenedObjects = function (options, callback) {
   var result = [];
@@ -261,8 +261,8 @@ module.exports = Streams;
 
 /**
  * Called with the desired Streams as result.
- * @callback Pryv.Streams~getCallback
+ * @callback Streams~getCallback
  * @param {Object} error - eventual error
- * @param {Pryv.Stream[]} result
+ * @param {Stream[]} result
  */
 

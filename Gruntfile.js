@@ -1,6 +1,15 @@
 module.exports = function (grunt) {
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
+    jsdoc : {
+      dist : {
+        src: ['source/**/*.*'],
+        options : {
+          destination : 'doc',
+          private: false
+        }
+      }
+    },
     browserify: {
       main: {
         src: ['./source/main.js'],
@@ -46,6 +55,6 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-mocha-test');
-
-  grunt.registerTask('default', [ 'jshint', 'browserify', 'mochaTest' ]);
+  grunt.loadNpmTasks('grunt-jsdoc');
+  grunt.registerTask('default', [ 'jshint', 'browserify', 'mochaTest', 'jsdoc' ]);
 };
