@@ -11,11 +11,13 @@ var testEvents = function (preFetchStructure) {
 
   var localEnabledStr = preFetchStructure ? ' + LocalStorage' : '';
 
+  var username = 'test-user',
+    auth = 'test-token',
+    defaultFilter = new Pryv.Filter();
+
   describe('Connection.events' + localEnabledStr, function () {
 
-    var username = 'test-user',
-      auth = 'test-token',
-      defaultFilter = Pryv.Filter();
+
     var settings = {
       port: 443,
       ssl: true,

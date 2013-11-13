@@ -2,7 +2,6 @@ var _ = require('underscore'),
     Utility = require('../utility/Utility.js'),
     Stream = require('../Stream.js');
 
-
 /**
  * @class Streams
  * @description
@@ -26,14 +25,14 @@ function Streams(connection) {
 
 
 /**
- * @typedef {Object} Streams~options parameters than can be passed allong a Stream request
+ * @typedef StreamsOptions parameters than can be passed along a Stream request
  * @property {string} parentId  if parentId is null you will get all the "root" streams.
  * @property {string} [state] 'all' || null  - if null you get only "active" streams
  **/
 
 
 /**
- * @param {Streams~options} options
+ * @param {StreamsOptions} options
  * @param {Streams~getCallback} callback - handles the response
  */
 Streams.prototype.get = function (options, callback) {

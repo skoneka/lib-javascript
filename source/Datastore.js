@@ -1,11 +1,10 @@
 var _ = require('underscore');
 
-var Datastore = module.exports = function (connection) {
+function Datastore(connection) {
   this.connection = connection;
   this.streamsIndex = {}; // streams are linked to their object representation
   this.rootStreams = [];
-
-};
+}
 
 Datastore.prototype.init = function (callback) {
   this.connection.streams._getObjects({state: 'all'}, function (error, result) {
@@ -16,8 +15,7 @@ Datastore.prototype.init = function (callback) {
     callback(null, result);
   }.bind(this));
 
-  // activate monitoring
-
+  // TODO activate monitoring
 };
 
 Datastore.prototype._rebuildStreamIndex = function (streamArray) {
@@ -60,4 +58,6 @@ Datastore.prototype.getStreamById = function (streamId, test) {
   }
   return result;
 };
+
+module.exports = Datastore;
 

@@ -3,11 +3,7 @@ var _ = require('underscore');
 var SignalEmitter = require('./utility/SignalEmitter.js');
 var MSGs = require('./Messages.js').Filter;
 
-var Filter = module.exports = function (settings) {
-  // protect against calls without `new`
-  if (! (this instanceof Filter)) {
-    return new Filter(settings);
-  }
+function Filter(settings) {
   SignalEmitter.extend(this, MSGs, 'Filter');
 
   this._settings = _.extend({
@@ -21,7 +17,7 @@ var Filter = module.exports = function (settings) {
     modifiedSince: null,
     state: null
   }, settings);
-};
+}
 
 
 // TODO
@@ -299,3 +295,18 @@ Filter.prototype.focusedOnSingleStream = function () {
   }
   return null;
 };
+
+module.exports = Filter;
+
+/**
+ * An pryv Filter or an object corresponding at what we can get with Filter.getData().
+ * @typedef {(Filter|Object)} FilterLike
+ * @property {String[]} [streams]
+ * @property {String[]} [tags]
+ * @property {number} [fromTime] -- serverTime
+ * @property {number} [toTime] -- serverTime
+ * @property {number} [modifiedSince] -- serverTime
+ * @property {number} [limit] -- response to 'n' events
+ * @property {number} [skip] -- skip the first 'n' events of he response
+ */
+

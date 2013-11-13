@@ -7,11 +7,15 @@ var _ = require('underscore'),
 
 
 /**
+ * @class Connection
  * Create an instance of Connection to Pryv API.
  * The connection will be opened on
- * http[s]://<username>.<domain>:<port>/<extraPath>?auth=<auth>
+ * http[s]://&lt;username>.&lt;domain>:&lt;port>/&lt;extraPath>?auth=&lt;auth>
  *
- * @class Connection
+ * @example
+ * // create a connection for the user 'perkikiki' with the token 'TTZycvBTiq'
+ * var conn = new Pryv.Connection('perkikiki', 'TTZycvBTiq');
+ *
  * @constructor
  * @this {Connection}
  * @param {string} username
@@ -52,7 +56,15 @@ function Connection(username, auth, settings) {
   this._streamSerialCounter = 0;
   this._eventSerialCounter = 0;
 
+  /**
+   * Manipulate events for this connection
+   * @type {ConnectionEvents}
+   */
   this.events = new ConnectionEvents(this);
+  /**
+   * Manipulate streams for this connection
+   * @type {ConnectionEvents}
+   */
   this.streams = new ConnectionStreams(this);
 
   this.datastore = null;
@@ -282,7 +294,12 @@ module.exports = Connection;
  * Called with the desired Streams as result.
  * @callback Connection~accessInfoCallback
  * @param {Object} error - eventual error
- * @param {Object} result - @see http://api.pryv.com/reference.html#data-structure-access
+ * @param {AccessInfo} result
+ */
+
+/**
+ * @typedef AccessInfo
+ * @see http://api.pryv.com/reference.html#data-structure-access
  */
 
 /**

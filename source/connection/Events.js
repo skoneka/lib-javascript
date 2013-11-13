@@ -27,7 +27,14 @@ function Events(connection) {
 
 
 /**
- * @param {Filter} filter
+ * @example
+ * // get events from the Diary stream
+ * conn.events.get({streamId : 'diary'},
+ *  function(events) {
+ *    console.log('got ' + events.length + ' events)
+ *  }
+ * );
+ * @param {FilterLike} filter
  * @param {Events~getCallback} doneCallback
  * @param {Events~partialResultCallback} partialResultCallback
  */
@@ -138,7 +145,7 @@ Events.prototype.batchWithData = function (eventsData, callback, callBackWithEve
 // --- raw access to the API
 
 /**
- * @param {Filter} filter
+ * @param {FilterLike} filter
  * @param {Connection~requestCallback} callback
  * @private
  */
