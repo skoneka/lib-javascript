@@ -1,6 +1,6 @@
 var _ = require('underscore');
-var SignalEmitter = require('../utility/SignalEmitter.js');
-var MSGs =  require('../Messages.js');
+var SignalEmitter = require('./utility/SignalEmitter.js');
+var MSGs =  require('./Messages.js');
 var MyMsgs = MSGs.Monitor;
 
 
@@ -40,16 +40,17 @@ Monitor.prototype.start = function (done) {
   this.lastSynchedST = -1000000000000;
   this._initEvents();
 
-  //todo add a register monitor here ...
-  this.connection._monitors[this.id] = this;
-  this.connection._startMonitoring(done);
+  //TODO move this logic to ConnectionMonitors ??
+  this.connection.monitors._monitors[this.id] = this;
+  this.connection.monitors._startMonitoring(done);
 };
 
 
 Monitor.prototype.destroy = function () {
-  delete this.connection._monitors[this.id];
-  if (_.keys(this.connection._monitors).length === 0) {
-    this.connection._stopMonitoring();
+  //TODO move this logic to ConnectionMonitors ??
+  delete this.connection.monitors._monitors[this.id];
+  if (_.keys(this.connection.monitors._monitors).length === 0) {
+    this.connection.monitors._stopMonitoring();
   }
 };
 

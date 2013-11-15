@@ -2,9 +2,9 @@ var _ = require('underscore'),
   System = require('./system/System.js'),
   ConnectionEvents = require('./connection/ConnectionEvents.js'),
   ConnectionStreams = require('./connection/ConnectionStreams.js'),
- ConnectionProfile = require('./connection/ConnectionProfile.js'),
-  Datastore = require('./Datastore.js'),
-  Monitor = require('./connection/Monitor.js');
+  ConnectionProfile = require('./connection/ConnectionProfile.js'),
+  ConnectionMonitors = require('./connection/ConnectionMonitors.js'),
+  Datastore = require('./Datastore.js');
 
 
 /**
@@ -72,11 +72,13 @@ function Connection(username, auth, settings) {
   * @type {ConnectionProfile}
   */
   this.profile = new ConnectionProfile(this);
-
+  /**
+   * Manipulate this connection monitors
+   */
+  this.monitors = new ConnectionMonitors(this);
 
   this.datastore = null;
 
-  this._monitors = {};
 }
 
 Connection._serialCounter = 0;
@@ -152,55 +154,12 @@ Connection.prototype.getServerTime = function (localTime) {
  * @returns {Monitor}
  */
 Connection.prototype.monitor = function (filter) {
-  return new Monitor(this, filter);
+  return this.monitors.create(filter);
 };
 
 // ------------- start / stop Monitoring is called by Monitor constructor / destructor -----//
 
-/**
- * TODO
- * @private
- */
-Connection.prototype._stopMonitoring = function (/*callback*/) {
 
-};
-
-/**
- * Internal for Connection.Monitor
- * Maybe moved in Monitor by the way
- * @param callback
- * @private
- * @return {Object} XHR or Node http request
- */
-Connection.prototype._startMonitoring = function (callback) {
-
-  if (this.ioSocket) { return callback(null/*, ioSocket*/); }
-
-  var settings = {
-    host : this.username + '.' + this.settings.domain,
-    port : this.settings.port,
-    ssl : this.settings.ssl,
-    path : this.settings.extraPath + '/' + this.username,
-    namespace : '/' + this.username,
-    auth : this.auth
-  };
-
-  this.ioSocket = System.ioConnect(settings);
-
-  this.ioSocket.on('connect', function () {
-    _.each(this._monitors, function (monitor) { monitor._onIoConnect(); });
-  }.bind(this));
-  this.ioSocket.on('error', function (error) {
-    _.each(this._monitors, function (monitor) { monitor._onIoError(error); });
-  }.bind(this));
-  this.ioSocket.on('eventsChanged', function () {
-    _.each(this._monitors, function (monitor) { monitor._onIoEventsChanged(); });
-  }.bind(this));
-  this.ioSocket.on('streamsChanged', function () {
-    _.each(this._monitors, function (monitor) { monitor._onIoStreamsChanged(); });
-  }.bind(this));
-  callback(null);
-};
 
 /**
  * Do a direct request to Pryv's API.
