@@ -59,6 +59,7 @@ describe('Connection', function () {
   });
 
   describe('accessInfo()', function () {
+    this.timeout(15000);
 
     it('should call the proper API method', function (done) {
       nock('https://' + username + '.' + settings.domain)
@@ -72,7 +73,7 @@ describe('Connection', function () {
         should.exist(result);
         result.should.eql(responses.accessInfo);
 
-        connection.serverInfos.deltaTime.should.be.within(1, 1.2);
+        connection.serverInfos.deltaTime.should.be.within(1, 15);
         connection.serverInfos.apiVersion.should.equal('nock nock');
         connection.serverInfos.lastSeenLT.should.be.within(requestTime, responseTime);
         done();

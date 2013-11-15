@@ -14,7 +14,7 @@ var _ = require('underscore'),
  *
  *
  *
- * @param connection
+ * @param {Connection} connection
  * @constructor
  */
 function Streams(connection) {

@@ -2,18 +2,22 @@ require=(function(e,t,n){function i(n,s){if(!t[n]){if(!e[n]){var o=typeof requir
 module.exports=require('Oe2HK+');
 },{}],"Oe2HK+":[function(require,module,exports){
 /**
- * The main file.
+ * @class Pryv
+ * @constructor
  */
-module.exports = {
-  Connection : require('./Connection.js'),
-  Event : require('./Event.js'),
-  Stream : require('./Stream.js'),
-  Filter : require('./Filter.js'),
-  System : require('./system/System.js'),
-  Access: require('./Access.js'),
-  Utility: require('./utility/Utility.js'),
-  Messages: require('./Messages.js')
-};
+function Pryv() { }
+
+Pryv.prototype.Connection = require('./Connection.js');
+Pryv.prototype.Event = require('./Event.js');
+Pryv.prototype.Stream = require('./Stream.js');
+Pryv.prototype.Filter = require('./Filter.js');
+Pryv.prototype.System = require('./system/System.js');
+Pryv.prototype.Access = require('./Access.js');
+Pryv.prototype.Utility = require('./utility/Utility.js');
+Pryv.prototype.Messages = require('./Messages.js');
+
+
+module.exports = new Pryv();
 
 },{"./Access.js":6,"./Connection.js":1,"./Event.js":2,"./Filter.js":4,"./Messages.js":8,"./Stream.js":3,"./system/System.js":5,"./utility/Utility.js":7}],8:[function(require,module,exports){
 var Messages = module.exports = { };
@@ -110,6 +114,49 @@ exports.getAccesses = function (pack) {
   });
 };
 },{"./system/System.js":5}],9:[function(require,module,exports){
+var apiPathProfile = '/profile/app';
+
+
+/**
+ * @class Profile
+   @link http://api.pryv.com/reference.html#methods-app-profile
+ * @param {Connection} connection
+ * @constructor
+ */
+function Profile(connection) {
+  this.connection = connection;
+}
+
+/**
+ * @param {String | null} key
+ * @param {Connection~requestCallback} callback - handles the response
+ */
+Profile.prototype.get = function (key, callback) {
+  function myCallBack(error, result) {
+    if (key !== null && result) {
+      result = result[key];
+    }
+    callback(error, result);
+  }
+  this.connection.request('GET', apiPathProfile, myCallBack);
+};
+
+
+/**
+ * @example you want to store
+ *
+ * conn.profile.set({
+ *
+ * @param {Object} keyValuePairs
+ * @param {Connection~requestCallback} callback - handles the response
+ */
+Profile.prototype.set = function (keyValuePairs, callback) {
+  this.connection.request('PUT', apiPathProfile, callback, keyValuePairs);
+};
+
+
+module.exports = Profile;
+},{}],10:[function(require,module,exports){
 //file: system browser
 
 
@@ -274,33 +321,41 @@ var _initXHR = function () {
 
 
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 
 },{}],1:[function(require,module,exports){
 var _ = require('underscore'),
   System = require('./system/System.js'),
   ConnectionEvents = require('./connection/Events.js'),
   ConnectionStreams = require('./connection/Streams.js'),
+ ConnectionProfile = require('./connection/Profile.js'),
   Datastore = require('./Datastore.js'),
   Monitor = require('./connection/Monitor.js');
 
+
 /**
+ * @class Connection
  * Create an instance of Connection to Pryv API.
  * The connection will be opened on
- * http[s]://<username>.<domain>:<port>/<extrapath>?auth=<auth>
+ * http[s]://&lt;username>.&lt;domain>:&lt;port>/&lt;extraPath>?auth=&lt;auth>
+ *
+ * @example
+ * // create a connection for the user 'perkikiki' with the token 'TTZycvBTiq'
+ * var conn = new Pryv.Connection('perkikiki', 'TTZycvBTiq');
  *
  * @constructor
  * @this {Connection}
  * @param {string} username
- * @param {string} auth the authorization token for this username
+ * @param {string} auth - the authorization token for this username
  * @param {Object} [settings]
+ * @param {boolean} [settings.staging = false] use Pryv's staging servers
  * @param {number} [settings.port = 443]
  * @param {string} [settings.domain = 'pryv.io'] change the domain. use "settings.staging = true" to
  * activate 'pryv.in' staging domain.
  * @param {boolean} [settings.ssl = true] Use ssl (https) or no
- * @param {string} [settings.extraPath = ''] append to the connections
+ * @param {string} [settings.extraPath = ''] append to the connections. Must start with a '/'
  */
-var Connection = function (username, auth, settings) {
+function Connection(username, auth, settings) {
   this._serialId = Connection._serialCounter++;
 
   this.username = username;
@@ -310,10 +365,11 @@ var Connection = function (username, auth, settings) {
     port: 443,
     ssl: true,
     domain: 'pryv.io',
-    extraPath: ''
+    extraPath: '',
+    staging: false
   }, settings);
 
-  if (settings && settings.staging) { this.settings.domain = 'pryv.in'; }
+  if (settings && settings.staging) { this.settings.domain = 'pryv.in'; }
 
   this.serverInfos = {
     // nowLocalTime - nowServerTime
@@ -327,24 +383,40 @@ var Connection = function (username, auth, settings) {
   this._streamSerialCounter = 0;
   this._eventSerialCounter = 0;
 
+  /**
+   * Manipulate events for this connection
+   * @type {ConnectionEvents}
+   */
   this.events = new ConnectionEvents(this);
+  /**
+   * Manipulate streams for this connection
+   * @type {ConnectionStreams}
+   */
   this.streams = new ConnectionStreams(this);
+  /**
+  * Manipulate app profile for this connection
+  * @type {ConnectionProfile}
+  */
+  this.profile = new ConnectionProfile(this);
+
 
   this.datastore = null;
 
-  this._ioSocket = null;
   this._monitors = {};
-};
+}
 
 Connection._serialCounter = 0;
 
 
 /**
- * TODO create an open() .. like access_info and add this as a setting
- * Use localStorage for caching.
- * The Library will activate Structure Monitoring and
- * @param callback
- * @returns {*}
+ * In order to access some properties such as event.stream and get a {Stream} object, you
+ * need to fetch the structure at least once. For now, there is now way to be sure that the
+ * structure is up to date. Soon we will implement an optional parameter "keepItUpToDate", that
+ * will do that for you.
+ *
+ * TODO implements "keepItUpToDate" logic.
+ * @param {Streams~getCallback} callback - array of "root" Streams
+ * @returns {Connection} this
  */
 Connection.prototype.fetchStructure = function (callback /*, keepItUpToDate*/) {
   if (this.datastore) { return this.datastore.init(callback); }
@@ -356,6 +428,12 @@ Connection.prototype.fetchStructure = function (callback /*, keepItUpToDate*/) {
   return this;
 };
 
+/**
+ * Get access information related this connection. This is also the best way to test
+ * that the combination username/token is valid.
+ * @param {Connection~accessInfoCallback} callback
+ * @returns {Connection} this
+ */
 Connection.prototype.accessInfo = function (callback) {
   if (this._accessInfo) { return this._accessInfo; }
   var url = '/access-info';
@@ -365,13 +443,14 @@ Connection.prototype.accessInfo = function (callback) {
     }
     return callback(error, result);
   }.bind(this));
+  return this;
 };
 
 /**
  * Translate this timestamp (server dimension) to local system dimension
  * This could have been named to "translate2LocalTime"
- * @param serverTime timestamp  (server dimension)
- * @returns {number} timestamp (local dimension)
+ * @param {number} serverTime timestamp  (server dimension)
+ * @returns {number} timestamp (local dimension) same time space as (new Date()).getTime();
  */
 Connection.prototype.getLocalTime = function (serverTime) {
   return (serverTime + this.serverInfos.deltaTime) * 1000;
@@ -380,7 +459,7 @@ Connection.prototype.getLocalTime = function (serverTime) {
 /**
  * Translate this timestamp (local system dimension) to server dimension
  * This could have been named to "translate2ServerTime"
- * @param localTime timestamp  (local dimension)
+ * @param {number} localTime timestamp  (local dimension) same time space as (new Date()).getTime();
  * @returns {number} timestamp (server dimension)
  */
 Connection.prototype.getServerTime = function (localTime) {
@@ -391,6 +470,13 @@ Connection.prototype.getServerTime = function (localTime) {
 
 // ------------- monitor this connection --------//
 
+/**
+ * Start monitoring this Connection. Any change that occurs on the connection (add, delete, change)
+ * will trigger an event. Changes to the filter will also trigger events if they have an impact on
+ * the monitored data.
+ * @param {Filter} filter - changes to this filter will be monitored.
+ * @returns {Monitor}
+ */
 Connection.prototype.monitor = function (filter) {
   return new Monitor(this, filter);
 };
@@ -406,16 +492,15 @@ Connection.prototype._stopMonitoring = function (/*callback*/) {
 };
 
 /**
- *
+ * Internal for Connection.Monitor
+ * Maybe moved in Monitor by the way
  * @param callback
- * @returns {*}
  * @private
+ * @return {Object} XHR or Node http request
  */
 Connection.prototype._startMonitoring = function (callback) {
 
   if (this.ioSocket) { return callback(null/*, ioSocket*/); }
-
-
 
   var settings = {
     host : this.username + '.' + this.settings.domain,
@@ -443,6 +528,14 @@ Connection.prototype._startMonitoring = function (callback) {
   callback(null);
 };
 
+/**
+ * Do a direct request to Pryv's API.
+ * Even if exposed there must be an abstraction for every API call in this library.
+ * @param {string} method - GET | POST | PUT | DELETE
+ * @param {string} path - to resource, starting with '/' like '/events'
+ * @param {Connection~requestCallback} callback
+ * @param {Object} jsonData - data to POST or PUT
+ */
 Connection.prototype.request = function (method, path, callback, jsonData) {
   if (! callback || ! _.isFunction(callback)) {
     throw new Error('request\'s callback must be a function');
@@ -455,7 +548,7 @@ Connection.prototype.request = function (method, path, callback, jsonData) {
     headers['Content-Type'] = 'application/json; charset=utf-8';
   }
 
-  System.request({
+  var request = System.request({
     method : method,
     host : this.username + '.' + this.settings.domain,
     port : this.settings.port,
@@ -485,20 +578,28 @@ Connection.prototype.request = function (method, path, callback, jsonData) {
   function onError(error /*, requestInfo*/) {
     callback(error, null);
   }
+  return request;
 };
 
 
+
+/**
+ * @property {string} Connection.id an unique id that contains all needed information to access
+ * this Pryv data source. http[s]://<username>.<domain>:<port>[/extraPath]/?auth=<auth token>
+ */
 Object.defineProperty(Connection.prototype, 'id', {
   get: function () {
     var id = this.settings.ssl ? 'https://' : 'http://';
     id += this.username + '.' + this.settings.domain + ':' +
-      this.settings.port + '/?auth=' + this.auth;
+      this.settings.port + this.settings.extraPath + '/?auth=' + this.auth;
     return id;
   },
   set: function () { throw new Error('ConnectionNode.id property is read only'); }
 });
 
-//TODO rename in displayID
+/**
+ * @property {string} Connection.displayId an id easily readable <username>:<access name>
+ */
 Object.defineProperty(Connection.prototype, 'displayId', {
   get: function () {
     if (! this._accessInfo) {
@@ -511,15 +612,37 @@ Object.defineProperty(Connection.prototype, 'displayId', {
   set: function () { throw new Error('Connection.displayId property is read only'); }
 });
 
-
+/**
+ * @property {string} Connection.serialId a unique id for this instance of {Pryv}. This can be
+ * also see as a **clientSideId**
+ */
 Object.defineProperty(Connection.prototype, 'serialId', {
   get: function () { return 'C' + this._serialId; }
 });
 
-
-
 module.exports = Connection;
-},{"./Datastore.js":14,"./connection/Events.js":11,"./connection/Monitor.js":13,"./connection/Streams.js":12,"./system/System.js":5,"underscore":15}],2:[function(require,module,exports){
+
+
+/**
+ * Called with the desired Streams as result.
+ * @callback Connection~accessInfoCallback
+ * @param {Object} error - eventual error
+ * @param {AccessInfo} result
+ */
+
+/**
+ * @typedef AccessInfo
+ * @see http://api.pryv.com/reference.html#data-structure-access
+ */
+
+/**
+ * Called with the result of the request
+ * @callback Connection~requestCallback
+ * @param {Object} error - eventual error
+ * @param {Object} result - jSonEncoded result
+ */
+
+},{"./Datastore.js":14,"./connection/Events.js":12,"./connection/Monitor.js":15,"./connection/Profile.js":9,"./connection/Streams.js":13,"./system/System.js":5,"underscore":16}],2:[function(require,module,exports){
 
 var _ = require('underscore');
 
@@ -584,7 +707,16 @@ Object.defineProperty(Event.prototype, 'attachmentsUrl', {
   set: function () { throw new Error('Event.attachmentsUrl property is read only'); }
 });
 
-},{"underscore":15}],3:[function(require,module,exports){
+/**
+ * An newly created Event (no id, not synched with API)
+ * or an object with sufficient properties to be considered as an Event.
+ * @typedef {(Event|Object)} NewEventLike
+ * @property {String} streamId
+ * @property {String} type
+ * @property {number} [time]
+ */
+
+},{"underscore":16}],3:[function(require,module,exports){
 
 var _ = require('underscore');
 
@@ -642,17 +774,13 @@ Object.defineProperty(Stream.prototype, 'ancestors', {
 
 
 
-},{"underscore":15}],4:[function(require,module,exports){
+},{"underscore":16}],4:[function(require,module,exports){
 var _ = require('underscore');
 
 var SignalEmitter = require('./utility/SignalEmitter.js');
 var MSGs = require('./Messages.js').Filter;
 
-var Filter = module.exports = function (settings) {
-  // protect against calls without `new`
-  if (! (this instanceof Filter)) {
-    return new Filter(settings);
-  }
+function Filter(settings) {
   SignalEmitter.extend(this, MSGs, 'Filter');
 
   this._settings = _.extend({
@@ -666,17 +794,17 @@ var Filter = module.exports = function (settings) {
     modifiedSince: null,
     state: null
   }, settings);
-};
+}
 
 
 // TODO
 // redundant with get
 function _normalizeTimeFrameST(filterData) {
   var result = [Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY];
-  if (filterData.fromTime || filterData.fromTime === 0) {
+  if (filterData.fromTime || filterData.fromTime === 0) {
     result[0] = filterData.fromTime;
   }
-  if (filterData.toTime || filterData.toTime === 0) {
+  if (filterData.toTime || filterData.toTime === 0) {
     result[1] = filterData.toTime;
   }
   return result;
@@ -712,8 +840,8 @@ Filter.prototype.matchEvent = function (event) {
 
 /**
  * Compare this filter with data form anothe filter
- * @param filterData data got with filter.getData
- * @returns keymap { timeFrame : -1, 0 , 1 }
+ * @param {Object} filterDataTest data got with filter.getData
+ * @returns keymap \{ timeFrame : -1, 0 , 1 \}
  * (1 = more than test, -1 = less data than test, 0 == no changes)
  */
 Filter.prototype.compareToFilterData = function (filterDataTest) {
@@ -853,7 +981,7 @@ Filter.prototype._setValue = function (key, newValue, batch) {
       this._settings.toTime = newValue[1];
       this._fireFilterChange(MSGs.DATE_CHANGE, this.timeFrameST, batch);
     }
-    if (waitForMe) { waitForMe.done(); }
+    if (waitForMe) { waitForMe.done(); }
     return;
   }
 
@@ -871,11 +999,11 @@ Filter.prototype._setValue = function (key, newValue, batch) {
     // TODO check that this stream is valid
     this._settings.streams = newValue;
     this._fireFilterChange(MSGs.STREAMS_CHANGE, this.streams, batch);
-    if (waitForMe) { waitForMe.done(); }
+    if (waitForMe) { waitForMe.done(); }
     return;
   }
 
-  if (waitForMe) { waitForMe.done(); }
+  if (waitForMe) { waitForMe.done(); }
   throw new Error('Filter has no property : ' + key);
 };
 
@@ -884,7 +1012,7 @@ Filter.prototype._setValue = function (key, newValue, batch) {
  */
 Object.defineProperty(Filter.prototype, 'toTimeSTNormalized', {
   get: function () {
-    if (this._settings.toTime || this._settings.toTime === 0) {
+    if (this._settings.toTime || this._settings.toTime === 0) {
       return this._settings.toTime;
     }
     return Number.POSITIVE_INFINITY;
@@ -896,7 +1024,7 @@ Object.defineProperty(Filter.prototype, 'toTimeSTNormalized', {
  */
 Object.defineProperty(Filter.prototype, 'fromTimeSTNormalized', {
   get: function () {
-    if (this._settings.fromTime || this._settings.fromTime === 0) {
+    if (this._settings.fromTime || this._settings.fromTime === 0) {
       return this._settings.fromTime;
     }
     return Number.NEGATIVE_INFINITY;
@@ -945,7 +1073,22 @@ Filter.prototype.focusedOnSingleStream = function () {
   return null;
 };
 
-},{"./Messages.js":8,"./utility/SignalEmitter.js":16,"underscore":15}],15:[function(require,module,exports){
+module.exports = Filter;
+
+/**
+ * An pryv Filter or an object corresponding at what we can get with Filter.getData().
+ * @typedef {(Filter|Object)} FilterLike
+ * @property {String[]} [streams]
+ * @property {String[]} [tags]
+ * @property {number} [fromTime] -- serverTime
+ * @property {number} [toTime] -- serverTime
+ * @property {number} [modifiedSince] -- serverTime
+ * @property {number} [limit] -- response to 'n' events
+ * @property {number} [skip] -- skip the first 'n' events of he response
+ */
+
+
+},{"./Messages.js":8,"./utility/SignalEmitter.js":17,"underscore":16}],16:[function(require,module,exports){
 (function(){//     Underscore.js 1.5.2
 //     http://underscorejs.org
 //     (c) 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -2224,29 +2367,7 @@ Filter.prototype.focusedOnSingleStream = function () {
 }).call(this);
 
 })()
-},{}],5:[function(require,module,exports){
-//TODO: consider merging System into Utility
-
-function isBrowser() {
-  return typeof(window) !== 'undefined';
-}
-
-var socketIO = require('socket.io-client');
-
-
-var System =
-  module.exports =  isBrowser() ?  require('./System-browser.js') : require('./System-node.js');
-
-System.ioConnect = function (settings) {
-  var httpMode = settings.ssl ? 'https' : 'http';
-  var url = httpMode + '://' + settings.host + ':' + settings.port + '' +
-    settings.path + '?auth=' + settings.auth + '&resource=' + settings.namespace;
-
-  return socketIO.connect(url, {'force new connection': true});
-};
-
-
-},{"./System-browser.js":9,"./System-node.js":10,"socket.io-client":17}],7:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 var _ = require('underscore');
 
 exports.SignalEmitter = require('./SignalEmitter.js');
@@ -2279,15 +2400,36 @@ exports.getQueryParametersString = function (data) {
   }, this).join('&');
 };
 
-},{"./SignalEmitter.js":16,"underscore":15}],14:[function(require,module,exports){
+},{"./SignalEmitter.js":17,"underscore":16}],5:[function(require,module,exports){
+//TODO: consider merging System into Utility
+
+function isBrowser() {
+  return typeof(window) !== 'undefined';
+}
+
+var socketIO = require('socket.io-client');
+
+
+var System =
+  module.exports =  isBrowser() ?  require('./System-browser.js') : require('./System-node.js');
+
+System.ioConnect = function (settings) {
+  var httpMode = settings.ssl ? 'https' : 'http';
+  var url = httpMode + '://' + settings.host + ':' + settings.port + '' +
+    settings.path + '?auth=' + settings.auth + '&resource=' + settings.namespace;
+
+  return socketIO.connect(url, {'force new connection': true});
+};
+
+
+},{"./System-browser.js":10,"./System-node.js":11,"socket.io-client":18}],14:[function(require,module,exports){
 var _ = require('underscore');
 
-var Datastore = module.exports = function (connection) {
+function Datastore(connection) {
   this.connection = connection;
   this.streamsIndex = {}; // streams are linked to their object representation
   this.rootStreams = [];
-
-};
+}
 
 Datastore.prototype.init = function (callback) {
   this.connection.streams._getObjects({state: 'all'}, function (error, result) {
@@ -2295,11 +2437,10 @@ Datastore.prototype.init = function (callback) {
     if (result) {
       this._rebuildStreamIndex(result); // maybe done transparently
     }
-    callback(null);
+    callback(null, result);
   }.bind(this));
 
-  // activate monitoring
-
+  // TODO activate monitoring
 };
 
 Datastore.prototype._rebuildStreamIndex = function (streamArray) {
@@ -2343,7 +2484,10 @@ Datastore.prototype.getStreamById = function (streamId, test) {
   return result;
 };
 
-},{"underscore":15}],17:[function(require,module,exports){
+module.exports = Datastore;
+
+
+},{"underscore":16}],18:[function(require,module,exports){
 (function(){/*! Socket.IO.js build:0.9.16, development. Copyright(c) 2011 LearnBoost <dev@learnboost.com> MIT Licensed */
 
 var io = ('undefined' === typeof module ? {} : module.exports);
@@ -6218,38 +6362,158 @@ if (typeof define === "function" && define.amd) {
 }
 })();
 })()
-},{}],11:[function(require,module,exports){
-
+},{}],12:[function(require,module,exports){
 var Utility = require('../utility/Utility.js'),
   _ = require('underscore'),
   Filter = require('../Filter'),
   Event = require('../Event');
 
-
-
-var Events = module.exports = function (conn) {
-  this.conn = conn;
-};
+/**
+ * @class Events
+ *
+ * Coverage of the API
+ *  GET /events -- 100%
+ *  POST /events -- only data (no object)
+ *  POST /events/start -- 0%
+ *  POST /events/stop -- 0%
+ *  PUT /events/{event-id} -- 100%
+ *  DELETE /events/{event-id} -- only data (no object)
+ *  POST /events/batch -- only data (no object)
+ *
+ *  attached files manipulations are covered by Event
+ *
+ *
+ * @param {Connection} connection
+ * @constructor
+ */
+function Events(connection) {
+  this.connection = connection;
+}
 
 
 /**
- *
- * @param filter Pryv.Filter object or a properties map
- * @param doneCallback
- * @param partialResultCallback
+ * @example
+ * // get events from the Diary stream
+ * conn.events.get({streamId : 'diary'},
+ *  function(events) {
+ *    console.log('got ' + events.length + ' events)
+ *  }
+ * );
+ * @param {FilterLike} filter
+ * @param {Events~getCallback} doneCallback
+ * @param {Events~partialResultCallback} partialResultCallback
  */
 Events.prototype.get = function (filter, doneCallback, partialResultCallback) {
   //TODO handle caching
   var result = [];
   this._get(filter, function (error, eventList) {
     _.each(eventList, function (eventData) {
-      result.push(new Event(this.conn, eventData));
+      result.push(new Event(this.connection, eventData));
     }.bind(this));
     doneCallback(error, result);
-    if (partialResultCallback) { partialResultCallback(error, result); }
+    if (partialResultCallback) { partialResultCallback(result); }
   }.bind(this));
 };
 
+/**
+ * @param {Event} event
+ * @param {Connection~requestCallback} callback
+ */
+Events.prototype.update = function (event, callback) {
+  this._updateWithIdAndData(event.id, event.getData(), callback);
+};
+
+/**
+ * @param {Event | eventId} event
+ * @param {Connection~requestCallback} callback
+ */
+Events.prototype.trash = function (event, callback) {
+  this.trashWithId(event.id, callback);
+};
+
+/**
+ * @param {String} eventId
+ * @param {Connection~requestCallback} callback
+ */
+Events.prototype.trashWithId = function (eventId, callback) {
+  var url = '/events/' + eventId;
+  this.connection.request('DELETE', url, callback, null);
+};
+
+/**
+ * This is the preferred method to create an event, or to create it on the API.
+ * The function return the newly created object.. It will be updated when posted on the API.
+ * @param {NewEventLike} event -- minimum {streamId, type } -- if typeof Event, must belong to
+ * the same connection and not exists on the API.
+ * @param {Events~eventCreatedOnTheAPI} callback
+ * @return {Event} event
+ */
+Events.prototype.create = function (newEventlike, callback) {
+  var event = null;
+  if (newEventlike instanceof Event) {
+    if (newEventlike.connection !== this.connection) {
+      return callback(new Error('event.connection does not match current connection'));
+    }
+    if (newEventlike.id) {
+      return callback(new Error('cannot create an event already existing on the API'));
+    }
+    event = newEventlike;
+  } else {
+    event = new Event(this.connection, event);
+  }
+
+  var url = '/events';
+  this.connection.request('POST', url, function (err, result) {
+    if (result) {
+      _.extend(event, result);
+    }
+    callback(err, event);
+  }, event.getData());
+  return event;
+};
+
+/**
+ * //TODO make it NewEventLike compatible
+ * This is the prefered method to create events in batch
+ * @param {Object[]} eventsData -- minimum {streamId, type }
+ * @param {Events~eventBatchCreatedOnTheAPI}
+ * @param {function} [callBackWithEventsBeforeRequest] mostly for testing purposes
+ * @return {Event[]} events
+ */
+Events.prototype.batchWithData = function (eventsData, callback, callBackWithEventsBeforeRequest) {
+  if (!_.isArray(eventsData)) { eventsData = [eventsData]; }
+
+  var createdEvents = [];
+  var eventMap = {};
+
+  var url = '/events/batch';
+  // use the serialId as a temporary Id for the batch
+  _.each(eventsData, function (eventData) {
+    var event =  new Event(this.connection, eventData);
+    createdEvents.push(event);
+    eventMap[event.serialId] = event;
+    eventData.tempRefId = event.serialId;
+  }.bind(this));
+
+  if (callBackWithEventsBeforeRequest) { callBackWithEventsBeforeRequest(createdEvents); }
+
+  this.connection.request('POST', url, function (err, result) {
+    _.each(result, function (eventData, tempRefId) {
+      _.extend(eventMap[tempRefId], eventData); // add the data to the event
+    });
+    callback(err, createdEvents);
+  }, eventsData);
+
+  return createdEvents;
+};
+
+// --- raw access to the API
+
+/**
+ * @param {FilterLike} filter
+ * @param {Connection~requestCallback} callback
+ * @private
+ */
 Events.prototype._get = function (filter, callback) {
   var tParams = filter;
   if (filter instanceof Filter) { tParams = filter.getData(true); }
@@ -6257,83 +6521,89 @@ Events.prototype._get = function (filter, callback) {
     return callback(null, []);
   }
   var url = '/events?' + Utility.getQueryParametersString(tParams);
-  this.conn.request('GET', url, callback, null);
+  this.connection.request('GET', url, callback, null);
 };
-
-/**
- * @param eventData minimum {streamId, type }
- * @return event
- */
-Events.prototype.create = function (eventData, callback) {
-  var event = new Event(this.conn, eventData);
-  var url = '/events';
-  this.conn.request('POST', url, function (err, result) {
-    if (result) {
-      _.extend(event, result);
-    }
-    callback(err, result);
-  }, event.getData());
-  return event;
-};
-
-Events.prototype.trash = function (event, callback) {
-  this.deleteWithId(event.id, callback);
-};
-
-Events.prototype.trashWithId = function (eventId, callback) {
-  var url = '/events/' + eventId;
-  this.conn.request('DELETE', url, callback, null);
-};
-
 
 
 /**
- * TODO code it right
- * @param eventsData Array of EventsData
+ * @param {String} eventId
+ * @param {Object} data
+ * @param  {Connection~requestCallback} callback
+ * @private
  */
-Events.prototype.batch = function (eventsData, callback) {
-  if (!_.isArray(eventsData)) { eventsData = [eventsData]; }
-  var url = '/events/batch';
-  _.each(eventsData, function (event, index) {
-    event.tempRefId = 'temp_ref_id_' + index;
-  });
-  this.conn.request('POST', url, function (err, result) {
-    _.each(eventsData, function (event) {
-      event.id = result[event.tempRefId].id;
-    });
-    callback(err, result);
-  }, eventsData);
-};
-
-Events.prototype.update = function (event, callback) {
-  this.updateWithIdAndData(event.id, event.getData(), callback);
-};
-
-Events.prototype.updateWithIdAndData = function (eventId, data, callback) {
+Events.prototype._updateWithIdAndData = function (eventId, data, callback) {
   var url = '/events/' + eventId;
-  this.conn.request('PUT', url, callback, data);
+  this.connection.request('PUT', url, callback, data);
 };
 
 
+module.exports = Events;
+
+/**
+ * Called with the desired Events as result.
+ * @callback Events~getCallback
+ * @param {Object} error - eventual error
+ * @param {Event[]} result
+ */
 
 
-},{"../Event":2,"../Filter":4,"../utility/Utility.js":7,"underscore":15}],12:[function(require,module,exports){
+/**
+ * Called each time a "part" of the result is received
+ * @callback Events~partialResultCallback
+ * @param {Event[]} result
+ */
+
+
+/**
+ * Called when an event is created on the API
+ * @callback Events~eventCreatedOnTheAPI
+ * @param {Object} error - eventual error
+ * @param {Event} event
+ */
+
+/**
+ * Called when batch create an array of events on the API
+ * @callback Events~eventBatchCreatedOnTheAPI
+ * @param {Object} error - eventual error
+ * @param {Event[]} events
+ */
+},{"../Event":2,"../Filter":4,"../utility/Utility.js":7,"underscore":16}],13:[function(require,module,exports){
 var _ = require('underscore'),
     Utility = require('../utility/Utility.js'),
     Stream = require('../Stream.js');
 
-var Streams = module.exports = function (connection) {
+/**
+ * @class Streams
+ * @description
+ * ##Coverage of the API
+ *
+ *  * GET /streams -- 100%
+ *  * POST /streams -- only data (no object)
+ *  * PUT /streams -- 0%
+ *  * DELETE /streams/{stream-id} -- 0%
+ *
+ *
+ *
+ * @param {Connection} connection
+ * @constructor
+ */
+function Streams(connection) {
   this.connection = connection;
   this._streamsIndex = {};
-};
+}
 
-
-//--- Many test on streams are made in Connection.streams.test.js
 
 
 /**
- * @param options {parentId: <parentId | null> , state: <all | null>}
- * @return Arrray of Pryv.Stream matching the options
+ * @typedef StreamsOptions parameters than can be passed along a Stream request
+ * @property {string} parentId  if parentId is null you will get all the "root" streams.
+ * @property {string} [state] 'all' || null  - if null you get only "active" streams
+ **/
+
+
+/**
+ * @param {StreamsOptions} options
+ * @param {Streams~getCallback} callback - handles the response
  */
 Streams.prototype.get = function (options, callback) {
   if (this.connection.datastore) {
@@ -6349,9 +6619,12 @@ Streams.prototype.get = function (options, callback) {
   }
 };
 
+
 /**
  * Get a Stream by it's Id.
- * Works only if localStorage is activated
+ * Works only if fetchStructure has been done once.
+ * @param {string} streamId
+ * @throws {Error} Connection.fetchStructure must have been called before.
  */
 Streams.prototype.getById = function (streamId) {
   if (! this.connection.datastore) {
@@ -6361,8 +6634,51 @@ Streams.prototype.getById = function (streamId) {
 };
 
 
+// ------------- Raw calls to the API ----------- //
+
+/**
+ * get streams on the API
+ * @private
+ * @param {Streams~options} opts
+ * @param callback
+ */
+Streams.prototype._getData = function (opts, callback) {
+  var url = opts ? '/streams?' + Utility.getQueryParametersString(opts) : '/streams';
+  this.connection.request('GET', url, callback, null);
+};
+
+/**
+ * Create a stream on the API with a jsonObject
+ * @private
+ * @param {Object} streamData an object array.. typically one that can be obtained with
+ * stream.getData()
+ * @param callback
+ */
+Streams.prototype._createWithData = function (streamData, callback) {
+  var url = '/streams';
+  this.connection.request('POST', url, function (err, resultData) {
+    streamData.id = resultData.id;
+    callback(err, resultData);
+  }, streamData);
+};
+
+/**
+ * Update a stream on the API with a jsonObject
+ * @private
+ * @param {Object} streamData an object array.. typically one that can be obtained with
+ * stream.getData()
+ * @param callback
+ */
+Streams.prototype._updateWithData = function (streamData, callback) {
+  var url = '/streams/' + streamData.id;
+  this.connection.request('PUT', url, callback, null);
+};
+
+// -- helper for get --- //
+
 /**
  * @private
+ * @param {Streams~options} options
  */
 Streams.prototype._getObjects = function (options, callback) {
   options = options || {};
@@ -6388,30 +6704,23 @@ Streams.prototype._getObjects = function (options, callback) {
   }.bind(this));
 };
 
-Streams.prototype._getData = function (opts, callback) {
-  var url = opts ? '/streams?' + Utility.getQueryParametersString(opts) : '/streams';
-  this.connection.request('GET', url, callback, null);
-};
-
-Streams.prototype.create = function (stream, callback) {
-  var url = '/streams';
-  this.connection.request('POST', url, function (err, result) {
-    stream.id = result.id;
-    callback(err, result);
-  }, stream);
-};
-
-Streams.prototype.update = function (stream, callback) {
-  var url = '/streams/' + stream.id;
-  this.connection.request('PUT', url, callback, null);
-};
 
 /**
- * Walk the tree structure..
- * parents are always announced before childrens
- * @param opts
- * @param eachStream
- * @param done
+ * Called once per streams
+ * @callback Streams~walkTreeEachStreams
+ * @param {Stream} stream
+ */
+
+/**
+ * Called when walk is done
+ * @callback Streams~walkTreeDone
+ */
+
+/**
+ * Walk the tree structure.. parents are always announced before childrens
+ * @param {Streams~options} options
+ * @param {Streams~walkTreeEachStreams} eachStream
+ * @param {Streams~walkTreeDone} done
  */
 Streams.prototype.walkTree = function (options, eachStream, done) {
   this.get(options, function (error, result) {
@@ -6421,6 +6730,18 @@ Streams.prototype.walkTree = function (options, eachStream, done) {
   });
 };
 
+
+/**
+ * Called when tree has been flatened
+ * @callback Streams~getFlatenedObjectsDone
+ * @param {Streams[]} streams
+ */
+
+/**
+ * Get the all the streams of the Tree in a list.. parents firsts
+ * @param {Streams~options} options
+ * @param {Streams~getFlatenedObjectsDone} done
+ */
 Streams.prototype.getFlatenedObjects = function (options, callback) {
   var result = [];
   this.walkTree(options,
@@ -6435,9 +6756,10 @@ Streams.prototype.getFlatenedObjects = function (options, callback) {
 
 /**
  * Utility to debug a tree structure
+ * @param {Streams[]} arrayOfStreams
  */
-Streams.prototype.getDisplayTree = function (arrayOfSTream) {
-  return Streams.Utils._debugTree(arrayOfSTream);
+Streams.prototype.getDisplayTree = function (arrayOfStreams) {
+  return Streams.Utils._debugTree(arrayOfStreams);
 };
 
 
@@ -6505,7 +6827,17 @@ Streams.Utils = {
 
 };
 
-},{"../Stream.js":3,"../utility/Utility.js":7,"underscore":15}],13:[function(require,module,exports){
+module.exports = Streams;
+
+/**
+ * Called with the desired Streams as result.
+ * @callback Streams~getCallback
+ * @param {Object} error - eventual error
+ * @param {Stream[]} result
+ */
+
+
+},{"../Stream.js":3,"../utility/Utility.js":7,"underscore":16}],15:[function(require,module,exports){
 var _ = require('underscore');
 var SignalEmitter = require('../utility/SignalEmitter.js');
 var MSGs =  require('../Messages.js');
@@ -6515,11 +6847,11 @@ var MyMsgs = MSGs.Monitor;
 var EXTRA_ALL_EVENTS = {state : 'all', modifiedSince : -100000000 };
 
 /**
- *
+ * Monitoring
  * @type {Function}
  * @constructor
  */
-var Monitor = module.exports = function (connection, filter) {
+function Monitor(connection, filter) {
   SignalEmitter.extend(this, MyMsgs, 'Monitor');
   this.connection = connection;
   this.id = 'M' + Monitor.serial++;
@@ -6535,7 +6867,7 @@ var Monitor = module.exports = function (connection, filter) {
   this.filter.addEventListener(MSGs.Filter.ON_CHANGE, this._onFilterChange.bind(this));
   this._events = null;
 
-};
+}
 
 Monitor.serial = 0;
 
@@ -6652,9 +6984,7 @@ Monitor.prototype._refilterLocaly = function (signal, extracontent, batch) {
   this._fireEvent(signal, result, batch);
 };
 
-/**
- *
- */
+
 Monitor.prototype._initEvents = function () {
   this.lastSynchedST = this.connection.getServerTime();
   this._events = { active : {}};
@@ -6752,11 +7082,11 @@ Monitor.prototype.stats = function () {
   return result;
 };
 
+module.exports = Monitor;
 
 
 
-
-},{"../Messages.js":8,"../utility/SignalEmitter.js":16,"underscore":15}],16:[function(require,module,exports){
+},{"../Messages.js":8,"../utility/SignalEmitter.js":17,"underscore":16}],17:[function(require,module,exports){
 (function(){/**
  * (event)Emitter renamed to avoid confusion with prvy's events
  */
@@ -6874,7 +7204,7 @@ SignalEmitter.prototype.startBatch = function (batchName, orHookOnBatch) {
     done : function (name) {
       this.waitFor--;
       if (this.waitFor === 0) {
-        _.each(this.doneCallbacks, function (callback) { callback(); });
+        _.each(this.doneCallbacks, function (callback) { callback(); });
         this.filter._fireEvent(SignalEmitter.Messages.BATCH_DONE, this.id, this);
       }
       if (this.waitFor < 0) {
@@ -6887,5 +7217,5 @@ SignalEmitter.prototype.startBatch = function (batchName, orHookOnBatch) {
 };
 
 })()
-},{"underscore":15}]},{},["Oe2HK+"])
+},{"underscore":16}]},{},["Oe2HK+"])
 ;

@@ -2,6 +2,7 @@ var _ = require('underscore'),
   System = require('./system/System.js'),
   ConnectionEvents = require('./connection/Events.js'),
   ConnectionStreams = require('./connection/Streams.js'),
+ ConnectionProfile = require('./connection/Profile.js'),
   Datastore = require('./Datastore.js'),
   Monitor = require('./connection/Monitor.js');
 
@@ -63,9 +64,15 @@ function Connection(username, auth, settings) {
   this.events = new ConnectionEvents(this);
   /**
    * Manipulate streams for this connection
-   * @type {ConnectionEvents}
+   * @type {ConnectionStreams}
    */
   this.streams = new ConnectionStreams(this);
+  /**
+  * Manipulate app profile for this connection
+  * @type {ConnectionProfile}
+  */
+  this.profile = new ConnectionProfile(this);
+
 
   this.datastore = null;
 
