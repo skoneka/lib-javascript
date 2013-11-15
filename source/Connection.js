@@ -1,8 +1,8 @@
 var _ = require('underscore'),
   System = require('./system/System.js'),
   ConnectionEvents = require('./connection/ConnectionEvents.js'),
-  ConnectionStreams = require('./connection/Streams.js'),
- ConnectionProfile = require('./connection/Profile.js'),
+  ConnectionStreams = require('./connection/ConnectionStreams.js'),
+ ConnectionProfile = require('./connection/ConnectionProfile.js'),
   Datastore = require('./Datastore.js'),
   Monitor = require('./connection/Monitor.js');
 

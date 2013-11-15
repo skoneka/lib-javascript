@@ -3,7 +3,7 @@ var _ = require('underscore'),
     Stream = require('../Stream.js');
 
 /**
- * @class Streams
+ * @class ConnectionStreams
  * @description
  * ##Coverage of the API
  *
@@ -17,7 +17,7 @@ var _ = require('underscore'),
  * @param {Connection} connection
  * @constructor
  */
-function Streams(connection) {
+function ConnectionStreams(connection) {
   this.connection = connection;
   this._streamsIndex = {};
 }
@@ -25,17 +25,17 @@ function Streams(connection) {
 
 
 /**
- * @typedef StreamsOptions parameters than can be passed along a Stream request
+ * @typedef ConnectionStreamsOptions parameters than can be passed along a Stream request
  * @property {string} parentId  if parentId is null you will get all the "root" streams.
  * @property {string} [state] 'all' || null  - if null you get only "active" streams
  **/
 
 
 /**
- * @param {StreamsOptions} options
- * @param {Streams~getCallback} callback - handles the response
+ * @param {ConnectionStreamsOptions} options
+ * @param {ConnectionStreams~getCallback} callback - handles the response
  */
-Streams.prototype.get = function (options, callback) {
+ConnectionStreams.prototype.get = function (options, callback) {
   if (this.connection.datastore) {
     var resultTree = [];
     if (options && _.has(options, 'parentId')) {
@@ -56,7 +56,7 @@ Streams.prototype.get = function (options, callback) {
  * @param {string} streamId
  * @throws {Error} Connection.fetchStructure must have been called before.
  */
-Streams.prototype.getById = function (streamId) {
+ConnectionStreams.prototype.getById = function (streamId) {
   if (! this.connection.datastore) {
     throw new Error('Call connection.fetchStructure before, to get automatic stream mapping');
   }
@@ -69,10 +69,10 @@ Streams.prototype.getById = function (streamId) {
 /**
  * get streams on the API
  * @private
- * @param {Streams~options} opts
+ * @param {ConnectionStreams~options} opts
  * @param callback
  */
-Streams.prototype._getData = function (opts, callback) {
+ConnectionStreams.prototype._getData = function (opts, callback) {
   var url = opts ? '/streams?' + Utility.getQueryParametersString(opts) : '/streams';
   this.connection.request('GET', url, callback, null);
 };
@@ -84,7 +84,7 @@ Streams.prototype._getData = function (opts, callback) {
  * stream.getData()
  * @param callback
  */
-Streams.prototype._createWithData = function (streamData, callback) {
+ConnectionStreams.prototype._createWithData = function (streamData, callback) {
   var url = '/streams';
   this.connection.request('POST', url, function (err, resultData) {
     streamData.id = resultData.id;
@@ -99,7 +99,7 @@ Streams.prototype._createWithData = function (streamData, callback) {
  * stream.getData()
  * @param callback
  */
-Streams.prototype._updateWithData = function (streamData, callback) {
+ConnectionStreams.prototype._updateWithData = function (streamData, callback) {
   var url = '/streams/' + streamData.id;
   this.connection.request('PUT', url, callback, null);
 };
@@ -108,16 +108,16 @@ Streams.prototype._updateWithData = function (streamData, callback) {
 
 /**
  * @private
- * @param {Streams~options} options
+ * @param {ConnectionStreams~options} options
  */
-Streams.prototype._getObjects = function (options, callback) {
+ConnectionStreams.prototype._getObjects = function (options, callback) {
   options = options || {};
   options.parentId = options.parentId || null;
   var streamsIndex = {};
   var resultTree = [];
   this._getData(options, function (error, treeData) {
     if (error) { return callback('Stream.get failed: ' + error); }
-    Streams.Utils.walkDataTree(treeData, function (streamData) {
+    ConnectionStreams.Utils.walkDataTree(treeData, function (streamData) {
       var stream = new Stream(this.connection, streamData);
       streamsIndex[streamData.id] = stream;
       if (stream.parentId === options.parentId) { // attached to the rootNode or filter
@@ -137,25 +137,25 @@ Streams.prototype._getObjects = function (options, callback) {
 
 /**
  * Called once per streams
- * @callback Streams~walkTreeEachStreams
+ * @callback ConnectionStreams~walkTreeEachStreams
  * @param {Stream} stream
  */
 
 /**
  * Called when walk is done
- * @callback Streams~walkTreeDone
+ * @callback ConnectionStreams~walkTreeDone
  */
 
 /**
  * Walk the tree structure.. parents are always announced before childrens
- * @param {Streams~options} options
- * @param {Streams~walkTreeEachStreams} eachStream
- * @param {Streams~walkTreeDone} done
+ * @param {ConnectionStreams~options} options
+ * @param {ConnectionStreams~walkTreeEachStreams} eachStream
+ * @param {ConnectionStreams~walkTreeDone} done
  */
-Streams.prototype.walkTree = function (options, eachStream, done) {
+ConnectionStreams.prototype.walkTree = function (options, eachStream, done) {
   this.get(options, function (error, result) {
     if (error) { return done('Stream.walkTree failed: ' + error); }
-    Streams.Utils.walkObjectTree(result, eachStream);
+    ConnectionStreams.Utils.walkObjectTree(result, eachStream);
     if (done) { done(null); }
   });
 };
@@ -163,16 +163,16 @@ Streams.prototype.walkTree = function (options, eachStream, done) {
 
 /**
  * Called when tree has been flatened
- * @callback Streams~getFlatenedObjectsDone
- * @param {Streams[]} streams
+ * @callback ConnectionStreams~getFlatenedObjectsDone
+ * @param {ConnectionStreams[]} streams
  */
 
 /**
  * Get the all the streams of the Tree in a list.. parents firsts
- * @param {Streams~options} options
- * @param {Streams~getFlatenedObjectsDone} done
+ * @param {ConnectionStreams~options} options
+ * @param {ConnectionStreams~getFlatenedObjectsDone} done
  */
-Streams.prototype.getFlatenedObjects = function (options, callback) {
+ConnectionStreams.prototype.getFlatenedObjects = function (options, callback) {
   var result = [];
   this.walkTree(options,
     function (stream) { // each stream
@@ -186,15 +186,15 @@ Streams.prototype.getFlatenedObjects = function (options, callback) {
 
 /**
  * Utility to debug a tree structure
- * @param {Streams[]} arrayOfStreams
+ * @param {ConnectionStreams[]} arrayOfStreams
  */
-Streams.prototype.getDisplayTree = function (arrayOfStreams) {
-  return Streams.Utils._debugTree(arrayOfStreams);
+ConnectionStreams.prototype.getDisplayTree = function (arrayOfStreams) {
+  return ConnectionStreams.Utils._debugTree(arrayOfStreams);
 };
 
 
 // TODO Validate that it's the good place for them .. Could have been in Stream or Utility
-Streams.Utils = {
+ConnectionStreams.Utils = {
 
 
   /**
@@ -205,7 +205,7 @@ Streams.Utils = {
   walkObjectTree : function (streamArray, eachStream) {
     _.each(streamArray, function (stream) {
       eachStream(stream);
-      Streams.Utils.walkObjectTree(stream.children, eachStream);
+      ConnectionStreams.Utils.walkObjectTree(stream.children, eachStream);
     });
   },
 
@@ -249,7 +249,7 @@ Streams.Utils = {
         name : stream.name,
         id : stream.id,
         parentId : stream.parentId,
-        children : Streams.Utils._debugTree(stream.children)
+        children : ConnectionStreams.Utils._debugTree(stream.children)
       });
     });
     return result;
@@ -257,11 +257,11 @@ Streams.Utils = {
 
 };
 
-module.exports = Streams;
+module.exports = ConnectionStreams;
 
 /**
- * Called with the desired Streams as result.
- * @callback Streams~getCallback
+ * Called with the desired streams as result.
+ * @callback ConnectionStreams~getCallback
  * @param {Object} error - eventual error
  * @param {Stream[]} result
  */
