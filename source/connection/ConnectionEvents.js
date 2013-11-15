@@ -4,7 +4,7 @@ var Utility = require('../utility/Utility.js'),
   Event = require('../Event');
 
 /**
- * @class Events
+ * @class ConnectionEvents
  *
  * Coverage of the API
  *  GET /events -- 100%
@@ -21,7 +21,7 @@ var Utility = require('../utility/Utility.js'),
  * @param {Connection} connection
  * @constructor
  */
-function Events(connection) {
+function ConnectionEvents(connection) {
   this.connection = connection;
 }
 
@@ -35,10 +35,10 @@ function Events(connection) {
  *  }
  * );
  * @param {FilterLike} filter
- * @param {Events~getCallback} doneCallback
- * @param {Events~partialResultCallback} partialResultCallback
+ * @param {ConnectionEvents~getCallback} doneCallback
+ * @param {ConnectionEvents~partialResultCallback} partialResultCallback
  */
-Events.prototype.get = function (filter, doneCallback, partialResultCallback) {
+ConnectionEvents.prototype.get = function (filter, doneCallback, partialResultCallback) {
   //TODO handle caching
   var result = [];
   this._get(filter, function (error, eventList) {
@@ -54,7 +54,7 @@ Events.prototype.get = function (filter, doneCallback, partialResultCallback) {
  * @param {Event} event
  * @param {Connection~requestCallback} callback
  */
-Events.prototype.update = function (event, callback) {
+ConnectionEvents.prototype.update = function (event, callback) {
   this._updateWithIdAndData(event.id, event.getData(), callback);
 };
 
@@ -62,7 +62,7 @@ Events.prototype.update = function (event, callback) {
  * @param {Event | eventId} event
  * @param {Connection~requestCallback} callback
  */
-Events.prototype.trash = function (event, callback) {
+ConnectionEvents.prototype.trash = function (event, callback) {
   this.trashWithId(event.id, callback);
 };
 
@@ -70,7 +70,7 @@ Events.prototype.trash = function (event, callback) {
  * @param {String} eventId
  * @param {Connection~requestCallback} callback
  */
-Events.prototype.trashWithId = function (eventId, callback) {
+ConnectionEvents.prototype.trashWithId = function (eventId, callback) {
   var url = '/events/' + eventId;
   this.connection.request('DELETE', url, callback, null);
 };
@@ -80,10 +80,10 @@ Events.prototype.trashWithId = function (eventId, callback) {
  * The function return the newly created object.. It will be updated when posted on the API.
  * @param {NewEventLike} event -- minimum {streamId, type } -- if typeof Event, must belong to
  * the same connection and not exists on the API.
- * @param {Events~eventCreatedOnTheAPI} callback
+ * @param {ConnectionEvents~eventCreatedOnTheAPI} callback
  * @return {Event} event
  */
-Events.prototype.create = function (newEventlike, callback) {
+ConnectionEvents.prototype.create = function (newEventlike, callback) {
   var event = null;
   if (newEventlike instanceof Event) {
     if (newEventlike.connection !== this.connection) {
@@ -111,11 +111,12 @@ Events.prototype.create = function (newEventlike, callback) {
  * //TODO make it NewEventLike compatible
  * This is the prefered method to create events in batch
  * @param {Object[]} eventsData -- minimum {streamId, type }
- * @param {Events~eventBatchCreatedOnTheAPI}
+ * @param {ConnectionEvents~eventBatchCreatedOnTheAPI}
  * @param {function} [callBackWithEventsBeforeRequest] mostly for testing purposes
  * @return {Event[]} events
  */
-Events.prototype.batchWithData = function (eventsData, callback, callBackWithEventsBeforeRequest) {
+ConnectionEvents.prototype.batchWithData =
+  function (eventsData, callback, callBackWithEventsBeforeRequest) {
   if (!_.isArray(eventsData)) { eventsData = [eventsData]; }
 
   var createdEvents = [];
@@ -130,7 +131,9 @@ Events.prototype.batchWithData = function (eventsData, callback, callBackWithEve
     eventData.tempRefId = event.serialId;
   }.bind(this));
 
-  if (callBackWithEventsBeforeRequest) { callBackWithEventsBeforeRequest(createdEvents); }
+  if (callBackWithEventsBeforeRequest) {
+    callBackWithEventsBeforeRequest(createdEvents);
+  }
 
   this.connection.request('POST', url, function (err, result) {
     _.each(result, function (eventData, tempRefId) {
@@ -149,7 +152,7 @@ Events.prototype.batchWithData = function (eventsData, callback, callBackWithEve
  * @param {Connection~requestCallback} callback
  * @private
  */
-Events.prototype._get = function (filter, callback) {
+ConnectionEvents.prototype._get = function (filter, callback) {
   var tParams = filter;
   if (filter instanceof Filter) { tParams = filter.getData(true); }
   if (_.has(tParams, 'streams') && tParams.streams.length === 0) { // dead end filter..
@@ -166,17 +169,17 @@ Events.prototype._get = function (filter, callback) {
  * @param  {Connection~requestCallback} callback
  * @private
  */
-Events.prototype._updateWithIdAndData = function (eventId, data, callback) {
+ConnectionEvents.prototype._updateWithIdAndData = function (eventId, data, callback) {
   var url = '/events/' + eventId;
   this.connection.request('PUT', url, callback, data);
 };
 
 
-module.exports = Events;
+module.exports = ConnectionEvents;
 
 /**
  * Called with the desired Events as result.
- * @callback Events~getCallback
+ * @callback ConnectionEvents~getCallback
  * @param {Object} error - eventual error
  * @param {Event[]} result
  */
@@ -184,21 +187,21 @@ module.exports = Events;
 
 /**
  * Called each time a "part" of the result is received
- * @callback Events~partialResultCallback
+ * @callback ConnectionEvents~partialResultCallback
  * @param {Event[]} result
  */
 
 
 /**
  * Called when an event is created on the API
- * @callback Events~eventCreatedOnTheAPI
+ * @callback ConnectionEvents~eventCreatedOnTheAPI
  * @param {Object} error - eventual error
  * @param {Event} event
  */
 
 /**
  * Called when batch create an array of events on the API
- * @callback Events~eventBatchCreatedOnTheAPI
+ * @callback ConnectionEvents~eventBatchCreatedOnTheAPI
  * @param {Object} error - eventual error
  * @param {Event[]} events
  */
