@@ -14,4 +14,6 @@ Pryv.prototype.Utility = require('./utility/Utility.js');
 Pryv.prototype.Messages = require('./Messages.js');
 
 
+Pryv.prototype.eventTypes = require('./eventTypes.js');
+
 module.exports = new Pryv();

@@ -6,19 +6,19 @@
 
 /**
  *
- * @param pack json with
- * method : 'GET/DELETE/POST/PUT'
- * host : fully qualified host name
- * port : port to use
- * path : the request PATH
- * headers : key / value map of headers
- * payload : the payload
- * success : function (result, requestInfos)
- * error : function (error, requestInfos)
- * info : a text
- * async : boolean : default (TRUE)
- * expectedStatus : code
- * ssl : boolean (default true)
+ * @param {Object} pack json with
+ * @param {Object} [pack.type = 'POST'] : 'GET/DELETE/POST/PUT'
+ * @param {String} pack.host : fully qualified host name
+ * @param {Number} pack.port : port to use
+ * @param {String} pack.path : the request PATH
+ * @param {Object} [pack.headers] : key / value map of headers
+ * @param {String} [pack.payload] : the payload -- only with POST/PUT
+ * @param {Function} pack.success : function (result, requestInfos)
+ * @param {Function} pack.error : function (error, requestInfos)
+ * @param {String} [pack.info] : a text
+ * @param {Boolean} [pack.async = true]
+ * @param {Number} [pack.expectedStatus] : http result code
+ * @param {Boolean} [pack.ssl = true]
  */
 exports.request = function (pack)  {
   if (pack.payload) {
