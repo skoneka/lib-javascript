@@ -27,9 +27,9 @@ Profile.prototype.get = function (key, callback) {
 
 
 /**
- * @example you want to store
- *
- * conn.profile.set({
+ * @example
+ * // set x=25 and delete y
+ * conn.profile.set({x : 25, y : null}, function(error) { console.log('done'); });
  *
  * @param {Object} keyValuePairs
  * @param {Connection~requestCallback} callback - handles the response

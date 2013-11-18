@@ -11,6 +11,18 @@ var Stream = module.exports = function (connection, data) {
   _.extend(this, data);
 };
 
+/**
+ * Set or erase clientData properties
+ * @example // set x=25 and delete y
+ * stream.setClientData({x : 25, y : null}, function(error) { console.log('done'); });
+ *
+ * @param {Object} keyValueMap
+ * @param {Connection~requestCallback} callback
+ */
+Stream.prototype.setClientData = function (keyValueMap, callback) {
+  return this.connection.streams.setClientData(this, keyValueMap, callback);
+};
+
 Object.defineProperty(Stream.prototype, 'parent', {
   get: function () {
 
@@ -50,6 +62,8 @@ Object.defineProperty(Stream.prototype, 'ancestors', {
   },
   set: function () { throw new Error('Stream.ancestors property is read only'); }
 });
+
+
 
 
 
