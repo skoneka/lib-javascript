@@ -12,7 +12,8 @@
  * @param {Number} pack.port : port to use
  * @param {String} pack.path : the request PATH
  * @param {Object} [pack.headers] : key / value map of headers
- * @param {String} [pack.payload] : the payload -- only with POST/PUT
+ * @param {Object} [pack.params] : the payload -- only with POST/PUT
+ * @param {String} [pack.parseResult = 'json'] : 'text' for no parsing
  * @param {Function} pack.success : function (result, requestInfos)
  * @param {Function} pack.error : function (error, requestInfos)
  * @param {String} [pack.info] : a text
@@ -35,6 +36,7 @@ exports.request = function (pack)  {
     headers : pack.headers
   };
 
+  var parseResult = pack.parseResult || 'json';
   var httpMode = pack.ssl ? 'https' : 'http';
   var http = require(httpMode);
 
@@ -59,16 +61,17 @@ exports.request = function (pack)  {
         code : res.statusCode,
         headers : res.headers
       };
-      var resJson = {};
-      try {
-        resJson = JSON.parse(bodyarr.join(''));
-      } catch (error) {
-
-        return onError('System-node.request failed to parse JSON in response' +
-          bodyarr.join('')
-        );
+      var result = null;
+      if (parseResult === 'json') {
+        try {
+          result = JSON.parse(bodyarr.join(''));
+        } catch (error) {
+          return onError('System-node.request failed to parse JSON in response' +
+            bodyarr.join('')
+          );
+        }
       }
-      return pack.success(resJson, requestInfo);
+      return pack.success(result, requestInfo);
     });
 
   }).on('error', function (e) {

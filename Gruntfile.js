@@ -26,6 +26,19 @@ module.exports = function (grunt) {
         }
       }
     },
+    copy: {
+      media : {
+        files: [
+          {
+            expand: true,
+            flatten: true,
+            filter: 'isFile',
+            src: 'source/media/**',
+            dest: 'dist/media/'
+          }
+        ]
+      }
+    },
     watch: {
       all: {
         files: [ 'source/**/*.*', 'test/**/*.*' ],
@@ -62,5 +75,6 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-mocha-test');
   grunt.loadNpmTasks('grunt-jsdoc');
-  grunt.registerTask('default', [ 'jshint', 'browserify', 'mochaTest', 'jsdoc' ]);
+  grunt.loadNpmTasks('grunt-contrib-copy');
+  grunt.registerTask('default', [ 'jshint', 'browserify', 'copy', 'mochaTest', 'jsdoc' ]);
 };

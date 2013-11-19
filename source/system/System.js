@@ -1,14 +1,14 @@
 //TODO: consider merging System into Utility
 
-function isBrowser() {
-  return typeof(window) !== 'undefined';
-}
+var Utility = require('../utility/Utility.js');
+
 
 var socketIO = require('socket.io-client');
 
 
 var System =
-  module.exports =  isBrowser() ?  require('./System-browser.js') : require('./System-node.js');
+  module.exports =  Utility.isBrowser() ?
+    require('./System-browser.js') : require('./System-node.js');
 
 System.ioConnect = function (settings) {
   var httpMode = settings.ssl ? 'https' : 'http';

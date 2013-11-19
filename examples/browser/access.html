@@ -1,0 +1,226 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html;charset=utf-8">
+<title>Pryv Javascript Lib | Signin</title>
+
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+<script src="../../dist/pryv.js"></script>
+
+
+<style>
+  body  {
+    background-color: #ABABAB;
+  }
+
+  h1  {
+    font:bold 21px Arial;
+    color:#171817;
+    margin-top: 20px;
+  }
+
+  label, p {
+    font:15px Arial;
+  }
+
+  #requestAccess  {
+    width: 95%;
+    height: auto;
+    overflow: hidden;
+    padding: 2%;
+    box-shadow: 0px 0px 8px #171817;
+    background-color: white;
+    margin: auto;
+    margin: 5px 0px 5px 0px;
+  }
+
+  #pryvButtonHolder {
+    background-color: #ABABAB;
+    padding: 2%;
+    box-shadow: 0px 0px 4px #171817;
+  }
+
+  textarea, input  {
+    width: 100%;
+  }
+</style>
+</head>
+<body>
+  <script>
+    var Pryv = require('pryv');
+
+    /**
+     * process the form and request access
+     */
+    function requestAccess() {
+      // ----------------------- //
+      // -- Config only used for debugging
+      Pryv.Access.config.registerURL = JSON.parse($('#registerURL option:selected').val());
+      console.log(Pryv.Access.config.registerURL);
+      Pryv.Access.config.registerStagingURL = Pryv.Access.config.registerURL;
+      if ($('#localDevel option:selected').val() == "false") {
+        Pryv.Access.config.localDevel = false;
+      } else {
+        Pryv.Access.config.localDevel = $('#localDevel option:selected').val();
+      }
+      Pryv.Access._init(); //because we change the config
+
+      // ----------------------- //
+      var settings = {
+        requestingAppId : false,
+        languageCode : false,
+        requestedPermissions : false,
+        returnURL : false,
+        callbacks : {}
+      };
+      settings.requestingAppId = $('#requestingAppId').val();
+      settings.requestedPermissions = JSON.parse($('#requestedPermissions').val());
+      settings.languageCode = $('#languageCode option:selected').val();
+      settings.returnURL = $('#returnURL').val();
+      settings.forcePolling = $('#forcePolling').attr('checked') == 'checked';
+
+      settings.spanButtonID = 'pryvButton';
+
+      settings.callbacks.initialization = function() {
+        mylog("***\n>State: Initialization");
+      };
+      settings.callbacks.needSignin = function(popupUrl, pollUrl, pollRateMs) {
+        mylog("State: needSignin popuUrl: " + popupUrl + " pollUrl: "
+            + pollUrl + " pollRateMs: " + pollRateMs);
+      };
+      settings.callbacks.needValidation = function(popupUrl, pollUrl,
+          pollRateMs) {
+        mylog("State: needValidation popuUrl: " + popupUrl + " pollUrl: "
+            + pollUrl + " pollRateMs: " + pollRateMs);
+      };
+      settings.callbacks.accepted = function(username, appToken, languageCode) {
+        mylog("State: SUCCESS! username:" + username + " appToken:" + appToken+ " lang:"+languageCode);
+      };
+      settings.callbacks.refused = function(reason) {
+        mylog("State: REFUSED! " + reason);
+      };
+      settings.callbacks.error = function(code, message) {
+        mylog("State: ERROR! " + code + " " + message);
+      };
+
+      Pryv.Access.setup(settings);
+    };
+
+    var buf = "";
+    function mylog(text) {
+      var ta = $("#mylog");
+      buf += ">"+text+"\n";
+      if (typeof(ta) == 'undefined' || typeof(ta[0]) == 'undefined') {
+         return ;
+      }
+      ta.append(buf);
+      buf = "";
+      ta.scrollTop(ta[0].scrollHeight - ta.height());
+    }
+
+    /** Uncomment the following lines to debug in the History textarea
+    console.log = function(args) { mylog(""+args);  } ;
+    console.error= function(args) { mylog("error: "+args); } ;
+   window.onerror = function (message, url, lineNo) {
+      console.error('Error: ' + message +
+        '\nUrl: ' + url +
+        '\nLine Number: ' + lineNo);
+      return true;
+    }**/
+
+    console.log("cookies reading from test:"+document.cookie);
+
+  </script>
+  <div id="body">
+    <h1>ACCESS TEST PAGE</h1>
+  </div>
+  <div id='requestAccess'>
+    <table>
+      <tr>
+        <td><label for='registerURL'>Register URL</label>
+        </td>
+        <td><select name='registerURL' id='registerURL' />
+          <option value='{ "host": "reg.pryv.in", "ssl": true}'>https://reg.pryv.in</option>
+          <option>https://reglocal.pryv.in:8443</option>
+          <option>https://reg.pryv.io</option> </select></td>
+      </tr>
+      <tr>
+        
+        <td><label for='localDevel'>Local Dev Version</label>
+        </td>
+        <td><select name='localDevel' id='localDevel' />
+          <option value="false">-----</option>
+          <option value="SDK-VERSION-NUM/access.html">SDK-VERSION-NUM</option>
+          <option value="v0/access.html">v0</option>
+        <em>Popup url will be https://l.pryv.in:4443/access/-??-/access.html</em>
+        </td>
+      </tr>
+      <tr>
+        <td><label for='forcePolling'>Force Polling</label>
+        </td>
+        <td><input type='checkbox' name='forcePolling' id='forcePolling' />
+        </td>
+      </tr>
+      <tr>
+        <td><label for='languageCode'>Language</label>
+        </td>
+        <td><select name='languageCode' id='languageCode' />
+        <option value="">_Browser_</option>
+        <option value="en">English</option>
+        <option value="fr">French</option> </select>
+        </td>
+      </tr>
+      <tr>
+        <td><label for='requestingAppId'>Application ID</label>
+        </td>
+        <td><input id='requestingAppId' name='requestingAppId' type='text'
+          value='web-page-test' />
+        </td>
+      </tr>
+      <tr>
+        <td><label for='requestedPermissions'>Access JSON</label>
+        </td>
+        <td><textarea id='requestedPermissions' name='requestedPermissions' rows='9' cols='80'>
+[
+  {
+    "streamId" : "diary",
+    "defaultName" : "Journal",
+    "level" : "read"
+  },
+  {
+    "streamId" : "position",
+    "defaultName" : "Position",
+    "level" : "read"
+  }
+]
+</textarea>
+        </td>
+      </tr>
+      <tr>
+        <td><label for='returnURL'>Return URL (opt)</label>
+        </td>
+        <td><input id='returnURL' name='returnURL' type='text'
+          size='80' value='auto#'/>
+        </td>
+      </tr>
+      <tr>
+        <td><input id='submitButton' type='submit'
+          onClick='requestAccess() ; return false;' value='Request Access' />
+        </td>
+
+      </tr>
+      <tr><br/></tr>
+      <tr>
+        <td id="pryvButtonHolder" colspan="2">&nbsp;<span id='pryvButton'></span>
+        </td>
+      </tr>
+    </table>
+    <p> You can test with username: <b>perkikiki</b> or <b>tech@pryv.com</b> Password: <b>poilonez</b><br>
+    No registration yet! </p>
+    <hr>
+    <p> History: </p><BR>
+    <textarea id="mylog" cols="150" rows="10"></textarea>
+  </div>
+  <!-- <script type="text/javascript" src="SDK-VERSION-NUM/pryv-access-sdk.js"></script> -->
+</body>
+</html>

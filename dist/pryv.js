@@ -12,14 +12,16 @@ Pryv.prototype.Event = require('./Event.js');
 Pryv.prototype.Stream = require('./Stream.js');
 Pryv.prototype.Filter = require('./Filter.js');
 Pryv.prototype.System = require('./system/System.js');
-Pryv.prototype.Access = require('./Access.js');
+Pryv.prototype.Access = require('./access/Access.js');
 Pryv.prototype.Utility = require('./utility/Utility.js');
 Pryv.prototype.Messages = require('./Messages.js');
 
 
+Pryv.prototype.eventTypes = require('./eventTypes.js');
+
 module.exports = new Pryv();
 
-},{"./Access.js":6,"./Connection.js":1,"./Event.js":2,"./Filter.js":4,"./Messages.js":8,"./Stream.js":3,"./system/System.js":5,"./utility/Utility.js":7}],8:[function(require,module,exports){
+},{"./Connection.js":1,"./Event.js":2,"./Filter.js":4,"./Messages.js":8,"./Stream.js":3,"./access/Access.js":6,"./eventTypes.js":9,"./system/System.js":5,"./utility/Utility.js":7}],8:[function(require,module,exports){
 var Messages = module.exports = { };
 
 Messages.Monitor = {
@@ -55,65 +57,68 @@ Messages.Filter = {
   DATE_CHANGE : 'dateChange'
 
 };
-},{}],6:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
+
 var System = require('./system/System.js');
+var eventTypes = module.exports = { };
+
+var HOSTNAME = 'api.pryv.com';
+var PATH = '/event-types/';
 
 
 /**
- *
- * @param params
- * host:
- * username:
- * password:
- * appId:
- * success:
- * error:
+ * @private
+ * @param fileName
+ * @param callback
  */
-exports.getSessionId = function (pack) {
-  var payload,
-  headers = {},
-  params = {
-    username: pack.username,
-    password: pack.password,
-    appId: pack.appId
-  };
-
-  payload = JSON.stringify(params);
-  headers['Content-Type'] = 'application/json; charset=utf-8';
-  headers['Content-Length'] = payload.length;
-
-  System.request({
-    method : 'POST',
-    host : pack.username + '.' + pack.host,
-    port : 443,
-    ssl : true,
-    path : '/admin/login',
-    headers : headers,
-    payload : payload,
-    //TODO: decide what callback convention to use (Node or jQuery)
-    success : pack.success,
-    error : pack.error
-  });
-};
-/**
- *
- * @param pack
- */
-exports.getAccesses = function (pack) {
-  var headers =  { 'authorization': pack.sessionId };
+function _getFile(fileName, callback) {
   System.request({
     method : 'GET',
-    host : pack.host,
-    port : 443,
-    ssl : true,
-    path : '/admin/accesses',
-    headers : headers,
-    //TODO: decide what callback convention to use (Node or jQuery)
-    success : pack.success,
-    error : pack.error
+    host : HOSTNAME,
+    path : PATH + fileName,
+    success : function (result) { callback(null, result); },
+    error : function (error) { callback(error, null); }
   });
+}
+
+/**
+ * @link http://api.pryv.com/event-typez.html#about-json-file
+ * @param {eventTypes~contentCallback} callback
+ */
+eventTypes.hierachical = function (callback) {
+  _getFile('hierarchical.json', callback);
 };
-},{"./system/System.js":5}],9:[function(require,module,exports){
+
+/**
+ * @link http://api.pryv.com/event-typez.html#about-json-file
+ * @param {eventTypes~contentCallback} callback
+ */
+eventTypes.flat = function (callback) {
+  _getFile('flat.json', callback);
+};
+
+/**
+ * @link http://api.pryv.com/event-typez.html#about-json-file
+ * @param {eventTypes~contentCallback} callback
+ */
+eventTypes.extras = function (callback) {
+  _getFile('extras.json', callback);
+};
+
+/**
+ * Called with the result of the request
+ * @callback eventTypes~contentCallback
+ * @param {Object} error - eventual error
+ * @param {Object} result - jSonEncoded result
+ */
+
+},{"./system/System.js":5}],6:[function(require,module,exports){
+var Utility = require('../utility/Utility.js');
+
+
+module.exports =  Utility.isBrowser() ?
+    require('./Access-browser.js') : require('./Access-node.js');
+},{"../utility/Utility.js":7,"./Access-browser.js":10,"./Access-node.js":11}],12:[function(require,module,exports){
 var apiPathProfile = '/profile/app';
 
 
@@ -143,9 +148,9 @@ Profile.prototype.get = function (key, callback) {
 
 
 /**
- * @example you want to store
- *
- * conn.profile.set({
+ * @example
+ * // set x=25 and delete y
+ * conn.profile.set({x : 25, y : null}, function(error) { console.log('done'); });
  *
  * @param {Object} keyValuePairs
  * @param {Connection~requestCallback} callback - handles the response
@@ -156,30 +161,35 @@ Profile.prototype.set = function (keyValuePairs, callback) {
 
 
 module.exports = Profile;
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
+
+module.exports = {};
+},{}],13:[function(require,module,exports){
 //file: system browser
 
 
 
 /**
  *
- * @param pack json with
- * type : 'GET/DELETE/POST/PUT'
- * host : fully qualified host name
- * port : port to use
- * path : the request PATH
- * headers : key / value map of headers
- * payload : the payload
- * success : function (result, requestInfos)
- * error : function (error, requestInfos)
- * info : a text
- * async : boolean : default (TRUE)
- * expectedStatus : code
- * ssl : boolean (default true)
+ * @param {Object} pack json with
+ * @param {Object} [pack.type = 'POST'] : 'GET/DELETE/POST/PUT'
+ * @param {String} pack.host : fully qualified host name
+ * @param {Number} pack.port : port to use
+ * @param {String} pack.path : the request PATH
+ * @param {Object} [pack.headers] : key / value map of headers
+ * @param {Object} [pack.params] : the payload -- only with POST/PUT
+ * @param {String} [pack.parseResult = 'json'] : 'text' for no parsing
+ * @param {Function} pack.success : function (result, requestInfos)
+ * @param {Function} pack.error : function (error, requestInfos)
+ * @param {String} [pack.info] : a text
+ * @param {Boolean} [pack.async = true]
+ * @param {Number} [pack.expectedStatus] : http result code
+ * @param {Boolean} [pack.ssl = true]
  */
 exports.request = function (pack)  {
-
   pack.info = pack.info || '';
+  console.log(pack);
+  var parseResult = pack.parseResult || 'json';
 
   if (!pack.hasOwnProperty('async')) {
     pack.async = true;
@@ -202,9 +212,9 @@ exports.request = function (pack)  {
   if (pack.method === 'POST' || pack.method === 'PUT') {// add json headers is POST or PUT
     pack.headers['Content-Type'] =
       pack.headers['Content-Type'] || 'application/json; charset=utf-8';
-  //}
+    //}
 
-  //if (pack.method === 'POST') {
+    //if (pack.method === 'POST') {
     if (pack.params) {
       pack.params = JSON.stringify(pack.params);
     } else {
@@ -228,7 +238,7 @@ exports.request = function (pack)  {
   // --------------- request
   var xhr = _initXHR(),
     httpMode = pack.ssl ? 'https://' : 'http://',
-    url = pack.url || (httpMode + pack.host + pack.path);
+    url = httpMode + pack.host + pack.path;
   xhr.open(pack.method, url, pack.async);
   xhr.withCredentials = true;
 
@@ -245,18 +255,22 @@ exports.request = function (pack)  {
     } else if (xhr.readyState === 4) {
       var result = null;
 
-      try { result = JSON.parse(xhr.responseText); } catch (e) {
-        return pack.error({
-          message: 'Data is not JSON',
-          detail: xhr.responseText + '\n' + detail,
-          id: 'RESULT_NOT_JSON',
-          xhr: xhr
-        });
+      if (parseResult === 'json') {
+        try { result = JSON.parse(xhr.responseText); } catch (e) {
+          return pack.error({
+            message: 'Data is not JSON',
+            detail: xhr.responseText + '\n' + detail,
+            id: 'RESULT_NOT_JSON',
+            xhr: xhr
+          });
+        }
       }
       var requestInfo = {
+        xhr : xhr,
         code : xhr.status,
         headers : xhr.getAllResponseHeaders()
       };
+
       pack.success(result, requestInfo);
     }
   };
@@ -268,15 +282,15 @@ exports.request = function (pack)  {
   }
   //--- prepare the params
   /*var sentParams = null;
-  if (pack.params)  {
-    try {
-      sentParams = JSON.stringify(pack.params);
-    } catch (e) {
-      return pack.error({message: 'Parameters are not JSON', detail: 'params: '+pack.params+'\n
-      '+detail, id: 'INTERNAL_ERROR', error: e}, pack.context);
-    }
-  }
-      */
+   if (pack.params)  {
+   try {
+   sentParams = JSON.stringify(pack.params);
+   } catch (e) {
+   return pack.error({message: 'Parameters are not JSON', detail: 'params: '+pack.params+'\n
+   '+detail, id: 'INTERNAL_ERROR', error: e}, pack.context);
+   }
+   }
+   */
   //--- sending the request
   try {
     xhr.send(pack.params);
@@ -285,7 +299,8 @@ exports.request = function (pack)  {
       message: 'pryvXHRCall unsent',
       detail: detail,
       id: 'INTERNAL_ERROR',
-      error: e
+      error: e,
+      xhr: xhr
     });
   }
   return xhr;
@@ -321,16 +336,16 @@ var _initXHR = function () {
 
 
 
-},{}],11:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 
 },{}],1:[function(require,module,exports){
 var _ = require('underscore'),
   System = require('./system/System.js'),
-  ConnectionEvents = require('./connection/Events.js'),
-  ConnectionStreams = require('./connection/Streams.js'),
- ConnectionProfile = require('./connection/Profile.js'),
-  Datastore = require('./Datastore.js'),
-  Monitor = require('./connection/Monitor.js');
+  ConnectionEvents = require('./connection/ConnectionEvents.js'),
+  ConnectionStreams = require('./connection/ConnectionStreams.js'),
+  ConnectionProfile = require('./connection/ConnectionProfile.js'),
+  ConnectionMonitors = require('./connection/ConnectionMonitors.js'),
+  Datastore = require('./Datastore.js');
 
 
 /**
@@ -398,11 +413,13 @@ function Connection(username, auth, settings) {
   * @type {ConnectionProfile}
   */
   this.profile = new ConnectionProfile(this);
-
+  /**
+   * Manipulate this connection monitors
+   */
+  this.monitors = new ConnectionMonitors(this);
 
   this.datastore = null;
 
-  this._monitors = {};
 }
 
 Connection._serialCounter = 0;
@@ -478,55 +495,12 @@ Connection.prototype.getServerTime = function (localTime) {
  * @returns {Monitor}
  */
 Connection.prototype.monitor = function (filter) {
-  return new Monitor(this, filter);
+  return this.monitors.create(filter);
 };
 
 // ------------- start / stop Monitoring is called by Monitor constructor / destructor -----//
 
-/**
- * TODO
- * @private
- */
-Connection.prototype._stopMonitoring = function (/*callback*/) {
 
-};
-
-/**
- * Internal for Connection.Monitor
- * Maybe moved in Monitor by the way
- * @param callback
- * @private
- * @return {Object} XHR or Node http request
- */
-Connection.prototype._startMonitoring = function (callback) {
-
-  if (this.ioSocket) { return callback(null/*, ioSocket*/); }
-
-  var settings = {
-    host : this.username + '.' + this.settings.domain,
-    port : this.settings.port,
-    ssl : this.settings.ssl,
-    path : this.settings.extraPath + '/' + this.username,
-    namespace : '/' + this.username,
-    auth : this.auth
-  };
-
-  this.ioSocket = System.ioConnect(settings);
-
-  this.ioSocket.on('connect', function () {
-    _.each(this._monitors, function (monitor) { monitor._onIoConnect(); });
-  }.bind(this));
-  this.ioSocket.on('error', function (error) {
-    _.each(this._monitors, function (monitor) { monitor._onIoError(error); });
-  }.bind(this));
-  this.ioSocket.on('eventsChanged', function () {
-    _.each(this._monitors, function (monitor) { monitor._onIoEventsChanged(); });
-  }.bind(this));
-  this.ioSocket.on('streamsChanged', function () {
-    _.each(this._monitors, function (monitor) { monitor._onIoStreamsChanged(); });
-  }.bind(this));
-  callback(null);
-};
 
 /**
  * Do a direct request to Pryv's API.
@@ -642,7 +616,79 @@ module.exports = Connection;
  * @param {Object} result - jSonEncoded result
  */
 
-},{"./Datastore.js":14,"./connection/Events.js":12,"./connection/Monitor.js":15,"./connection/Profile.js":9,"./connection/Streams.js":13,"./system/System.js":5,"underscore":16}],2:[function(require,module,exports){
+},{"./Datastore.js":18,"./connection/ConnectionEvents.js":15,"./connection/ConnectionMonitors.js":17,"./connection/ConnectionProfile.js":12,"./connection/ConnectionStreams.js":16,"./system/System.js":5,"underscore":19}],3:[function(require,module,exports){
+
+var _ = require('underscore');
+
+var Stream = module.exports = function (connection, data) {
+  this.connection = connection;
+
+  this.serialId = this.connection.serialId + '>S' + this.connection._streamSerialCounter++;
+  /** those are only used when no datastore **/
+  this._parent = null;
+  this._children = [];
+  _.extend(this, data);
+};
+
+/**
+ * Set or erase clientData properties
+ * @example // set x=25 and delete y
+ * stream.setClientData({x : 25, y : null}, function(error) { console.log('done'); });
+ *
+ * @param {Object} keyValueMap
+ * @param {Connection~requestCallback} callback
+ */
+Stream.prototype.setClientData = function (keyValueMap, callback) {
+  return this.connection.streams.setClientData(this, keyValueMap, callback);
+};
+
+Object.defineProperty(Stream.prototype, 'parent', {
+  get: function () {
+
+    if (! this.parentId) { return null; }
+    if (! this.connection.datastore) { // we use this._parent and this._children
+      return this._parent;
+    }
+
+    return this.connection.datastore.getStreamById(this.parentId);
+  },
+  set: function () { throw new Error('Stream.children property is read only'); }
+});
+
+
+Object.defineProperty(Stream.prototype, 'children', {
+  get: function () {
+    if (! this.connection.datastore) { // we use this._parent and this._children
+      return this._children;
+    }
+    var children = [];
+    _.each(this.childrenIds, function (childrenId) {
+      var child = this.connection.datastore.getStreamById(childrenId);
+      children.push(child);
+    }.bind(this));
+    return children;
+  },
+  set: function () { throw new Error('Stream.children property is read only'); }
+});
+
+// TODO write test
+Object.defineProperty(Stream.prototype, 'ancestors', {
+  get: function () {
+    if (! this.parentId || this.parent === null) { return []; }
+    var result = this.parent.ancestors;
+    result.push(this.parent);
+    return result;
+  },
+  set: function () { throw new Error('Stream.ancestors property is read only'); }
+});
+
+
+
+
+
+
+
+},{"underscore":19}],2:[function(require,module,exports){
 
 var _ = require('underscore');
 
@@ -716,65 +762,7 @@ Object.defineProperty(Event.prototype, 'attachmentsUrl', {
  * @property {number} [time]
  */
 
-},{"underscore":16}],3:[function(require,module,exports){
-
-var _ = require('underscore');
-
-var Stream = module.exports = function (connection, data) {
-  this.connection = connection;
-
-  this.serialId = this.connection.serialId + '>S' + this.connection._streamSerialCounter++;
-  /** those are only used when no datastore **/
-  this._parent = null;
-  this._children = [];
-  _.extend(this, data);
-};
-
-Object.defineProperty(Stream.prototype, 'parent', {
-  get: function () {
-
-    if (! this.parentId) { return null; }
-    if (! this.connection.datastore) { // we use this._parent and this._children
-      return this._parent;
-    }
-
-    return this.connection.datastore.getStreamById(this.parentId);
-  },
-  set: function () { throw new Error('Stream.children property is read only'); }
-});
-
-
-Object.defineProperty(Stream.prototype, 'children', {
-  get: function () {
-    if (! this.connection.datastore) { // we use this._parent and this._children
-      return this._children;
-    }
-    var children = [];
-    _.each(this.childrenIds, function (childrenId) {
-      var child = this.connection.datastore.getStreamById(childrenId);
-      children.push(child);
-    }.bind(this));
-    return children;
-  },
-  set: function () { throw new Error('Stream.children property is read only'); }
-});
-
-// TODO write test
-Object.defineProperty(Stream.prototype, 'ancestors', {
-  get: function () {
-    if (! this.parentId || this.parent === null) { return []; }
-    var result = this.parent.ancestors;
-    result.push(this.parent);
-    return result;
-  },
-  set: function () { throw new Error('Stream.ancestors property is read only'); }
-});
-
-
-
-
-
-},{"underscore":16}],4:[function(require,module,exports){
+},{"underscore":19}],4:[function(require,module,exports){
 var _ = require('underscore');
 
 var SignalEmitter = require('./utility/SignalEmitter.js');
@@ -1088,7 +1076,290 @@ module.exports = Filter;
  */
 
 
-},{"./Messages.js":8,"./utility/SignalEmitter.js":17,"underscore":16}],16:[function(require,module,exports){
+},{"./Messages.js":8,"./utility/SignalEmitter.js":20,"underscore":19}],21:[function(require,module,exports){
+(function(){/* global document, navigator */
+
+/* jshint -W101*/
+
+var System = require('../system/System.js');
+
+/**
+ * Browser only utils
+ */
+
+var UtilityBrowser = {};
+
+module.exports = UtilityBrowser;
+
+/* Regular expressions. */
+
+
+/**
+ * Test if hostname is a *.rec.la or pryv.li if yes. it assumes that the client
+ * runs on a staging version
+ */
+UtilityBrowser.testIfStagingFromHostname = function () {
+  return UtilityBrowser.endsWith(document.location.hostname, 'pryv.li') ||
+    UtilityBrowser.endsWith(document.location.hostname, 'rec.la');
+};
+
+
+/**
+ *  return true if browser is seen as a mobile or tablet
+ *  list grabbed from https://github.com/codefuze/js-mobile-tablet-redirect/blob/master/mobile-redirect.js
+ */
+UtilityBrowser.browserIsMobileOrTablet = function () {
+  return (/iphone|ipod|android|blackberry|opera mini|opera mobi|skyfire|maemo|windows phone|palm|iemobile|symbian|symbianos|fennec|ipad|android 3|sch-i800|playbook|tablet|kindle|gt-p1000|sgh-t849|shw-m180s|a510|a511|a100|dell streak|silk/i.test(navigator.userAgent.toLowerCase()));
+};
+
+/**
+ * Method to get the preferred language, either from desiredLanguage or from the browser settings
+ * @method getPreferredLanguage
+ * @param {Array} supportedLanguages an array of supported languages encoded on 2characters
+ * @param {String} desiredLanguage (optional) get this language if supported
+ */
+UtilityBrowser.getPreferredLanguage = function (supportedLanguages, desiredLanguage) {
+  if (desiredLanguage) {
+    if (supportedLanguages.indexOf(desiredLanguage) >= 0) { return desiredLanguage; }
+  }
+  var lct = null;
+  if (navigator.language) {
+    lct = navigator.language.toLowerCase().substring(0, 2);
+  } else if (navigator.userLanguage) {
+    lct = navigator.userLanguage.toLowerCase().substring(0, 2);
+  } else if (navigator.userAgent.indexOf('[') !== -1) {
+    var start = navigator.userAgent.indexOf('[');
+    var end = navigator.userAgent.indexOf(']');
+    lct = navigator.userAgent.substring(start + 1, end).toLowerCase();
+  }
+  if (desiredLanguage) {
+    if (lct.indexOf(desiredLanguage) >= 0) { return lct; }
+  }
+
+  return supportedLanguages[0];
+};
+
+
+/**
+ * //TODO check if it's robust
+ * Method to check the browser supports CSS3.
+ * @method supportCSS3
+ * @return boolean
+ */
+UtilityBrowser.supportCSS3 = function ()  {
+  var stub = document.createElement('div'),
+    testProperty = 'textShadow';
+
+  if (testProperty in stub.style) { return true; }
+
+  testProperty = testProperty.replace(/^[a-z]/, function (val) {
+    return val.toUpperCase();
+  });
+
+  return false;
+};
+
+/**
+ * Method to load external files like javascript and stylesheet. this version
+ * of method only support to file types - js|javascript and css|stylesheet.
+ * @method loadExternalFiles
+ * @param {String} string filename
+ * @param {String} type -- 'js' or 'css'
+ */
+UtilityBrowser.loadExternalFiles = function (filename, type)  {
+  var tag = null;
+
+  type = type.toLowerCase();
+
+  if (type === 'js' || type === 'javascript') {
+    tag = document.createElement('script');
+    tag.setAttribute('type', 'text/javascript');
+    tag.setAttribute('src', filename);
+  } else if (type === 'css' || type === 'stylesheet')  {
+    tag = document.createElement('link');
+    tag.setAttribute('rel', 'stylesheet');
+    tag.setAttribute('type', 'text/css');
+    tag.setAttribute('href', filename);
+  }
+
+  if (tag !== null || tag !== undefined) {
+    document.getElementsByTagName('head')[0].appendChild(tag);
+  }
+};
+
+/**
+ * Get the content on an URL as a String ,
+ * Mainly designed to load HTML ressources
+ * @param {String} url
+ * @param {Function} callBack  function(error,content,xhr)
+ * @return {Object} xhr request
+ */
+UtilityBrowser.getURLContent = function (url, callback) {
+
+  function onSuccess(result, xhr) {
+    callback(null, result, xhr);
+  }
+
+  function onError(error) {
+    callback(error, null, error.xhr);
+  }
+
+  return System.request({
+    method : 'GET',
+    url : url,
+    parseResult : 'text',
+    success: onSuccess,
+    error: onError
+  });
+};
+
+/**
+ * Load the content of a URL into a div
+ * !! No error will go to the console.
+ */
+UtilityBrowser.loadURLContentInElementId = function (url, elementId, next) {
+  next = next || function () {};
+  var content = document.getElementById(elementId);
+  UtilityBrowser.getURLContent(url,
+    function (error, result) {
+      content.innerHTML = result;
+      next();
+      if (error) {
+        console.error(error);
+      }
+    }
+  );
+};
+
+
+
+
+/* jshint ignore:start */
+/*\
+ |*|
+ |*|  :: cookies.js ::
+ |*|
+ |*|  A complete cookies reader/writer framework with full unicode support.
+ |*|
+ |*|  https://developer.mozilla.org/en-US/docs/DOM/document.cookie
+ |*|
+ |*|  Syntaxes:
+ |*|
+ |*|  * docCookies.setItem(name, value[, end[, path[, domain[, secure]]]])
+ |*|  * docCookies.getItem(name)
+ |*|  * docCookies.removeItem(name[, path])
+ |*|  * docCookies.hasItem(name)
+ |*|  * docCookies.keys()
+ |*|
+ \*/
+UtilityBrowser.docCookies = {
+  getItem: function (sKey) {
+    if (!sKey || !this.hasItem(sKey)) { return null; }
+    return unescape(document.cookie.replace(new RegExp("(?:^|.*;\\s*)" +
+      escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=\\s*((?:[^;](?!;))*[^;]?).*"), "$1"));
+  },
+  setItem: function (sKey, sValue, vEnd, sPath, sDomain, bSecure) {
+    if (!sKey || /^(?:expires|max\-age|path|domain|secure)$/i.test(sKey)) { return; }
+    var sExpires = "";
+    if (vEnd) {
+      switch (vEnd.constructor) {
+        case Number:
+          sExpires = vEnd === Infinity ?
+            "; expires=Tue, 19 Jan 2038 03:14:07 GMT" : "; max-age=" + vEnd;
+          break;
+        case String:
+          sExpires = "; expires=" + vEnd;
+          break;
+        case Date:
+          sExpires = "; expires=" + vEnd.toGMTString();
+          break;
+      }
+    }
+    document.cookie = escape(sKey) + "=" + escape(sValue) + sExpires + (sDomain ? "; domain=" + sDomain : "") + (sPath ? "; path=" + sPath : "") + (bSecure ? "; secure" : "");
+  },
+  removeItem: function (sKey, sPath) {
+    if (!sKey || !this.hasItem(sKey)) { return; }
+    document.cookie = escape(sKey) + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT" + (sPath ? "; path=" + sPath : "");
+  },
+  hasItem: function (sKey) {
+    return (new RegExp("(?:^|;\\s*)" + escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=")).test(document.cookie);
+  },
+  keys: /* optional method: you can safely remove it! */ function () {
+    var aKeys = document.cookie.replace(/((?:^|\s*;)[^\=]+)(?=;|$)|^\s*|\s*(?:\=[^;]*)?(?:\1|$)/g, "").split(/\s*(?:\=[^;]*)?;\s*/);
+    for (var nIdx = 0; nIdx < aKeys.length; nIdx++) { aKeys[nIdx] = unescape(aKeys[nIdx]); }
+    return aKeys;
+  }
+};
+
+/* jshint ignore:end */
+
+
+//----------- DomReady ----------//
+
+
+/*!
+ * domready (c) Dustin Diaz 2012 - License MIT
+ */
+
+/* jshint ignore:start */
+UtilityBrowser.domReady = function (ready) {
+
+
+  var fns = [], fn, f = false,
+    doc = document,
+    testEl = doc.documentElement,
+    hack = testEl.doScroll,
+    domContentLoaded = 'DOMContentLoaded',
+    addEventListener = 'addEventListener',
+    onreadystatechange = 'onreadystatechange',
+    readyState = 'readyState',
+    loaded = /^loade|c/.test(doc[readyState]);
+
+  function flush(f) {
+    loaded = 1;
+    while (f = fns.shift()) { 
+      f()
+    }
+  }
+
+  doc[addEventListener] && doc[addEventListener](domContentLoaded, fn = function () {
+    doc.removeEventListener(domContentLoaded, fn, f);
+    flush();
+  }, f);
+
+
+  hack && doc.attachEvent(onreadystatechange, fn = function () {
+    if (/^c/.test(doc[readyState])) {
+      doc.detachEvent(onreadystatechange, fn);
+      flush();
+    }
+  });
+
+  return (ready = hack ?
+    function (fn) {
+      self != top ?
+        loaded ? fn() : fns.push(fn) :
+        function () {
+          console.log("on dom ready 2");
+          try {
+            testEl.doScroll('left')
+          } catch (e) {
+            return setTimeout(function() { ready(fn) }, 50)
+          }
+          fn()
+        }()
+    } :
+    function (fn) {
+      loaded ? fn() : fns.push(fn)
+    })
+}();
+
+/* jshint ignore:end */
+
+
+
+})()
+},{"../system/System.js":5}],19:[function(require,module,exports){
 (function(){//     Underscore.js 1.5.2
 //     http://underscorejs.org
 //     (c) 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -2367,12 +2638,57 @@ module.exports = Filter;
 }).call(this);
 
 })()
-},{}],7:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
+//TODO: consider merging System into Utility
+
+var Utility = require('../utility/Utility.js');
+
+
+var socketIO = require('socket.io-client');
+
+
+var System =
+  module.exports =  Utility.isBrowser() ?
+    require('./System-browser.js') : require('./System-node.js');
+
+System.ioConnect = function (settings) {
+  var httpMode = settings.ssl ? 'https' : 'http';
+  var url = httpMode + '://' + settings.host + ':' + settings.port + '' +
+    settings.path + '?auth=' + settings.auth + '&resource=' + settings.namespace;
+
+  return socketIO.connect(url, {'force new connection': true});
+};
+
+
+},{"../utility/Utility.js":7,"./System-browser.js":13,"./System-node.js":14,"socket.io-client":22}],7:[function(require,module,exports){
 var _ = require('underscore');
 
-exports.SignalEmitter = require('./SignalEmitter.js');
+var isBrowser = function () {
+  return typeof(window) !== 'undefined';
+};
 
-exports.mergeAndClean = function (sourceA, sourceB) {
+
+var Utility =  module.exports =  isBrowser() ?
+  require('./Utility-browser.js') : require('./Utility-node.js');
+
+module.exports = Utility;
+
+/**
+ * return true if environment is a web browser
+ * @returns {boolean}
+ */
+Utility.isBrowser = isBrowser;
+
+
+Utility.SignalEmitter = require('./SignalEmitter.js');
+
+/**
+ * Merge two object (key/value map) and remove "null" properties
+ * @param {Object} sourceA
+ * @param {Object} sourceB
+ * @returns {*|Block|Node|Tag}
+ */
+Utility.mergeAndClean = function (sourceA, sourceB) {
   sourceA = sourceA || {};
   sourceB = sourceB || {};
   var result = _.clone(sourceA);
@@ -2383,7 +2699,12 @@ exports.mergeAndClean = function (sourceA, sourceB) {
   return result;
 };
 
-exports.getQueryParametersString = function (data) {
+/**
+ * Create a query string from an object (key/value map)
+ * @param {Object} data
+ * @returns {String} key1=value1&key2=value2....
+ */
+Utility.getQueryParametersString = function (data) {
   data = this.mergeAndClean(data);
   return Object.keys(data).map(function (key) {
     if (data[key] !== null) {
@@ -2400,29 +2721,27 @@ exports.getQueryParametersString = function (data) {
   }, this).join('&');
 };
 
-},{"./SignalEmitter.js":17,"underscore":16}],5:[function(require,module,exports){
-//TODO: consider merging System into Utility
+/**
+ * Common regexp
+ * @type {{username: RegExp, email: RegExp}}
+ */
+Utility.regex = {
+  username :  /^([a-zA-Z0-9])(([a-zA-Z0-9\-]){3,21})([a-zA-Z0-9])$/,
+  email : /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/
+};
 
-function isBrowser() {
-  return typeof(window) !== 'undefined';
-}
-
-var socketIO = require('socket.io-client');
-
-
-var System =
-  module.exports =  isBrowser() ?  require('./System-browser.js') : require('./System-node.js');
-
-System.ioConnect = function (settings) {
-  var httpMode = settings.ssl ? 'https' : 'http';
-  var url = httpMode + '://' + settings.host + ':' + settings.port + '' +
-    settings.path + '?auth=' + settings.auth + '&resource=' + settings.namespace;
-
-  return socketIO.connect(url, {'force new connection': true});
+/**
+ * Cross platform string endsWith
+ * @param {String} str
+ * @param {String} suffix
+ * @returns {boolean}
+ */
+Utility.endsWith = function (str, suffix) {
+  return str.indexOf(suffix, str.length - suffix.length) !== -1;
 };
 
 
-},{"./System-browser.js":10,"./System-node.js":11,"socket.io-client":18}],14:[function(require,module,exports){
+},{"./SignalEmitter.js":20,"./Utility-browser.js":21,"./Utility-node.js":14,"underscore":19}],18:[function(require,module,exports){
 var _ = require('underscore');
 
 function Datastore(connection) {
@@ -2487,7 +2806,7 @@ Datastore.prototype.getStreamById = function (streamId, test) {
 module.exports = Datastore;
 
 
-},{"underscore":16}],18:[function(require,module,exports){
+},{"underscore":19}],22:[function(require,module,exports){
 (function(){/*! Socket.IO.js build:0.9.16, development. Copyright(c) 2011 LearnBoost <dev@learnboost.com> MIT Licensed */
 
 var io = ('undefined' === typeof module ? {} : module.exports);
@@ -6362,14 +6681,14 @@ if (typeof define === "function" && define.amd) {
 }
 })();
 })()
-},{}],12:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 var Utility = require('../utility/Utility.js'),
   _ = require('underscore'),
   Filter = require('../Filter'),
   Event = require('../Event');
 
 /**
- * @class Events
+ * @class ConnectionEvents
  *
  * Coverage of the API
  *  GET /events -- 100%
@@ -6386,7 +6705,7 @@ var Utility = require('../utility/Utility.js'),
  * @param {Connection} connection
  * @constructor
  */
-function Events(connection) {
+function ConnectionEvents(connection) {
   this.connection = connection;
 }
 
@@ -6400,10 +6719,10 @@ function Events(connection) {
  *  }
  * );
  * @param {FilterLike} filter
- * @param {Events~getCallback} doneCallback
- * @param {Events~partialResultCallback} partialResultCallback
+ * @param {ConnectionEvents~getCallback} doneCallback
+ * @param {ConnectionEvents~partialResultCallback} partialResultCallback
  */
-Events.prototype.get = function (filter, doneCallback, partialResultCallback) {
+ConnectionEvents.prototype.get = function (filter, doneCallback, partialResultCallback) {
   //TODO handle caching
   var result = [];
   this._get(filter, function (error, eventList) {
@@ -6419,7 +6738,7 @@ Events.prototype.get = function (filter, doneCallback, partialResultCallback) {
  * @param {Event} event
  * @param {Connection~requestCallback} callback
  */
-Events.prototype.update = function (event, callback) {
+ConnectionEvents.prototype.update = function (event, callback) {
   this._updateWithIdAndData(event.id, event.getData(), callback);
 };
 
@@ -6427,7 +6746,7 @@ Events.prototype.update = function (event, callback) {
  * @param {Event | eventId} event
  * @param {Connection~requestCallback} callback
  */
-Events.prototype.trash = function (event, callback) {
+ConnectionEvents.prototype.trash = function (event, callback) {
   this.trashWithId(event.id, callback);
 };
 
@@ -6435,7 +6754,7 @@ Events.prototype.trash = function (event, callback) {
  * @param {String} eventId
  * @param {Connection~requestCallback} callback
  */
-Events.prototype.trashWithId = function (eventId, callback) {
+ConnectionEvents.prototype.trashWithId = function (eventId, callback) {
   var url = '/events/' + eventId;
   this.connection.request('DELETE', url, callback, null);
 };
@@ -6445,10 +6764,10 @@ Events.prototype.trashWithId = function (eventId, callback) {
  * The function return the newly created object.. It will be updated when posted on the API.
  * @param {NewEventLike} event -- minimum {streamId, type } -- if typeof Event, must belong to
  * the same connection and not exists on the API.
- * @param {Events~eventCreatedOnTheAPI} callback
+ * @param {ConnectionEvents~eventCreatedOnTheAPI} callback
  * @return {Event} event
  */
-Events.prototype.create = function (newEventlike, callback) {
+ConnectionEvents.prototype.create = function (newEventlike, callback) {
   var event = null;
   if (newEventlike instanceof Event) {
     if (newEventlike.connection !== this.connection) {
@@ -6476,11 +6795,12 @@ Events.prototype.create = function (newEventlike, callback) {
  * //TODO make it NewEventLike compatible
  * This is the prefered method to create events in batch
  * @param {Object[]} eventsData -- minimum {streamId, type }
- * @param {Events~eventBatchCreatedOnTheAPI}
+ * @param {ConnectionEvents~eventBatchCreatedOnTheAPI}
  * @param {function} [callBackWithEventsBeforeRequest] mostly for testing purposes
  * @return {Event[]} events
  */
-Events.prototype.batchWithData = function (eventsData, callback, callBackWithEventsBeforeRequest) {
+ConnectionEvents.prototype.batchWithData =
+  function (eventsData, callback, callBackWithEventsBeforeRequest) {
   if (!_.isArray(eventsData)) { eventsData = [eventsData]; }
 
   var createdEvents = [];
@@ -6495,7 +6815,9 @@ Events.prototype.batchWithData = function (eventsData, callback, callBackWithEve
     eventData.tempRefId = event.serialId;
   }.bind(this));
 
-  if (callBackWithEventsBeforeRequest) { callBackWithEventsBeforeRequest(createdEvents); }
+  if (callBackWithEventsBeforeRequest) {
+    callBackWithEventsBeforeRequest(createdEvents);
+  }
 
   this.connection.request('POST', url, function (err, result) {
     _.each(result, function (eventData, tempRefId) {
@@ -6514,7 +6836,7 @@ Events.prototype.batchWithData = function (eventsData, callback, callBackWithEve
  * @param {Connection~requestCallback} callback
  * @private
  */
-Events.prototype._get = function (filter, callback) {
+ConnectionEvents.prototype._get = function (filter, callback) {
   var tParams = filter;
   if (filter instanceof Filter) { tParams = filter.getData(true); }
   if (_.has(tParams, 'streams') && tParams.streams.length === 0) { // dead end filter..
@@ -6531,17 +6853,17 @@ Events.prototype._get = function (filter, callback) {
  * @param  {Connection~requestCallback} callback
  * @private
  */
-Events.prototype._updateWithIdAndData = function (eventId, data, callback) {
+ConnectionEvents.prototype._updateWithIdAndData = function (eventId, data, callback) {
   var url = '/events/' + eventId;
   this.connection.request('PUT', url, callback, data);
 };
 
 
-module.exports = Events;
+module.exports = ConnectionEvents;
 
 /**
  * Called with the desired Events as result.
- * @callback Events~getCallback
+ * @callback ConnectionEvents~getCallback
  * @param {Object} error - eventual error
  * @param {Event[]} result
  */
@@ -6549,31 +6871,31 @@ module.exports = Events;
 
 /**
  * Called each time a "part" of the result is received
- * @callback Events~partialResultCallback
+ * @callback ConnectionEvents~partialResultCallback
  * @param {Event[]} result
  */
 
 
 /**
  * Called when an event is created on the API
- * @callback Events~eventCreatedOnTheAPI
+ * @callback ConnectionEvents~eventCreatedOnTheAPI
  * @param {Object} error - eventual error
  * @param {Event} event
  */
 
 /**
  * Called when batch create an array of events on the API
- * @callback Events~eventBatchCreatedOnTheAPI
+ * @callback ConnectionEvents~eventBatchCreatedOnTheAPI
  * @param {Object} error - eventual error
  * @param {Event[]} events
  */
-},{"../Event":2,"../Filter":4,"../utility/Utility.js":7,"underscore":16}],13:[function(require,module,exports){
+},{"../Event":2,"../Filter":4,"../utility/Utility.js":7,"underscore":19}],16:[function(require,module,exports){
 var _ = require('underscore'),
     Utility = require('../utility/Utility.js'),
     Stream = require('../Stream.js');
 
 /**
- * @class Streams
+ * @class ConnectionStreams
  * @description
  * ##Coverage of the API
  *
@@ -6587,7 +6909,7 @@ var _ = require('underscore'),
  * @param {Connection} connection
  * @constructor
  */
-function Streams(connection) {
+function ConnectionStreams(connection) {
   this.connection = connection;
   this._streamsIndex = {};
 }
@@ -6595,17 +6917,37 @@ function Streams(connection) {
 
 
 /**
- * @typedef StreamsOptions parameters than can be passed along a Stream request
+ * @typedef ConnectionStreamsOptions parameters than can be passed along a Stream request
  * @property {string} parentId  if parentId is null you will get all the "root" streams.
  * @property {string} [state] 'all' || null  - if null you get only "active" streams
  **/
 
 
 /**
- * @param {StreamsOptions} options
- * @param {Streams~getCallback} callback - handles the response
+ * @param {ConnectionStreamsOptions} options
+ * @param {ConnectionStreams~getCallback} callback - handles the response
  */
-Streams.prototype.get = function (options, callback) {
+ConnectionStreams.prototype.get = function (options, callback) {
+  if (this.connection.datastore) {
+    var resultTree = [];
+    if (options && _.has(options, 'parentId')) {
+      resultTree = this.connection.datastore.getStreamById(options.parentId).children;
+    } else {
+      resultTree = this.connection.datastore.getStreams();
+    }
+    callback(null, resultTree);
+  } else {
+    this._getObjects(options, callback);
+  }
+};
+
+
+
+/**
+ * @param {ConnectionStreamsOptions} options
+ * @param {ConnectionStreams~getCallback} callback - handles the response
+ */
+ConnectionStreams.prototype.updateProperties = function (stream, properties, options, callback) {
   if (this.connection.datastore) {
     var resultTree = [];
     if (options && _.has(options, 'parentId')) {
@@ -6626,7 +6968,7 @@ Streams.prototype.get = function (options, callback) {
  * @param {string} streamId
  * @throws {Error} Connection.fetchStructure must have been called before.
  */
-Streams.prototype.getById = function (streamId) {
+ConnectionStreams.prototype.getById = function (streamId) {
   if (! this.connection.datastore) {
     throw new Error('Call connection.fetchStructure before, to get automatic stream mapping');
   }
@@ -6639,10 +6981,10 @@ Streams.prototype.getById = function (streamId) {
 /**
  * get streams on the API
  * @private
- * @param {Streams~options} opts
+ * @param {ConnectionStreams~options} opts
  * @param callback
  */
-Streams.prototype._getData = function (opts, callback) {
+ConnectionStreams.prototype._getData = function (opts, callback) {
   var url = opts ? '/streams?' + Utility.getQueryParametersString(opts) : '/streams';
   this.connection.request('GET', url, callback, null);
 };
@@ -6654,7 +6996,7 @@ Streams.prototype._getData = function (opts, callback) {
  * stream.getData()
  * @param callback
  */
-Streams.prototype._createWithData = function (streamData, callback) {
+ConnectionStreams.prototype._createWithData = function (streamData, callback) {
   var url = '/streams';
   this.connection.request('POST', url, function (err, resultData) {
     streamData.id = resultData.id;
@@ -6669,7 +7011,7 @@ Streams.prototype._createWithData = function (streamData, callback) {
  * stream.getData()
  * @param callback
  */
-Streams.prototype._updateWithData = function (streamData, callback) {
+ConnectionStreams.prototype._updateWithData = function (streamData, callback) {
   var url = '/streams/' + streamData.id;
   this.connection.request('PUT', url, callback, null);
 };
@@ -6678,16 +7020,16 @@ Streams.prototype._updateWithData = function (streamData, callback) {
 
 /**
  * @private
- * @param {Streams~options} options
+ * @param {ConnectionStreams~options} options
  */
-Streams.prototype._getObjects = function (options, callback) {
+ConnectionStreams.prototype._getObjects = function (options, callback) {
   options = options || {};
   options.parentId = options.parentId || null;
   var streamsIndex = {};
   var resultTree = [];
   this._getData(options, function (error, treeData) {
     if (error) { return callback('Stream.get failed: ' + error); }
-    Streams.Utils.walkDataTree(treeData, function (streamData) {
+    ConnectionStreams.Utils.walkDataTree(treeData, function (streamData) {
       var stream = new Stream(this.connection, streamData);
       streamsIndex[streamData.id] = stream;
       if (stream.parentId === options.parentId) { // attached to the rootNode or filter
@@ -6707,25 +7049,25 @@ Streams.prototype._getObjects = function (options, callback) {
 
 /**
  * Called once per streams
- * @callback Streams~walkTreeEachStreams
+ * @callback ConnectionStreams~walkTreeEachStreams
  * @param {Stream} stream
  */
 
 /**
  * Called when walk is done
- * @callback Streams~walkTreeDone
+ * @callback ConnectionStreams~walkTreeDone
  */
 
 /**
  * Walk the tree structure.. parents are always announced before childrens
- * @param {Streams~options} options
- * @param {Streams~walkTreeEachStreams} eachStream
- * @param {Streams~walkTreeDone} done
+ * @param {ConnectionStreams~options} options
+ * @param {ConnectionStreams~walkTreeEachStreams} eachStream
+ * @param {ConnectionStreams~walkTreeDone} done
  */
-Streams.prototype.walkTree = function (options, eachStream, done) {
+ConnectionStreams.prototype.walkTree = function (options, eachStream, done) {
   this.get(options, function (error, result) {
     if (error) { return done('Stream.walkTree failed: ' + error); }
-    Streams.Utils.walkObjectTree(result, eachStream);
+    ConnectionStreams.Utils.walkObjectTree(result, eachStream);
     if (done) { done(null); }
   });
 };
@@ -6733,16 +7075,16 @@ Streams.prototype.walkTree = function (options, eachStream, done) {
 
 /**
  * Called when tree has been flatened
- * @callback Streams~getFlatenedObjectsDone
- * @param {Streams[]} streams
+ * @callback ConnectionStreams~getFlatenedObjectsDone
+ * @param {ConnectionStreams[]} streams
  */
 
 /**
  * Get the all the streams of the Tree in a list.. parents firsts
- * @param {Streams~options} options
- * @param {Streams~getFlatenedObjectsDone} done
+ * @param {ConnectionStreams~options} options
+ * @param {ConnectionStreams~getFlatenedObjectsDone} done
  */
-Streams.prototype.getFlatenedObjects = function (options, callback) {
+ConnectionStreams.prototype.getFlatenedObjects = function (options, callback) {
   var result = [];
   this.walkTree(options,
     function (stream) { // each stream
@@ -6756,15 +7098,15 @@ Streams.prototype.getFlatenedObjects = function (options, callback) {
 
 /**
  * Utility to debug a tree structure
- * @param {Streams[]} arrayOfStreams
+ * @param {ConnectionStreams[]} arrayOfStreams
  */
-Streams.prototype.getDisplayTree = function (arrayOfStreams) {
-  return Streams.Utils._debugTree(arrayOfStreams);
+ConnectionStreams.prototype.getDisplayTree = function (arrayOfStreams) {
+  return ConnectionStreams.Utils._debugTree(arrayOfStreams);
 };
 
 
 // TODO Validate that it's the good place for them .. Could have been in Stream or Utility
-Streams.Utils = {
+ConnectionStreams.Utils = {
 
 
   /**
@@ -6775,7 +7117,7 @@ Streams.Utils = {
   walkObjectTree : function (streamArray, eachStream) {
     _.each(streamArray, function (stream) {
       eachStream(stream);
-      Streams.Utils.walkObjectTree(stream.children, eachStream);
+      ConnectionStreams.Utils.walkObjectTree(stream.children, eachStream);
     });
   },
 
@@ -6819,7 +7161,7 @@ Streams.Utils = {
         name : stream.name,
         id : stream.id,
         parentId : stream.parentId,
-        children : Streams.Utils._debugTree(stream.children)
+        children : ConnectionStreams.Utils._debugTree(stream.children)
       });
     });
     return result;
@@ -6827,20 +7169,700 @@ Streams.Utils = {
 
 };
 
-module.exports = Streams;
+module.exports = ConnectionStreams;
 
 /**
- * Called with the desired Streams as result.
- * @callback Streams~getCallback
+ * Called with the desired streams as result.
+ * @callback ConnectionStreams~getCallback
  * @param {Object} error - eventual error
  * @param {Stream[]} result
  */
 
 
-},{"../Stream.js":3,"../utility/Utility.js":7,"underscore":16}],15:[function(require,module,exports){
+},{"../Stream.js":3,"../utility/Utility.js":7,"underscore":19}],17:[function(require,module,exports){
+var _ = require('underscore'),
+  System = require('../system/System.js'),
+  Monitor = require('../Monitor.js');
+
+/**
+ * @class ConnectionMonitors
+ * @private
+ *
+ * @param {Connection} connection
+ * @constructor
+ */
+function ConnectionMonitors(connection) {
+  this.connection = connection;
+  this._monitors = {};
+  this.ioSocket = null;
+}
+
+/**
+ * Start monitoring this Connection. Any change that occurs on the connection (add, delete, change)
+ * will trigger an event. Changes to the filter will also trigger events if they have an impact on
+ * the monitored data.
+ * @param {Filter} filter - changes to this filter will be monitored.
+ * @returns {Monitor}
+ */
+ConnectionMonitors.prototype.create = function (filter) {
+  return new Monitor(this.connection, filter);
+};
+
+
+
+/**
+ * TODO
+ * @private
+ */
+ConnectionMonitors.prototype._stopMonitoring = function (/*callback*/) {
+
+};
+
+/**
+ * Internal for Connection.Monitor
+ * Maybe moved in Monitor by the way
+ * @param callback
+ * @private
+ * @return {Object} XHR or Node http request
+ */
+ConnectionMonitors.prototype._startMonitoring = function (callback) {
+
+  if (this.ioSocket) { return callback(null/*, ioSocket*/); }
+
+  var settings = {
+    host : this.connection.username + '.' + this.connection.settings.domain,
+    port : this.connection.settings.port,
+    ssl : this.connection.settings.ssl,
+    path : this.connection.settings.extraPath + '/' + this.connection.username,
+    namespace : '/' + this.connection.username,
+    auth : this.connection.auth
+  };
+
+  this.ioSocket = System.ioConnect(settings);
+
+  this.ioSocket.on('connect', function () {
+    _.each(this._monitors, function (monitor) { monitor._onIoConnect(); });
+  }.bind(this));
+  this.ioSocket.on('error', function (error) {
+    _.each(this._monitors, function (monitor) { monitor._onIoError(error); });
+  }.bind(this));
+  this.ioSocket.on('eventsChanged', function () {
+    _.each(this._monitors, function (monitor) { monitor._onIoEventsChanged(); });
+  }.bind(this));
+  this.ioSocket.on('streamsChanged', function () {
+    _.each(this._monitors, function (monitor) { monitor._onIoStreamsChanged(); });
+  }.bind(this));
+  callback(null);
+};
+
+module.exports = ConnectionMonitors;
+
+
+
+},{"../Monitor.js":23,"../system/System.js":5,"underscore":19}],20:[function(require,module,exports){
+(function(){/**
+ * (event)Emitter renamed to avoid confusion with prvy's events
+ */
+
+
 var _ = require('underscore');
-var SignalEmitter = require('../utility/SignalEmitter.js');
-var MSGs =  require('../Messages.js');
+
+var SignalEmitter = module.exports = function (messagesMap) {
+  SignalEmitter.extend(this, messagesMap);
+};
+
+
+SignalEmitter.extend = function (object, messagesMap, name) {
+  if (! name) {
+    throw new Error('"name" parameter must be set');
+  }
+  object._signalEmitterEvents = {};
+  _.each(_.values(messagesMap), function (value) {
+    object._signalEmitterEvents[value] = [];
+  });
+  _.extend(object, SignalEmitter.prototype);
+  object._signalEmitterName = name;
+};
+
+
+SignalEmitter.Messages = {
+  /** called when a batch of changes is expected, content: <batchId> unique**/
+  BATCH_BEGIN : 'beginBatch',
+  /** called when a batch of changes is done, content: <batchId> unique**/
+  BATCH_DONE : 'doneBatch',
+  /** if an eventListener return this string, it will be removed automatically **/
+  UNREGISTER_LISTENER : 'unregisterMePlease'
+};
+
+/**
+ * Add an event listener
+ * @param signal one of  MSGs.SIGNAL.*.*
+ * @param callback function(content) .. content vary on each signal.
+ * If the callback returns SignalEmitter.Messages.UNREGISTER_LISTENER it will be removed
+ * @return the callback function for further reference
+ */
+SignalEmitter.prototype.addEventListener = function (signal, callback) {
+  this._signalEmitterEvents[signal].push(callback);
+  return callback;
+};
+
+
+/**
+ * remove the callback matching this signal
+ */
+SignalEmitter.prototype.removeEventListener = function (signal, callback) {
+  for (var i = 0; i < this._signalEmitterEvents[signal].length; i++) {
+    if (this._signalEmitterEvents[signal][i] === callback) {
+      this._signalEmitterEvents[signal][i] = null;
+    }
+  }
+};
+
+
+/**
+ * A changes occurred on the filter
+ * @param signal
+ * @param content
+ * @param batch
+ * @private
+ */
+SignalEmitter.prototype._fireEvent = function (signal, content, batch) {
+  var batchId = batch ? batch.id : null;
+  if (! signal) { throw new Error(); }
+
+  var batchStr = batchId ? ' batch: ' + batchId + ', ' + batch.batchName : '';
+  console.log('FireEvent-' + this._signalEmitterName  + ' : ' + signal + batchStr);
+
+  _.each(this._signalEmitterEvents[signal], function (callback) {
+    if (callback !== null &&
+      SignalEmitter.Messages.UNREGISTER_LISTENER === callback(content, batchId, batch)) {
+      this.removeEventListener(signal, callback);
+    }
+  }, this);
+};
+
+
+SignalEmitter.batchSerial = 0;
+/**
+ * start a batch process
+ * @param eventual superBatch you can hook on. In this case it will call superBatch.waitForMe(..)
+ * @return an object where you have to call stop when done
+ */
+SignalEmitter.prototype.startBatch = function (batchName, orHookOnBatch) {
+  if (orHookOnBatch && orHookOnBatch.sender === this) { // test if this batch comes form me
+    return orHookOnBatch.waitForMeToFinish();
+  }
+  var batch = {
+    sender : this,
+    batchName : batchName || '',
+    id : this._signalEmitterName + SignalEmitter.batchSerial++,
+    filter : this,
+    waitFor : 1,
+    doneCallbacks : {},
+
+    waitForMeToFinish : function () {
+      batch.waitFor++;
+      return this;
+    },
+
+    /**
+     * listener are stored in key/map fashion, so addOnDoneListener('bob',..)
+     * may be called several time, callback 'bob', will be done just once
+     * @param key a unique key per callback
+     * @param callback
+     */
+    addOnDoneListener : function (key, callback) {
+      this.doneCallbacks[key] = callback;
+    },
+    done : function (name) {
+      this.waitFor--;
+      if (this.waitFor === 0) {
+        _.each(this.doneCallbacks, function (callback) { callback(); });
+        this.filter._fireEvent(SignalEmitter.Messages.BATCH_DONE, this.id, this);
+      }
+      if (this.waitFor < 0) {
+        console.error('This batch has been done() to much :' + name);
+      }
+    }
+  };
+  this._fireEvent(SignalEmitter.Messages.BATCH_BEGIN, batch.id, batch);
+  return batch;
+};
+
+})()
+},{"underscore":19}],10:[function(require,module,exports){
+(function(){/* global confirm, document, navigator, location, window */
+
+var Utility = require('../utility/Utility.js');
+var System = require('../system/System.js');
+var _ = require('underscore');
+
+
+//--------------------- access ----------//
+/**
+ * @class Access
+ * */
+var Access = function ()  {
+};
+
+_.extend(Access, {
+  config: {
+    registerURL: {ssl: true, host: 'reg.pryv.io'},
+    registerStagingURL:  {ssl: true, host: 'reg.pryv.in'},
+    localDevel : false,
+    sdkFullPath: '/dist'
+  },
+  state: null,  // actual state
+  window: null,  // popup window reference (if any)
+  spanButton: null, // an element on the app web page that can be controlled
+  buttonHTML: '',
+  settings: null,
+  pollingID: false,
+  pollingIsOn: true, //may be turned off if we can communicate between windows
+  cookieEnabled: false,
+  ignoreStateFromURL: false // turned to true in case of loggout
+});
+
+/**
+ * Method to initialize the data required for authorization.
+ * @method _init
+ * @access private
+ */
+Access._init = function (i) {
+  // start only if Utility is loaded
+  if (typeof Utility === 'undefined') {
+    if (i > 100) {
+      throw new Error('Cannot find Utility');
+    }
+    i++;
+    return setTimeout('Access._init(' + i + ')', 10 * i);
+  }
+
+  Utility.loadExternalFiles(
+    this.config.sdkFullPath + '/media/buttonSigninPryv.css', 'css');
+
+  if (Utility.testIfStagingFromHostname()) {
+    console.log('staging mode');
+    Access.config.registerURL = Access.config.registerStagingURL;
+  }
+
+  console.log('init done');
+};
+
+
+Access._init(1);
+
+//--------------------- UI Content -----------//
+
+
+Access.uiSupportedLanguages = ['en', 'fr'];
+
+Access.uiButton = function (onClick, buttonText) {
+  if (Utility.supportCSS3()) {
+    return '<div class="pryv-access-btn-signin" onclick="' + onClick + '">' +
+      '<a class="pryv-access-btn pryv-access-btn-pryv-access-color" href="#">' +
+      '<span class="logoSignin">Y</span></a>' +
+      '<a class="pryv-access-btn pryv-access-btn-pryv-access-color"  href="#"><span>' +
+      buttonText + '</span></a></div>';
+  } else   {
+    return '<a href="#" onclick="' + onClick +
+      '" class="pryv-access-btn-signinImage" ' +
+      'src="' + this.config.sdkFullPath + '/media/btnSignIn.png" >' + buttonText + '</a>';
+  }
+};
+
+Access.uiErrorButton = function () {
+  var strs = {
+    'en': { 'msg': 'Error :(' },
+    'fr': { 'msg': 'Erreur :('}
+  }[this.settings.languageCode];
+
+  return Access.uiButton('Pryv.Access.logout(); return false;', strs.msg);
+
+};
+
+Access.uiLoadingButton = function () {
+  var strs = {
+    'en': { 'msg': 'Loading ...' },
+    'fr': { 'msg': 'Chargement ...'}
+  }[this.settings.languageCode];
+
+  return Access.uiButton('return false;', strs.msg);
+
+};
+
+Access.uiSigninButton = function () {
+  var strs = {
+    'en': { 'msg': 'PrYv Sign-In' },
+    'fr': { 'msg': 'Connection à PrYv'}
+  }[this.settings.languageCode];
+
+  return Access.uiButton('Pryv.Access.popupLogin(); return false;', strs.msg);
+
+};
+
+Access.uiConfirmLogout = function () {
+  var strs = {
+    'en': { 'logout': 'Logout ?'},
+    'fr': { 'logout': 'Se déconnecter?'}
+  }[this.settings.languageCode];
+
+  if (confirm(strs.logout)) {
+    Access.logout();
+  }
+};
+
+Access.uiInButton = function (username) {
+  return Access.uiButton('Pryv.Access.uiConfirmLogout(); return false;', username);
+};
+
+Access.uiRefusedButton = function (message) {
+  console.log('Pryv access [REFUSED]' + message);
+  var strs = {
+    'en': { 'msg': 'access refused'},
+    'fr': { 'msg': 'Accès refusé'}
+  }[this.settings.languageCode];
+
+  return Access.uiButton('Pryv.Access.retry(); return false;', strs.msg);
+
+};
+
+//--------------- end of UI ------------------//
+
+
+Access.updateButton = function (html) {
+  this.buttonHTML = html;
+  if (! this.settings.spanButtonID) { return; }
+
+  Utility.domReady(function () {
+    if (! Access.spanButton) {
+      var element = document.getElementById(Access.settings.spanButtonID);
+      if (typeof(element) === 'undefined' || element === null) {
+        throw new Error('access-SDK cannot find span ID: "' +
+          Access.settings.spanButtonID + '"');
+      } else {
+        Access.spanButton = element;
+      }
+    }
+    Access.spanButton.innerHTML = Access.buttonHTML;
+
+  });
+};
+
+Access.internalError = function (message, jsonData) {
+  Access.stateChanged({id: 'INTERNAL_ERROR', message: message, data: jsonData});
+};
+
+//STATE HUB
+Access.stateChanged  = function (data) {
+
+
+  if (data.id) { // error
+    this.settings.callbacks.error(data.id, data.message);
+    this.updateButton(this.uiErrorButton());
+    console.log('Error: ' + JSON.stringify(data));
+    // this.logout();   Why should I retry if it failed already once?
+  }
+
+  if (data.status === this.state.status) {
+    return;
+  }
+  if (data.status === 'LOADED') { // skip
+    return;
+  }
+  if (data.status === 'POPUPINIT') { // skip
+    return;
+  }
+
+  this.state = data;
+  if (this.state.status === 'NEED_SIGNIN') {
+    this.stateNeedSignin();
+  }
+  if (this.state.status === 'REFUSED') {
+    this.stateRefused();
+  }
+
+  if (this.state.status === 'ACCEPTED') {
+    this.stateAccepted();
+  }
+
+};
+
+//STATE 0 Init
+Access.stateInitialization = function () {
+  this.state = {status : 'initialization'};
+  this.updateButton(this.uiLoadingButton());
+  this.settings.callbacks.initialization();
+};
+
+//STATE 1 Need Signin
+Access.stateNeedSignin = function () {
+  this.updateButton(this.uiSigninButton());
+  this.settings.callbacks.needSignin(this.state.url, this.state.poll,
+    this.state.poll_rate_ms);
+};
+
+
+//STATE 2 User logged in and authorized
+Access.stateAccepted = function () {
+  if (this.cookieEnabled) {
+    Utility.docCookies.setItem('access_username', this.state.username, 3600);
+    Utility.docCookies.setItem('access_token', this.state.token, 3600);
+  }
+  this.updateButton(this.uiInButton(this.state.username));
+  this.settings.callbacks.accepted(this.state.username, this.state.token, this.state.lang);
+};
+
+//STATE 3 User refused
+Access.stateRefused = function () {
+  this.updateButton(this.uiRefusedButton(this.state.message));
+  this.settings.callbacks.refused('refused:' + this.state.message);
+};
+
+
+/**
+ * clear all references
+ */
+Access.logout = function () {
+  this.ignoreStateFromURL = true;
+  if (this.cookieEnabled) {
+    Utility.docCookies.removeItem('access_username');
+    Utility.docCookies.removeItem('access_token');
+  }
+  this.state = null;
+  this.settings.callbacks.accepted(false, false, false);
+  this.setup(this.settings);
+};
+
+/**
+ * clear references and try again
+ */
+Access.retry = Access.logout;
+
+
+Access.setup = function (settings) {
+  this.state = null;
+  //--- check the browser capabilities
+
+
+  // cookies
+  this.cookieEnabled = (navigator.cookieEnabled) ? true : false;
+  if (typeof navigator.cookieEnabled === 'undefined' && !this.cookieEnabled) {  //if not IE4+ NS6+
+    document.cookie = 'testcookie';
+    this.cookieEnabled = (document.cookie.indexOf('testcookie') !== -1) ? true : false;
+  }
+
+  //TODO check settings.. 
+
+  settings.languageCode =
+    Utility.getPreferredLanguage(this.uiSupportedLanguages, settings.languageCode);
+
+  //-- returnURL
+  if (settings.returnURL) {
+    // check the trailer
+    var trailer = settings.returnURL.charAt(settings.returnURL.length - 1);
+    if ('#&?'.indexOf(trailer) < 0) {
+      throw new Error('Pryv access: Last character of --returnURL setting-- is not ' +
+        '"?", "&" or "#": ' + settings.returnURL);
+    }
+
+    // set self as return url?
+    var returnself = (settings.returnURL.indexOf('self') === 0);
+    if (settings.returnURL.indexOf('auto') === 0) {
+      returnself = Utility.browserIsMobileOrTablet();
+      if (!returnself) { settings.returnURL = false; }
+    }
+
+    if (returnself) {
+      var myParams = settings.returnURL.substring(4);
+      // eventually clean-up current url from previous pryv returnURL
+      settings.returnURL = this._cleanStatusFromURL() + myParams;
+    }
+
+    if (settings.returnURL) {
+      if (settings.returnURL.indexOf('http') < 0) {
+        throw new Error('Pryv access: --returnURL setting-- does not start with http: ' +
+          settings.returnURL);
+      }
+    }
+  }
+
+  //  spanButtonID is checked only when possible  
+  this.settings = settings;
+
+  var params = {
+    requestingAppId : settings.requestingAppId,
+    requestedPermissions : settings.requestedPermissions,
+    languageCode : settings.languageCode,
+    returnURL : settings.returnURL
+  };
+
+  if (Access.config.localDevel) {
+    // return url will be forced to https://l.pryv.in:4443/Access.html
+    params.localDevel = Access.config.localDevel;
+  }
+
+  this.stateInitialization();
+
+  // look if we have a returning user (document.cookie)
+  var cookieUserName = this.cookieEnabled ? Utility.docCookies.getItem('access_username') : false;
+  var cookieToken = this.cookieEnabled ? Utility.docCookies.getItem('access_token') : false;
+
+  // look in the URL if we are returning from a login process
+  var stateFromURL =  this._getStatusFromURL();
+
+  if (stateFromURL && (! this.ignoreStateFromURL)) {
+    this.stateChanged(stateFromURL);
+  } else if (cookieToken && cookieUserName) {
+    this.stateChanged({status: 'ACCEPTED', username: cookieUserName, token: cookieToken});
+  } else { // launch process $
+
+    var pack = {
+      path :  '/access',
+      params : params,
+      success : function (data)  {
+        if (data.status && data.status !== 'ERROR') {
+          this.stateChanged(data);
+        } else {
+          // TODO call shouldn't failed
+          this.internalError('/access Invalid data: ', data);
+        }
+      }.bind(this),
+      error : function (jsonError) {
+        this.internalError('/access ajax call failed: ', jsonError);
+      }.bind(this)
+    };
+
+    System.request(_.extend(pack, Access.config.registerURL));
+
+
+  }
+  return true;
+};
+
+//logout the user if 
+
+//read the polling 
+Access.poll = function poll() {
+  if (this.pollingIsOn && this.state.poll_rate_ms) {
+    // remove eventually waiting poll.. 
+    if (this.pollingID) { clearTimeout(this.pollingID); }
+
+
+    var pack = {
+      path :  '/access/' + Access.state.key,
+      method : 'GET',
+      success : function (data)  {
+        console.log(data);
+        this.stateChanged(data);
+      }.bind(this),
+      error : function (jsonError) {
+        this.internalError('poll failed: ', jsonError);
+      }.bind(this)
+    };
+
+    System.request(_.extend(pack, Access.config.registerURL));
+
+
+    this.pollingID = setTimeout(Access.poll.bind(this), this.state.poll_rate_ms);
+  } else {
+    console.log('stopped polling: on=' + this.pollingIsOn + ' rate:' + this.state.poll_rate_ms);
+  }
+};
+
+
+//messaging between browser window and window.opener
+Access.popupCallBack = function (event) {
+  // Do not use 'this' here !
+  if (Access.settings.forcePolling) { return; }
+  if (event.source !== Access.window) {
+    console.log('popupCallBack event.source does not match Access.window');
+    return false;
+  }
+  console.log('from popup >>> ' + JSON.stringify(event.data));
+  Access.pollingIsOn = false; // if we can receive messages we stop polling
+  Access.stateChanged(event.data);
+};
+
+
+
+Access.popupLogin = function popupLogin() {
+  if ((! this.state) || (! this.state.url)) {
+    throw new Error('Pryv Sign-In Error: NO SETUP. Please call Access.setup() first.');
+  }
+
+  if (this.settings.returnURL) {
+    location.href = this.state.url;
+    return;
+  }
+
+  // start polling
+  setTimeout(Access.poll(), 1000);
+
+  var screenX = typeof window.screenX !== 'undefined' ? window.screenX : window.screenLeft,
+    screenY = typeof window.screenY !== 'undefined' ? window.screenY : window.screenTop,
+    outerWidth = typeof window.outerWidth !== 'undefined' ?
+      window.outerWidth : document.body.clientWidth,
+    outerHeight = typeof window.outerHeight !== 'undefined' ?
+      window.outerHeight : (document.body.clientHeight - 22),
+    width    = 270,
+    height   = 420,
+    left     = parseInt(screenX + ((outerWidth - width) / 2), 10),
+    top      = parseInt(screenY + ((outerHeight - height) / 2.5), 10),
+    features = (
+      'width=' + width +
+        ',height=' + height +
+        ',left=' + left +
+        ',top=' + top +
+        ',scrollbars=yes'
+      );
+
+
+  window.addEventListener('message', Access.popupCallBack, false);
+
+  this.window = window.open(this.state.url, 'prYv Sign-in', features);
+
+  if (! this.window) {
+    // TODO try to fall back on access
+    console.log('FAILED_TO_OPEN_WINDOW');
+  } else {
+    if (window.focus) {
+      this.window.focus();
+    }
+  }
+
+  return false;
+};
+
+
+
+
+//util to grab parameters from url query string
+Access._getStatusFromURL = function () {
+  var vars = {};
+  window.location.href.replace(/[?#&]+prYv([^=&]+)=([^&]*)/gi,
+    function (m, key, value) {
+      vars[key] = value;
+    });
+
+  //TODO check validity of status
+
+  return (vars.key) ? vars : false;
+};
+
+//util to grab parameters from url query string
+Access._cleanStatusFromURL = function () {
+  return window.location.href.replace(/[?#&]+prYv([^=&]+)=([^&]*)/gi, '');
+};
+
+//-------------------- UTILS ---------------------//
+
+module.exports = Access;
+})()
+},{"../system/System.js":5,"../utility/Utility.js":7,"underscore":19}],23:[function(require,module,exports){
+var _ = require('underscore');
+var SignalEmitter = require('./utility/SignalEmitter.js');
+var MSGs =  require('./Messages.js');
 var MyMsgs = MSGs.Monitor;
 
 
@@ -6880,16 +7902,17 @@ Monitor.prototype.start = function (done) {
   this.lastSynchedST = -1000000000000;
   this._initEvents();
 
-  //todo add a register monitor here ...
-  this.connection._monitors[this.id] = this;
-  this.connection._startMonitoring(done);
+  //TODO move this logic to ConnectionMonitors ??
+  this.connection.monitors._monitors[this.id] = this;
+  this.connection.monitors._startMonitoring(done);
 };
 
 
 Monitor.prototype.destroy = function () {
-  delete this.connection._monitors[this.id];
-  if (_.keys(this.connection._monitors).length === 0) {
-    this.connection._stopMonitoring();
+  //TODO move this logic to ConnectionMonitors ??
+  delete this.connection.monitors._monitors[this.id];
+  if (_.keys(this.connection.monitors._monitors).length === 0) {
+    this.connection.monitors._stopMonitoring();
   }
 };
 
@@ -7086,136 +8109,5 @@ module.exports = Monitor;
 
 
 
-},{"../Messages.js":8,"../utility/SignalEmitter.js":17,"underscore":16}],17:[function(require,module,exports){
-(function(){/**
- * (event)Emitter renamed to avoid confusion with prvy's events
- */
-
-
-var _ = require('underscore');
-
-var SignalEmitter = module.exports = function (messagesMap) {
-  SignalEmitter.extend(this, messagesMap);
-};
-
-
-SignalEmitter.extend = function (object, messagesMap, name) {
-  if (! name) {
-    throw new Error('"name" parameter must be set');
-  }
-  object._signalEmitterEvents = {};
-  _.each(_.values(messagesMap), function (value) {
-    object._signalEmitterEvents[value] = [];
-  });
-  _.extend(object, SignalEmitter.prototype);
-  object._signalEmitterName = name;
-};
-
-
-SignalEmitter.Messages = {
-  /** called when a batch of changes is expected, content: <batchId> unique**/
-  BATCH_BEGIN : 'beginBatch',
-  /** called when a batch of changes is done, content: <batchId> unique**/
-  BATCH_DONE : 'doneBatch',
-  /** if an eventListener return this string, it will be removed automatically **/
-  UNREGISTER_LISTENER : 'unregisterMePlease'
-};
-
-/**
- * Add an event listener
- * @param signal one of  MSGs.SIGNAL.*.*
- * @param callback function(content) .. content vary on each signal.
- * If the callback returns SignalEmitter.Messages.UNREGISTER_LISTENER it will be removed
- * @return the callback function for further reference
- */
-SignalEmitter.prototype.addEventListener = function (signal, callback) {
-  this._signalEmitterEvents[signal].push(callback);
-  return callback;
-};
-
-
-/**
- * remove the callback matching this signal
- */
-SignalEmitter.prototype.removeEventListener = function (signal, callback) {
-  for (var i = 0; i < this._signalEmitterEvents[signal].length; i++) {
-    if (this._signalEmitterEvents[signal][i] === callback) {
-      this._signalEmitterEvents[signal][i] = null;
-    }
-  }
-};
-
-
-/**
- * A changes occurred on the filter
- * @param signal
- * @param content
- * @param batch
- * @private
- */
-SignalEmitter.prototype._fireEvent = function (signal, content, batch) {
-  var batchId = batch ? batch.id : null;
-  if (! signal) { throw new Error(); }
-
-  var batchStr = batchId ? ' batch: ' + batchId + ', ' + batch.batchName : '';
-  console.log('FireEvent-' + this._signalEmitterName  + ' : ' + signal + batchStr);
-
-  _.each(this._signalEmitterEvents[signal], function (callback) {
-    if (callback !== null &&
-      SignalEmitter.Messages.UNREGISTER_LISTENER === callback(content, batchId, batch)) {
-      this.removeEventListener(signal, callback);
-    }
-  }, this);
-};
-
-
-SignalEmitter.batchSerial = 0;
-/**
- * start a batch process
- * @param eventual superBatch you can hook on. In this case it will call superBatch.waitForMe(..)
- * @return an object where you have to call stop when done
- */
-SignalEmitter.prototype.startBatch = function (batchName, orHookOnBatch) {
-  if (orHookOnBatch && orHookOnBatch.sender === this) { // test if this batch comes form me
-    return orHookOnBatch.waitForMeToFinish();
-  }
-  var batch = {
-    sender : this,
-    batchName : batchName || '',
-    id : this._signalEmitterName + SignalEmitter.batchSerial++,
-    filter : this,
-    waitFor : 1,
-    doneCallbacks : {},
-
-    waitForMeToFinish : function () {
-      batch.waitFor++;
-      return this;
-    },
-
-    /**
-     * listener are stored in key/map fashion, so addOnDoneListener('bob',..)
-     * may be called several time, callback 'bob', will be done just once
-     * @param key a unique key per callback
-     * @param callback
-     */
-    addOnDoneListener : function (key, callback) {
-      this.doneCallbacks[key] = callback;
-    },
-    done : function (name) {
-      this.waitFor--;
-      if (this.waitFor === 0) {
-        _.each(this.doneCallbacks, function (callback) { callback(); });
-        this.filter._fireEvent(SignalEmitter.Messages.BATCH_DONE, this.id, this);
-      }
-      if (this.waitFor < 0) {
-        console.error('This batch has been done() to much :' + name);
-      }
-    }
-  };
-  this._fireEvent(SignalEmitter.Messages.BATCH_BEGIN, batch.id, batch);
-  return batch;
-};
-
-})()
-},{"underscore":16}]},{},["Oe2HK+"])
+},{"./Messages.js":8,"./utility/SignalEmitter.js":20,"underscore":19}]},{},["Oe2HK+"])
 ;

@@ -10,7 +10,8 @@
  * @param {Number} pack.port : port to use
  * @param {String} pack.path : the request PATH
  * @param {Object} [pack.headers] : key / value map of headers
- * @param {String} [pack.payload] : the payload -- only with POST/PUT
+ * @param {Object} [pack.params] : the payload -- only with POST/PUT
+ * @param {String} [pack.parseResult = 'json'] : 'text' for no parsing
  * @param {Function} pack.success : function (result, requestInfos)
  * @param {Function} pack.error : function (error, requestInfos)
  * @param {String} [pack.info] : a text
@@ -19,8 +20,9 @@
  * @param {Boolean} [pack.ssl = true]
  */
 exports.request = function (pack)  {
-
   pack.info = pack.info || '';
+  console.log(pack);
+  var parseResult = pack.parseResult || 'json';
 
   if (!pack.hasOwnProperty('async')) {
     pack.async = true;
@@ -43,9 +45,9 @@ exports.request = function (pack)  {
   if (pack.method === 'POST' || pack.method === 'PUT') {// add json headers is POST or PUT
     pack.headers['Content-Type'] =
       pack.headers['Content-Type'] || 'application/json; charset=utf-8';
-  //}
+    //}
 
-  //if (pack.method === 'POST') {
+    //if (pack.method === 'POST') {
     if (pack.params) {
       pack.params = JSON.stringify(pack.params);
     } else {
@@ -69,7 +71,7 @@ exports.request = function (pack)  {
   // --------------- request
   var xhr = _initXHR(),
     httpMode = pack.ssl ? 'https://' : 'http://',
-    url = pack.url || (httpMode + pack.host + pack.path);
+    url = httpMode + pack.host + pack.path;
   xhr.open(pack.method, url, pack.async);
   xhr.withCredentials = true;
 
@@ -86,18 +88,22 @@ exports.request = function (pack)  {
     } else if (xhr.readyState === 4) {
       var result = null;
 
-      try { result = JSON.parse(xhr.responseText); } catch (e) {
-        return pack.error({
-          message: 'Data is not JSON',
-          detail: xhr.responseText + '\n' + detail,
-          id: 'RESULT_NOT_JSON',
-          xhr: xhr
-        });
+      if (parseResult === 'json') {
+        try { result = JSON.parse(xhr.responseText); } catch (e) {
+          return pack.error({
+            message: 'Data is not JSON',
+            detail: xhr.responseText + '\n' + detail,
+            id: 'RESULT_NOT_JSON',
+            xhr: xhr
+          });
+        }
       }
       var requestInfo = {
+        xhr : xhr,
         code : xhr.status,
         headers : xhr.getAllResponseHeaders()
       };
+
       pack.success(result, requestInfo);
     }
   };
@@ -109,15 +115,15 @@ exports.request = function (pack)  {
   }
   //--- prepare the params
   /*var sentParams = null;
-  if (pack.params)  {
-    try {
-      sentParams = JSON.stringify(pack.params);
-    } catch (e) {
-      return pack.error({message: 'Parameters are not JSON', detail: 'params: '+pack.params+'\n
-      '+detail, id: 'INTERNAL_ERROR', error: e}, pack.context);
-    }
-  }
-      */
+   if (pack.params)  {
+   try {
+   sentParams = JSON.stringify(pack.params);
+   } catch (e) {
+   return pack.error({message: 'Parameters are not JSON', detail: 'params: '+pack.params+'\n
+   '+detail, id: 'INTERNAL_ERROR', error: e}, pack.context);
+   }
+   }
+   */
   //--- sending the request
   try {
     xhr.send(pack.params);
@@ -126,7 +132,8 @@ exports.request = function (pack)  {
       message: 'pryvXHRCall unsent',
       detail: detail,
       id: 'INTERNAL_ERROR',
-      error: e
+      error: e,
+      xhr: xhr
     });
   }
   return xhr;
