@@ -25,7 +25,7 @@ function _getFile(fileName, callback) {
  * @link http://api.pryv.com/event-typez.html#about-json-file
  * @param {eventTypes~contentCallback} callback
  */
-eventTypes.hierachical = function (callback) {
+eventTypes.loadHierachical = function (callback) {
   _getFile('hierarchical.json', callback);
 };
 
@@ -33,7 +33,7 @@ eventTypes.hierachical = function (callback) {
  * @link http://api.pryv.com/event-typez.html#about-json-file
  * @param {eventTypes~contentCallback} callback
  */
-eventTypes.flat = function (callback) {
+eventTypes.loadFlat = function (callback) {
   _getFile('flat.json', callback);
 };
 
@@ -41,9 +41,25 @@ eventTypes.flat = function (callback) {
  * @link http://api.pryv.com/event-typez.html#about-json-file
  * @param {eventTypes~contentCallback} callback
  */
-eventTypes.extras = function (callback) {
-  _getFile('extras.json', callback);
+eventTypes.loadExtras = function (callback) {
+  var myCallback = function (error, result) {
+    this._extras = result;
+    callback(error, result);
+  };
+  _getFile('extras.json', myCallback.bind(this));
 };
+
+eventTypes.extras = function (eventType) {
+  if (!this._extras) {
+    throw new Error('Call eventTypes.loadExtras, before access extras');
+  }
+  var type = eventType.split('/');
+  if (this._extras.extras[type[0]] && this._extras.extras[type[0]].formats[type[1]]) {
+    return this._extras.extras[type[0]].formats[type[1]];
+  }
+  return null;
+};
+
 
 /**
  * Called with the result of the request
