@@ -21,7 +21,6 @@
  */
 exports.request = function (pack)  {
   pack.info = pack.info || '';
-  console.log(pack);
   var parseResult = pack.parseResult || 'json';
 
   if (!pack.hasOwnProperty('async')) {

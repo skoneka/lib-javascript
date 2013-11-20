@@ -5,7 +5,7 @@
 <title>Pryv Javascript Lib | Signin</title>
 
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
-<script src="../../dist/pryv.js"></script>
+<script src="../dist/pryv.js"></script>
 
 
 <style>
@@ -49,6 +49,8 @@
   <script>
     var Pryv = require('pryv');
 
+    Pryv.Access.config.sdkFullPath = '../dist';
+
     /**
      * process the form and request access
      */
@@ -56,7 +58,6 @@
       // ----------------------- //
       // -- Config only used for debugging
       Pryv.Access.config.registerURL = JSON.parse($('#registerURL option:selected').val());
-      console.log(Pryv.Access.config.registerURL);
       Pryv.Access.config.registerStagingURL = Pryv.Access.config.registerURL;
       if ($('#localDevel option:selected').val() == "false") {
         Pryv.Access.config.localDevel = false;
@@ -141,8 +142,8 @@
         </td>
         <td><select name='registerURL' id='registerURL' />
           <option value='{ "host": "reg.pryv.in", "ssl": true}'>https://reg.pryv.in</option>
-          <option>https://reglocal.pryv.in:8443</option>
-          <option>https://reg.pryv.io</option> </select></td>
+          <option value='{ "host": "reglocal.pryv.in", "ssl": true, "port": 8443}'>https://reglocal.pryv.in:8443</option>
+          <option value='{ "host": "reg.pryv.io", "ssl": true}'>https://reg.pryv.io</option> </select></td>
       </tr>
       <tr>
         

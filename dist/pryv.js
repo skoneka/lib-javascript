@@ -161,9 +161,6 @@ Profile.prototype.set = function (keyValuePairs, callback) {
 
 
 module.exports = Profile;
-},{}],11:[function(require,module,exports){
-
-module.exports = {};
 },{}],13:[function(require,module,exports){
 //file: system browser
 
@@ -188,7 +185,6 @@ module.exports = {};
  */
 exports.request = function (pack)  {
   pack.info = pack.info || '';
-  console.log(pack);
   var parseResult = pack.parseResult || 'json';
 
   if (!pack.hasOwnProperty('async')) {
@@ -338,6 +334,9 @@ var _initXHR = function () {
 
 },{}],14:[function(require,module,exports){
 
+},{}],11:[function(require,module,exports){
+
+module.exports = {};
 },{}],1:[function(require,module,exports){
 var _ = require('underscore'),
   System = require('./system/System.js'),
@@ -7408,9 +7407,9 @@ var Access = function ()  {
 _.extend(Access, {
   config: {
     registerURL: {ssl: true, host: 'reg.pryv.io'},
-    registerStagingURL:  {ssl: true, host: 'reg.pryv.in'},
+    registerStagingURL: {ssl: true, host: 'reg.pryv.in'},
     localDevel : false,
-    sdkFullPath: '/dist'
+    sdkFullPath: '../../dist'
   },
   state: null,  // actual state
   window: null,  // popup window reference (if any)
@@ -7493,7 +7492,7 @@ Access.uiLoadingButton = function () {
 
 Access.uiSigninButton = function () {
   var strs = {
-    'en': { 'msg': 'PrYv Sign-In' },
+    'en': { 'msg': 'Pryv Sign-In' },
     'fr': { 'msg': 'Connection à PrYv'}
   }[this.settings.languageCode];
 
@@ -7753,7 +7752,6 @@ Access.poll = function poll() {
       path :  '/access/' + Access.state.key,
       method : 'GET',
       success : function (data)  {
-        console.log(data);
         this.stateChanged(data);
       }.bind(this),
       error : function (jsonError) {

@@ -15,9 +15,9 @@ var Access = function ()  {
 _.extend(Access, {
   config: {
     registerURL: {ssl: true, host: 'reg.pryv.io'},
-    registerStagingURL:  {ssl: true, host: 'reg.pryv.in'},
+    registerStagingURL: {ssl: true, host: 'reg.pryv.in'},
     localDevel : false,
-    sdkFullPath: '/dist'
+    sdkFullPath: '../../dist'
   },
   state: null,  // actual state
   window: null,  // popup window reference (if any)
@@ -100,7 +100,7 @@ Access.uiLoadingButton = function () {
 
 Access.uiSigninButton = function () {
   var strs = {
-    'en': { 'msg': 'PrYv Sign-In' },
+    'en': { 'msg': 'Pryv Sign-In' },
     'fr': { 'msg': 'Connection à PrYv'}
   }[this.settings.languageCode];
 
@@ -360,7 +360,6 @@ Access.poll = function poll() {
       path :  '/access/' + Access.state.key,
       method : 'GET',
       success : function (data)  {
-        console.log(data);
         this.stateChanged(data);
       }.bind(this),
       error : function (jsonError) {
