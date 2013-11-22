@@ -21,6 +21,7 @@ function _getFile(fileName, callback) {
     path : PATH + fileName,
     port : 443,
     ssl : true,
+    withCredentials: false,
     success : function (result) { callback(null, result); },
     error : function (error) { callback(error, null); }
   });
