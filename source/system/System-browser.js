@@ -18,6 +18,7 @@
  * @param {Boolean} [pack.async = true]
  * @param {Number} [pack.expectedStatus] : http result code
  * @param {Boolean} [pack.ssl = true]
+ * @param {Boolean} [pack.withoutCredentials = false]
  */
 exports.request = function (pack)  {
   pack.info = pack.info || '';
@@ -72,7 +73,7 @@ exports.request = function (pack)  {
     httpMode = pack.ssl ? 'https://' : 'http://',
     url = httpMode + pack.host + pack.path;
   xhr.open(pack.method, url, pack.async);
-  xhr.withCredentials = true;
+  xhr.withCredentials = pack.withoutCredentials ? false : true;
 
 
   xhr.onreadystatechange = function () {
