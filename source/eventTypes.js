@@ -2,8 +2,11 @@
 var System = require('./system/System.js');
 var eventTypes = module.exports = { };
 
-var HOSTNAME = 'api.pryv.com';
-var PATH = '/event-types/';
+// staging cloudfront https://d1kp76srklnnah.cloudfront.net/dist/data-types/event-extras.json
+// staging direct https://sw.pryv.li/dist/data-types/event-extras.json
+
+var HOSTNAME = 'd1kp76srklnnah.cloudfront.net';
+var PATH = '/dist/data-types/';
 
 
 /**
@@ -16,6 +19,8 @@ function _getFile(fileName, callback) {
     method : 'GET',
     host : HOSTNAME,
     path : PATH + fileName,
+    port : 443,
+    ssl : true,
     success : function (result) { callback(null, result); },
     error : function (error) { callback(error, null); }
   });
