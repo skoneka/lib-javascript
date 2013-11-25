@@ -162,20 +162,13 @@ Filter.prototype._fireFilterChange = function (signal, content, batch) {
  * @param batch
  */
 Filter.prototype.set = function (keyValueMap, batch) {
-
-
-  var myBatch = false;
-  if (! batch && _.keys(keyValueMap).length > 1) {
-    batch = this.startBatch('set');
-    myBatch = true;
-  }
+  batch = this.startBatch('set', batch);
 
   _.each(keyValueMap, function (value, key) {
-
     this._setValue(key, value, batch);
   }.bind(this));
 
-  if (myBatch) { batch.done(); }
+  batch.done();
 };
 
 /**
