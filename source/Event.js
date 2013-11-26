@@ -26,8 +26,20 @@ Event.prototype.getData = function () {
   }.bind(this));
   return data;
 };
-
-
+/**
+ *
+ * @param {Connection~requestCallback} callback
+ */
+Event.prototype.update = function (callback) {
+  this.connection.events.update(this, callback);
+};
+/**
+ *
+ * @param {Connection~requestCallback} callback
+ */
+Event.prototype.trash = function (callback) {
+  this.connection.events.trash(this, callback);
+};
 Object.defineProperty(Event.prototype, 'timeLT', {
   get: function () {
     return this.connection.getLocalTime(this.time);
