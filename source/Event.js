@@ -37,6 +37,13 @@ Event.prototype.update = function (callback) {
  *
  * @param {Connection~requestCallback} callback
  */
+Event.prototype.addAttachment = function (file, callback) {
+  this.connection.events.addAttachment(this.id, file, callback);
+};
+/**
+ *
+ * @param {Connection~requestCallback} callback
+ */
 Event.prototype.trash = function (callback) {
   this.connection.events.trash(this, callback);
 };
@@ -63,6 +70,14 @@ Object.defineProperty(Event.prototype, 'stream', {
   set: function () { throw new Error('Event.stream property is read only'); }
 });
 
+Object.defineProperty(Event.prototype, 'url', {
+  get: function () {
+    var url = this.connection.settings.ssl ? 'https://' : 'http://';
+    url += this.connection.username + '.' + this.connection.settings.domain + '/events/' + this.id;
+    return url;
+  },
+  set: function () { throw new Error('Event.url property is read only'); }
+});
 
 Object.defineProperty(Event.prototype, 'attachmentsUrl', {
   get: function () {

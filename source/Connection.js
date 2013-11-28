@@ -169,16 +169,21 @@ Connection.prototype.monitor = function (filter) {
  * @param {Connection~requestCallback} callback
  * @param {Object} jsonData - data to POST or PUT
  */
-Connection.prototype.request = function (method, path, callback, jsonData) {
+Connection.prototype.request = function (method, path, callback, jsonData, isFile) {
   if (! callback || ! _.isFunction(callback)) {
     throw new Error('request\'s callback must be a function');
   }
   var headers =  { 'authorization': this.auth };
-
+  var withouCredentials = false;
   var payload = null;
-  if (jsonData) {
+  if (jsonData && !isFile) {
     payload = JSON.stringify(jsonData);
     headers['Content-Type'] = 'application/json; charset=utf-8';
+  }
+  if (isFile) {
+    payload = jsonData;
+    headers['X-Requested-With'] = 'XMLHttpRequest';
+    withouCredentials = false;
   }
 
   var request = System.request({
@@ -191,7 +196,8 @@ Connection.prototype.request = function (method, path, callback, jsonData) {
     payload : payload,
     //TODO: decide what callback convention to use (Node or jQuery)
     success : onSuccess.bind(this),
-    error : onError.bind(this)
+    error : onError.bind(this),
+    withoutCredentials: withouCredentials
   });
 
   /**

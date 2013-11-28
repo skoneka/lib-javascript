@@ -107,6 +107,10 @@ ConnectionEvents.prototype.create = function (newEventlike, callback) {
   return event;
 };
 
+ConnectionEvents.prototype.addAttachment = function (eventId, file, callback) {
+  var url = '/events/' + eventId;
+  this.connection.request('POST', url, callback, file, true);
+};
 /**
  * //TODO make it NewEventLike compatible
  * This is the prefered method to create events in batch
