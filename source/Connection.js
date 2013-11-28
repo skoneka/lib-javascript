@@ -174,7 +174,7 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
     throw new Error('request\'s callback must be a function');
   }
   var headers =  { 'authorization': this.auth };
-  var withouCredentials = false;
+  var withoutCredentials = false;
   var payload = null;
   if (jsonData && !isFile) {
     payload = JSON.stringify(jsonData);
@@ -182,8 +182,9 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
   }
   if (isFile) {
     payload = jsonData;
+    headers['Content-Type'] = 'multipart/form-data';
     headers['X-Requested-With'] = 'XMLHttpRequest';
-    withouCredentials = false;
+    withoutCredentials = true;
   }
 
   var request = System.request({
@@ -197,7 +198,7 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
     //TODO: decide what callback convention to use (Node or jQuery)
     success : onSuccess.bind(this),
     error : onError.bind(this),
-    withoutCredentials: withouCredentials
+    withoutCredentials: withoutCredentials
   });
 
   /**

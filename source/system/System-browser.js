@@ -43,9 +43,13 @@ exports.request = function (pack)  {
   pack.headers = pack.headers || {};
 
   if (pack.method === 'POST' || pack.method === 'PUT') {// add json headers is POST or PUT
-    pack.headers['Content-Type'] =
-      pack.headers['Content-Type'] || 'application/json; charset=utf-8';
-    //}
+
+    if (pack.headers['Content-Type'] === 'multipart/form-data') {
+      delete pack.headers['Content-Type'];
+    } else {
+      pack.headers['Content-Type'] =
+        pack.headers['Content-Type'] || 'application/json; charset=utf-8';
+    }
 
     //if (pack.method === 'POST') {
     if (pack.params) {
