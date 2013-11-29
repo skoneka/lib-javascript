@@ -94,7 +94,7 @@ ConnectionEvents.prototype.create = function (newEventlike, callback) {
     }
     event = newEventlike;
   } else {
-    event = new Event(this.connection, event);
+    event = new Event(this.connection, newEventlike);
   }
 
   var url = '/events';

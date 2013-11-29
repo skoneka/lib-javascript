@@ -1,6 +1,6 @@
 require=(function(e,t,n){function i(n,s){if(!t[n]){if(!e[n]){var o=typeof require=="function"&&require;if(!s&&o)return o(n,!0);if(r)return r(n,!0);throw new Error("Cannot find module '"+n+"'")}var u=t[n]={exports:{}};e[n][0].call(u.exports,function(t){var r=e[n][1][t];return i(r?r:t)},u,u.exports)}return t[n].exports}var r=typeof require=="function"&&require;for(var s=0;s<n.length;s++)i(n[s]);return i})({"pryv":[function(require,module,exports){
-module.exports=require('om+jJw');
-},{}],"om+jJw":[function(require,module,exports){
+module.exports=require('4ILxb1');
+},{}],"4ILxb1":[function(require,module,exports){
 /**
  * @class Pryv
  * @constructor
@@ -21,7 +21,7 @@ Pryv.prototype.eventTypes = require('./eventTypes.js');
 
 module.exports = new Pryv();
 
-},{"./Connection.js":1,"./Event.js":2,"./Filter.js":6,"./Messages.js":7,"./Stream.js":3,"./access/Access.js":5,"./eventTypes.js":8,"./system/System.js":4,"./utility/Utility.js":9}],7:[function(require,module,exports){
+},{"./Connection.js":1,"./Event.js":2,"./Filter.js":4,"./Messages.js":8,"./Stream.js":3,"./access/Access.js":6,"./eventTypes.js":9,"./system/System.js":5,"./utility/Utility.js":7}],8:[function(require,module,exports){
 var Messages = module.exports = { };
 
 Messages.Monitor = {
@@ -57,7 +57,7 @@ Messages.Filter = {
   DATE_CHANGE : 'dateChange'
 
 };
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 
 var System = require('./system/System.js');
 var eventTypes = module.exports = { };
@@ -91,8 +91,19 @@ function _getFile(fileName, callback) {
  * @link http://api.pryv.com/event-typez.html#about-json-file
  * @param {eventTypes~contentCallback} callback
  */
-eventTypes.loadHierachical = function (callback) {
-  _getFile('hierarchical.json', callback);
+eventTypes.loadHierarchical = function (callback) {
+  var myCallback = function (error, result) {
+    this._hierarchical = result;
+    callback(error, result);
+  };
+  _getFile('hierarchical.json', myCallback.bind(this));
+};
+
+eventTypes.hierarchical = function () {
+  if (!this._hierarchical) {
+    throw new Error('Call eventTypes.loadHierarchical, before accessing hierarchical');
+  }
+  return this._hierarchical;
 };
 
 /**
@@ -117,7 +128,7 @@ eventTypes.loadExtras = function (callback) {
 
 eventTypes.extras = function (eventType) {
   if (!this._extras) {
-    throw new Error('Call eventTypes.loadExtras, before access extras');
+    throw new Error('Call eventTypes.loadExtras, before accessing extras');
   }
   var type = eventType.split('/');
   if (this._extras.extras[type[0]] && this._extras.extras[type[0]].formats[type[1]]) {
@@ -134,13 +145,13 @@ eventTypes.extras = function (eventType) {
  * @param {Object} result - jSonEncoded result
  */
 
-},{"./system/System.js":4}],5:[function(require,module,exports){
+},{"./system/System.js":5}],6:[function(require,module,exports){
 var Utility = require('../utility/Utility.js');
 
 
 module.exports =  Utility.isBrowser() ?
     require('./Access-browser.js') : require('./Access-node.js');
-},{"../utility/Utility.js":9,"./Access-browser.js":10,"./Access-node.js":11}],12:[function(require,module,exports){
+},{"../utility/Utility.js":7,"./Access-browser.js":10,"./Access-node.js":11}],12:[function(require,module,exports){
 var apiPathProfile = '/profile/app';
 
 
@@ -229,9 +240,13 @@ exports.request = function (pack)  {
   pack.headers = pack.headers || {};
 
   if (pack.method === 'POST' || pack.method === 'PUT') {// add json headers is POST or PUT
-    pack.headers['Content-Type'] =
-      pack.headers['Content-Type'] || 'application/json; charset=utf-8';
-    //}
+
+    if (pack.headers['Content-Type'] === 'multipart/form-data') {
+      delete pack.headers['Content-Type'];
+    } else {
+      pack.headers['Content-Type'] =
+        pack.headers['Content-Type'] || 'application/json; charset=utf-8';
+    }
 
     //if (pack.method === 'POST') {
     if (pack.params) {
@@ -537,7 +552,7 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
     throw new Error('request\'s callback must be a function');
   }
   var headers =  { 'authorization': this.auth };
-  var withouCredentials = false;
+  var withoutCredentials = false;
   var payload = null;
   if (jsonData && !isFile) {
     payload = JSON.stringify(jsonData);
@@ -545,8 +560,9 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
   }
   if (isFile) {
     payload = jsonData;
+    headers['Content-Type'] = 'multipart/form-data';
     headers['X-Requested-With'] = 'XMLHttpRequest';
-    withouCredentials = false;
+    withoutCredentials = true;
   }
 
   var request = System.request({
@@ -560,7 +576,7 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
     //TODO: decide what callback convention to use (Node or jQuery)
     success : onSuccess.bind(this),
     error : onError.bind(this),
-    withoutCredentials: withouCredentials
+    withoutCredentials: withoutCredentials
   });
 
   /**
@@ -644,7 +660,7 @@ module.exports = Connection;
  * @param {Object} result - jSonEncoded result
  */
 
-},{"./Datastore.js":18,"./connection/ConnectionEvents.js":15,"./connection/ConnectionMonitors.js":17,"./connection/ConnectionProfile.js":12,"./connection/ConnectionStreams.js":16,"./system/System.js":4,"underscore":19}],2:[function(require,module,exports){
+},{"./Datastore.js":18,"./connection/ConnectionEvents.js":15,"./connection/ConnectionMonitors.js":17,"./connection/ConnectionProfile.js":12,"./connection/ConnectionStreams.js":16,"./system/System.js":5,"underscore":19}],2:[function(require,module,exports){
 
 var _ = require('underscore');
 
@@ -817,290 +833,7 @@ Object.defineProperty(Stream.prototype, 'ancestors', {
 
 
 
-},{"underscore":19}],20:[function(require,module,exports){
-(function(){/* global document, navigator */
-
-/* jshint -W101*/
-
-var System = require('../system/System.js');
-
-/**
- * Browser only utils
- */
-
-var UtilityBrowser = {};
-
-module.exports = UtilityBrowser;
-
-/* Regular expressions. */
-
-
-/**
- * Test if hostname is a *.rec.la or pryv.li if yes. it assumes that the client
- * runs on a staging version
- */
-UtilityBrowser.testIfStagingFromHostname = function () {
-  return UtilityBrowser.endsWith(document.location.hostname, 'pryv.li') ||
-    UtilityBrowser.endsWith(document.location.hostname, 'rec.la');
-};
-
-
-/**
- *  return true if browser is seen as a mobile or tablet
- *  list grabbed from https://github.com/codefuze/js-mobile-tablet-redirect/blob/master/mobile-redirect.js
- */
-UtilityBrowser.browserIsMobileOrTablet = function () {
-  return (/iphone|ipod|android|blackberry|opera mini|opera mobi|skyfire|maemo|windows phone|palm|iemobile|symbian|symbianos|fennec|ipad|android 3|sch-i800|playbook|tablet|kindle|gt-p1000|sgh-t849|shw-m180s|a510|a511|a100|dell streak|silk/i.test(navigator.userAgent.toLowerCase()));
-};
-
-/**
- * Method to get the preferred language, either from desiredLanguage or from the browser settings
- * @method getPreferredLanguage
- * @param {Array} supportedLanguages an array of supported languages encoded on 2characters
- * @param {String} desiredLanguage (optional) get this language if supported
- */
-UtilityBrowser.getPreferredLanguage = function (supportedLanguages, desiredLanguage) {
-  if (desiredLanguage) {
-    if (supportedLanguages.indexOf(desiredLanguage) >= 0) { return desiredLanguage; }
-  }
-  var lct = null;
-  if (navigator.language) {
-    lct = navigator.language.toLowerCase().substring(0, 2);
-  } else if (navigator.userLanguage) {
-    lct = navigator.userLanguage.toLowerCase().substring(0, 2);
-  } else if (navigator.userAgent.indexOf('[') !== -1) {
-    var start = navigator.userAgent.indexOf('[');
-    var end = navigator.userAgent.indexOf(']');
-    lct = navigator.userAgent.substring(start + 1, end).toLowerCase();
-  }
-  if (desiredLanguage) {
-    if (lct.indexOf(desiredLanguage) >= 0) { return lct; }
-  }
-
-  return supportedLanguages[0];
-};
-
-
-/**
- * //TODO check if it's robust
- * Method to check the browser supports CSS3.
- * @method supportCSS3
- * @return boolean
- */
-UtilityBrowser.supportCSS3 = function ()  {
-  var stub = document.createElement('div'),
-    testProperty = 'textShadow';
-
-  if (testProperty in stub.style) { return true; }
-
-  testProperty = testProperty.replace(/^[a-z]/, function (val) {
-    return val.toUpperCase();
-  });
-
-  return false;
-};
-
-/**
- * Method to load external files like javascript and stylesheet. this version
- * of method only support to file types - js|javascript and css|stylesheet.
- * @method loadExternalFiles
- * @param {String} string filename
- * @param {String} type -- 'js' or 'css'
- */
-UtilityBrowser.loadExternalFiles = function (filename, type)  {
-  var tag = null;
-
-  type = type.toLowerCase();
-
-  if (type === 'js' || type === 'javascript') {
-    tag = document.createElement('script');
-    tag.setAttribute('type', 'text/javascript');
-    tag.setAttribute('src', filename);
-  } else if (type === 'css' || type === 'stylesheet')  {
-    tag = document.createElement('link');
-    tag.setAttribute('rel', 'stylesheet');
-    tag.setAttribute('type', 'text/css');
-    tag.setAttribute('href', filename);
-  }
-
-  if (tag !== null || tag !== undefined) {
-    document.getElementsByTagName('head')[0].appendChild(tag);
-  }
-};
-
-/**
- * Get the content on an URL as a String ,
- * Mainly designed to load HTML ressources
- * @param {String} url
- * @param {Function} callBack  function(error,content,xhr)
- * @return {Object} xhr request
- */
-UtilityBrowser.getURLContent = function (url, callback) {
-
-  function onSuccess(result, xhr) {
-    callback(null, result, xhr);
-  }
-
-  function onError(error) {
-    callback(error, null, error.xhr);
-  }
-
-  return System.request({
-    method : 'GET',
-    url : url,
-    parseResult : 'text',
-    success: onSuccess,
-    error: onError
-  });
-};
-
-/**
- * Load the content of a URL into a div
- * !! No error will go to the console.
- */
-UtilityBrowser.loadURLContentInElementId = function (url, elementId, next) {
-  next = next || function () {};
-  var content = document.getElementById(elementId);
-  UtilityBrowser.getURLContent(url,
-    function (error, result) {
-      content.innerHTML = result;
-      next();
-      if (error) {
-        console.error(error);
-      }
-    }
-  );
-};
-
-
-
-
-/* jshint ignore:start */
-/*\
- |*|
- |*|  :: cookies.js ::
- |*|
- |*|  A complete cookies reader/writer framework with full unicode support.
- |*|
- |*|  https://developer.mozilla.org/en-US/docs/DOM/document.cookie
- |*|
- |*|  Syntaxes:
- |*|
- |*|  * docCookies.setItem(name, value[, end[, path[, domain[, secure]]]])
- |*|  * docCookies.getItem(name)
- |*|  * docCookies.removeItem(name[, path])
- |*|  * docCookies.hasItem(name)
- |*|  * docCookies.keys()
- |*|
- \*/
-UtilityBrowser.docCookies = {
-  getItem: function (sKey) {
-    if (!sKey || !this.hasItem(sKey)) { return null; }
-    return unescape(document.cookie.replace(new RegExp("(?:^|.*;\\s*)" +
-      escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=\\s*((?:[^;](?!;))*[^;]?).*"), "$1"));
-  },
-  setItem: function (sKey, sValue, vEnd, sPath, sDomain, bSecure) {
-    if (!sKey || /^(?:expires|max\-age|path|domain|secure)$/i.test(sKey)) { return; }
-    var sExpires = "";
-    if (vEnd) {
-      switch (vEnd.constructor) {
-        case Number:
-          sExpires = vEnd === Infinity ?
-            "; expires=Tue, 19 Jan 2038 03:14:07 GMT" : "; max-age=" + vEnd;
-          break;
-        case String:
-          sExpires = "; expires=" + vEnd;
-          break;
-        case Date:
-          sExpires = "; expires=" + vEnd.toGMTString();
-          break;
-      }
-    }
-    document.cookie = escape(sKey) + "=" + escape(sValue) + sExpires + (sDomain ? "; domain=" + sDomain : "") + (sPath ? "; path=" + sPath : "") + (bSecure ? "; secure" : "");
-  },
-  removeItem: function (sKey, sPath) {
-    if (!sKey || !this.hasItem(sKey)) { return; }
-    document.cookie = escape(sKey) + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT" + (sPath ? "; path=" + sPath : "");
-  },
-  hasItem: function (sKey) {
-    return (new RegExp("(?:^|;\\s*)" + escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=")).test(document.cookie);
-  },
-  keys: /* optional method: you can safely remove it! */ function () {
-    var aKeys = document.cookie.replace(/((?:^|\s*;)[^\=]+)(?=;|$)|^\s*|\s*(?:\=[^;]*)?(?:\1|$)/g, "").split(/\s*(?:\=[^;]*)?;\s*/);
-    for (var nIdx = 0; nIdx < aKeys.length; nIdx++) { aKeys[nIdx] = unescape(aKeys[nIdx]); }
-    return aKeys;
-  }
-};
-
-/* jshint ignore:end */
-
-
-//----------- DomReady ----------//
-
-
-/*!
- * domready (c) Dustin Diaz 2012 - License MIT
- */
-
-/* jshint ignore:start */
-UtilityBrowser.domReady = function (ready) {
-
-
-  var fns = [], fn, f = false,
-    doc = document,
-    testEl = doc.documentElement,
-    hack = testEl.doScroll,
-    domContentLoaded = 'DOMContentLoaded',
-    addEventListener = 'addEventListener',
-    onreadystatechange = 'onreadystatechange',
-    readyState = 'readyState',
-    loaded = /^loade|c/.test(doc[readyState]);
-
-  function flush(f) {
-    loaded = 1;
-    while (f = fns.shift()) { 
-      f()
-    }
-  }
-
-  doc[addEventListener] && doc[addEventListener](domContentLoaded, fn = function () {
-    doc.removeEventListener(domContentLoaded, fn, f);
-    flush();
-  }, f);
-
-
-  hack && doc.attachEvent(onreadystatechange, fn = function () {
-    if (/^c/.test(doc[readyState])) {
-      doc.detachEvent(onreadystatechange, fn);
-      flush();
-    }
-  });
-
-  return (ready = hack ?
-    function (fn) {
-      self != top ?
-        loaded ? fn() : fns.push(fn) :
-        function () {
-          console.log("on dom ready 2");
-          try {
-            testEl.doScroll('left')
-          } catch (e) {
-            return setTimeout(function() { ready(fn) }, 50)
-          }
-          fn()
-        }()
-    } :
-    function (fn) {
-      loaded ? fn() : fns.push(fn)
-    })
-}();
-
-/* jshint ignore:end */
-
-
-
-})()
-},{"../system/System.js":4}],6:[function(require,module,exports){
+},{"underscore":19}],4:[function(require,module,exports){
 var _ = require('underscore');
 
 var SignalEmitter = require('./utility/SignalEmitter.js');
@@ -1407,7 +1140,290 @@ module.exports = Filter;
  */
 
 
-},{"./Messages.js":7,"./utility/SignalEmitter.js":21,"underscore":19}],19:[function(require,module,exports){
+},{"./Messages.js":8,"./utility/SignalEmitter.js":20,"underscore":19}],21:[function(require,module,exports){
+(function(){/* global document, navigator */
+
+/* jshint -W101*/
+
+var System = require('../system/System.js');
+
+/**
+ * Browser only utils
+ */
+
+var UtilityBrowser = {};
+
+module.exports = UtilityBrowser;
+
+/* Regular expressions. */
+
+
+/**
+ * Test if hostname is a *.rec.la or pryv.li if yes. it assumes that the client
+ * runs on a staging version
+ */
+UtilityBrowser.testIfStagingFromHostname = function () {
+  return UtilityBrowser.endsWith(document.location.hostname, 'pryv.li') ||
+    UtilityBrowser.endsWith(document.location.hostname, 'rec.la');
+};
+
+
+/**
+ *  return true if browser is seen as a mobile or tablet
+ *  list grabbed from https://github.com/codefuze/js-mobile-tablet-redirect/blob/master/mobile-redirect.js
+ */
+UtilityBrowser.browserIsMobileOrTablet = function () {
+  return (/iphone|ipod|android|blackberry|opera mini|opera mobi|skyfire|maemo|windows phone|palm|iemobile|symbian|symbianos|fennec|ipad|android 3|sch-i800|playbook|tablet|kindle|gt-p1000|sgh-t849|shw-m180s|a510|a511|a100|dell streak|silk/i.test(navigator.userAgent.toLowerCase()));
+};
+
+/**
+ * Method to get the preferred language, either from desiredLanguage or from the browser settings
+ * @method getPreferredLanguage
+ * @param {Array} supportedLanguages an array of supported languages encoded on 2characters
+ * @param {String} desiredLanguage (optional) get this language if supported
+ */
+UtilityBrowser.getPreferredLanguage = function (supportedLanguages, desiredLanguage) {
+  if (desiredLanguage) {
+    if (supportedLanguages.indexOf(desiredLanguage) >= 0) { return desiredLanguage; }
+  }
+  var lct = null;
+  if (navigator.language) {
+    lct = navigator.language.toLowerCase().substring(0, 2);
+  } else if (navigator.userLanguage) {
+    lct = navigator.userLanguage.toLowerCase().substring(0, 2);
+  } else if (navigator.userAgent.indexOf('[') !== -1) {
+    var start = navigator.userAgent.indexOf('[');
+    var end = navigator.userAgent.indexOf(']');
+    lct = navigator.userAgent.substring(start + 1, end).toLowerCase();
+  }
+  if (desiredLanguage) {
+    if (lct.indexOf(desiredLanguage) >= 0) { return lct; }
+  }
+
+  return supportedLanguages[0];
+};
+
+
+/**
+ * //TODO check if it's robust
+ * Method to check the browser supports CSS3.
+ * @method supportCSS3
+ * @return boolean
+ */
+UtilityBrowser.supportCSS3 = function ()  {
+  var stub = document.createElement('div'),
+    testProperty = 'textShadow';
+
+  if (testProperty in stub.style) { return true; }
+
+  testProperty = testProperty.replace(/^[a-z]/, function (val) {
+    return val.toUpperCase();
+  });
+
+  return false;
+};
+
+/**
+ * Method to load external files like javascript and stylesheet. this version
+ * of method only support to file types - js|javascript and css|stylesheet.
+ * @method loadExternalFiles
+ * @param {String} string filename
+ * @param {String} type -- 'js' or 'css'
+ */
+UtilityBrowser.loadExternalFiles = function (filename, type)  {
+  var tag = null;
+
+  type = type.toLowerCase();
+
+  if (type === 'js' || type === 'javascript') {
+    tag = document.createElement('script');
+    tag.setAttribute('type', 'text/javascript');
+    tag.setAttribute('src', filename);
+  } else if (type === 'css' || type === 'stylesheet')  {
+    tag = document.createElement('link');
+    tag.setAttribute('rel', 'stylesheet');
+    tag.setAttribute('type', 'text/css');
+    tag.setAttribute('href', filename);
+  }
+
+  if (tag !== null || tag !== undefined) {
+    document.getElementsByTagName('head')[0].appendChild(tag);
+  }
+};
+
+/**
+ * Get the content on an URL as a String ,
+ * Mainly designed to load HTML ressources
+ * @param {String} url
+ * @param {Function} callBack  function(error,content,xhr)
+ * @return {Object} xhr request
+ */
+UtilityBrowser.getURLContent = function (url, callback) {
+
+  function onSuccess(result, xhr) {
+    callback(null, result, xhr);
+  }
+
+  function onError(error) {
+    callback(error, null, error.xhr);
+  }
+
+  return System.request({
+    method : 'GET',
+    url : url,
+    parseResult : 'text',
+    success: onSuccess,
+    error: onError
+  });
+};
+
+/**
+ * Load the content of a URL into a div
+ * !! No error will go to the console.
+ */
+UtilityBrowser.loadURLContentInElementId = function (url, elementId, next) {
+  next = next || function () {};
+  var content = document.getElementById(elementId);
+  UtilityBrowser.getURLContent(url,
+    function (error, result) {
+      content.innerHTML = result;
+      next();
+      if (error) {
+        console.error(error);
+      }
+    }
+  );
+};
+
+
+
+
+/* jshint ignore:start */
+/*\
+ |*|
+ |*|  :: cookies.js ::
+ |*|
+ |*|  A complete cookies reader/writer framework with full unicode support.
+ |*|
+ |*|  https://developer.mozilla.org/en-US/docs/DOM/document.cookie
+ |*|
+ |*|  Syntaxes:
+ |*|
+ |*|  * docCookies.setItem(name, value[, end[, path[, domain[, secure]]]])
+ |*|  * docCookies.getItem(name)
+ |*|  * docCookies.removeItem(name[, path])
+ |*|  * docCookies.hasItem(name)
+ |*|  * docCookies.keys()
+ |*|
+ \*/
+UtilityBrowser.docCookies = {
+  getItem: function (sKey) {
+    if (!sKey || !this.hasItem(sKey)) { return null; }
+    return unescape(document.cookie.replace(new RegExp("(?:^|.*;\\s*)" +
+      escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=\\s*((?:[^;](?!;))*[^;]?).*"), "$1"));
+  },
+  setItem: function (sKey, sValue, vEnd, sPath, sDomain, bSecure) {
+    if (!sKey || /^(?:expires|max\-age|path|domain|secure)$/i.test(sKey)) { return; }
+    var sExpires = "";
+    if (vEnd) {
+      switch (vEnd.constructor) {
+        case Number:
+          sExpires = vEnd === Infinity ?
+            "; expires=Tue, 19 Jan 2038 03:14:07 GMT" : "; max-age=" + vEnd;
+          break;
+        case String:
+          sExpires = "; expires=" + vEnd;
+          break;
+        case Date:
+          sExpires = "; expires=" + vEnd.toGMTString();
+          break;
+      }
+    }
+    document.cookie = escape(sKey) + "=" + escape(sValue) + sExpires + (sDomain ? "; domain=" + sDomain : "") + (sPath ? "; path=" + sPath : "") + (bSecure ? "; secure" : "");
+  },
+  removeItem: function (sKey, sPath) {
+    if (!sKey || !this.hasItem(sKey)) { return; }
+    document.cookie = escape(sKey) + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT" + (sPath ? "; path=" + sPath : "");
+  },
+  hasItem: function (sKey) {
+    return (new RegExp("(?:^|;\\s*)" + escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=")).test(document.cookie);
+  },
+  keys: /* optional method: you can safely remove it! */ function () {
+    var aKeys = document.cookie.replace(/((?:^|\s*;)[^\=]+)(?=;|$)|^\s*|\s*(?:\=[^;]*)?(?:\1|$)/g, "").split(/\s*(?:\=[^;]*)?;\s*/);
+    for (var nIdx = 0; nIdx < aKeys.length; nIdx++) { aKeys[nIdx] = unescape(aKeys[nIdx]); }
+    return aKeys;
+  }
+};
+
+/* jshint ignore:end */
+
+
+//----------- DomReady ----------//
+
+
+/*!
+ * domready (c) Dustin Diaz 2012 - License MIT
+ */
+
+/* jshint ignore:start */
+UtilityBrowser.domReady = function (ready) {
+
+
+  var fns = [], fn, f = false,
+    doc = document,
+    testEl = doc.documentElement,
+    hack = testEl.doScroll,
+    domContentLoaded = 'DOMContentLoaded',
+    addEventListener = 'addEventListener',
+    onreadystatechange = 'onreadystatechange',
+    readyState = 'readyState',
+    loaded = /^loade|c/.test(doc[readyState]);
+
+  function flush(f) {
+    loaded = 1;
+    while (f = fns.shift()) { 
+      f()
+    }
+  }
+
+  doc[addEventListener] && doc[addEventListener](domContentLoaded, fn = function () {
+    doc.removeEventListener(domContentLoaded, fn, f);
+    flush();
+  }, f);
+
+
+  hack && doc.attachEvent(onreadystatechange, fn = function () {
+    if (/^c/.test(doc[readyState])) {
+      doc.detachEvent(onreadystatechange, fn);
+      flush();
+    }
+  });
+
+  return (ready = hack ?
+    function (fn) {
+      self != top ?
+        loaded ? fn() : fns.push(fn) :
+        function () {
+          console.log("on dom ready 2");
+          try {
+            testEl.doScroll('left')
+          } catch (e) {
+            return setTimeout(function() { ready(fn) }, 50)
+          }
+          fn()
+        }()
+    } :
+    function (fn) {
+      loaded ? fn() : fns.push(fn)
+    })
+}();
+
+/* jshint ignore:end */
+
+
+
+})()
+},{"../system/System.js":5}],19:[function(require,module,exports){
 (function(){//     Underscore.js 1.5.2
 //     http://underscorejs.org
 //     (c) 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -2686,7 +2702,7 @@ module.exports = Filter;
 }).call(this);
 
 })()
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 //TODO: consider merging System into Utility
 
 var Utility = require('../utility/Utility.js');
@@ -2708,7 +2724,7 @@ System.ioConnect = function (settings) {
 };
 
 
-},{"../utility/Utility.js":9,"./System-browser.js":13,"./System-node.js":14,"socket.io-client":22}],9:[function(require,module,exports){
+},{"../utility/Utility.js":7,"./System-browser.js":13,"./System-node.js":14,"socket.io-client":22}],7:[function(require,module,exports){
 var _ = require('underscore');
 
 var isBrowser = function () {
@@ -2789,7 +2805,7 @@ Utility.endsWith = function (str, suffix) {
 };
 
 
-},{"./SignalEmitter.js":21,"./Utility-browser.js":20,"./Utility-node.js":14,"underscore":19}],18:[function(require,module,exports){
+},{"./SignalEmitter.js":20,"./Utility-browser.js":21,"./Utility-node.js":14,"underscore":19}],18:[function(require,module,exports){
 var _ = require('underscore');
 
 function Datastore(connection) {
@@ -6826,7 +6842,7 @@ ConnectionEvents.prototype.create = function (newEventlike, callback) {
     }
     event = newEventlike;
   } else {
-    event = new Event(this.connection, event);
+    event = new Event(this.connection, newEventlike);
   }
 
   var url = '/events';
@@ -6941,7 +6957,8 @@ module.exports = ConnectionEvents;
  * @param {Object} error - eventual error
  * @param {Event[]} events
  */
-},{"../Event":2,"../Filter":6,"../utility/Utility.js":9,"underscore":19}],16:[function(require,module,exports){
+
+},{"../Event":2,"../Filter":4,"../utility/Utility.js":7,"underscore":19}],16:[function(require,module,exports){
 var _ = require('underscore'),
     Utility = require('../utility/Utility.js'),
     Stream = require('../Stream.js');
@@ -7231,7 +7248,7 @@ module.exports = ConnectionStreams;
  */
 
 
-},{"../Stream.js":3,"../utility/Utility.js":9,"underscore":19}],17:[function(require,module,exports){
+},{"../Stream.js":3,"../utility/Utility.js":7,"underscore":19}],17:[function(require,module,exports){
 var _ = require('underscore'),
   System = require('../system/System.js'),
   Monitor = require('../Monitor.js');
@@ -7311,7 +7328,7 @@ module.exports = ConnectionMonitors;
 
 
 
-},{"../Monitor.js":23,"../system/System.js":4,"underscore":19}],21:[function(require,module,exports){
+},{"../Monitor.js":23,"../system/System.js":5,"underscore":19}],20:[function(require,module,exports){
 (function(){/**
  * (event)Emitter renamed to avoid confusion with prvy's events
  */
@@ -7910,7 +7927,7 @@ Access._cleanStatusFromURL = function () {
 
 module.exports = Access;
 })()
-},{"../system/System.js":4,"../utility/Utility.js":9,"underscore":19}],23:[function(require,module,exports){
+},{"../system/System.js":5,"../utility/Utility.js":7,"underscore":19}],23:[function(require,module,exports){
 var _ = require('underscore');
 var SignalEmitter = require('./utility/SignalEmitter.js');
 var MSGs =  require('./Messages.js');
@@ -8160,5 +8177,5 @@ module.exports = Monitor;
 
 
 
-},{"./Messages.js":7,"./utility/SignalEmitter.js":21,"underscore":19}]},{},["om+jJw"])
+},{"./Messages.js":8,"./utility/SignalEmitter.js":20,"underscore":19}]},{},["4ILxb1"])
 ;
