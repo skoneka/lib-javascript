@@ -8,9 +8,16 @@ describe('eventTypes', function () {
 
   describe('get files', function () {
     this.timeout(20000);
-
+    
     it('hierachical', function (done) {
-      eventTypes.loadHierachical(function (error, result) {
+      var catchedErr = null;
+      try {
+        eventTypes.hierarchical();
+      } catch (e) {
+        catchedErr = e;
+      }
+      should.exist(catchedErr);
+      eventTypes.loadHierarchical(function (error, result) {
         should.exists(result.classes.activity.formats.pryv);
         done();
       });

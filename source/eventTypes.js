@@ -31,8 +31,19 @@ function _getFile(fileName, callback) {
  * @link http://api.pryv.com/event-typez.html#about-json-file
  * @param {eventTypes~contentCallback} callback
  */
-eventTypes.loadHierachical = function (callback) {
-  _getFile('hierarchical.json', callback);
+eventTypes.loadHierarchical = function (callback) {
+  var myCallback = function (error, result) {
+    this._hierarchical = result;
+    callback(error, result);
+  };
+  _getFile('hierarchical.json', myCallback.bind(this));
+};
+
+eventTypes.hierarchical = function () {
+  if (!this._hierarchical) {
+    throw new Error('Call eventTypes.loadHierarchical, before accessing hierarchical');
+  }
+  return this._hierarchical;
 };
 
 /**
@@ -57,7 +68,7 @@ eventTypes.loadExtras = function (callback) {
 
 eventTypes.extras = function (eventType) {
   if (!this._extras) {
-    throw new Error('Call eventTypes.loadExtras, before access extras');
+    throw new Error('Call eventTypes.loadExtras, before accessing extras');
   }
   var type = eventType.split('/');
   if (this._extras.extras[type[0]] && this._extras.extras[type[0]].formats[type[1]]) {
