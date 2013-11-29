@@ -9,7 +9,7 @@ describe('eventTypes', function () {
   describe('get files', function () {
     this.timeout(20000);
     
-    it('hierachical', function (done) {
+    it('hierarchical', function (done) {
       var catchedErr = null;
       try {
         eventTypes.hierarchical();
