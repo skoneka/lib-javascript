@@ -9,7 +9,7 @@ var _ = require('underscore');
 /**
  * @class Access
  * */
-var Access = function ()  {
+var Access = function () {
 };
 
 _.extend(Access, {
@@ -17,7 +17,7 @@ _.extend(Access, {
     registerURL: {ssl: true, host: 'reg.pryv.io'},
     registerStagingURL: {ssl: true, host: 'reg.pryv.in'},
     localDevel : false,
-    sdkFullPath: '../../dist'
+    sdkFullPath: 'https://raw.github.com/pryv/lib-javascript/master/dist'
   },
   state: null,  // actual state
   window: null,  // popup window reference (if any)
