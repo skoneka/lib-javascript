@@ -109,7 +109,7 @@
 }
 
 .pryv-access-btn-signin > .pryv-access-btn:first-child span {
-  background-image: url(https://dlw0lofo79is5.cloudfront.net/lib-javascript/dist/media/btnSigninLogoOnly.png);
+  background-image: url(https://dlw0lofo79is5.cloudfront.net/lib-javascript/media/btnSigninLogoOnly.png);
   background-position: 0px 4px;
   background-repeat: no-repeat;
   text-indent: -90000px;
@@ -138,7 +138,7 @@
   font-size: 12px;
   line-height: 20px;
   color: #FFFFFF;
-  background-image: url(https://dlw0lofo79is5.cloudfront.net/lib-javascript/dist/images/btnSignIn.png);
+  background-image: url(https://dlw0lofo79is5.cloudfront.net/lib-javascript/images/btnSignIn.png);
   background-position: 0px 4px;
   background-repeat: no-repeat;
   text-transform: uppercase;
