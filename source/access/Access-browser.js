@@ -17,7 +17,7 @@ _.extend(Access, {
     registerURL: {ssl: true, host: 'reg.pryv.io'},
     registerStagingURL: {ssl: true, host: 'reg.pryv.in'},
     localDevel : false,
-    sdkFullPath: 'https://raw.github.com/pryv/lib-javascript/master/dist'
+    sdkFullPath: 'https://dlw0lofo79is5.cloudfront.net/lib-javascript/dist'
   },
   state: null,  // actual state
   window: null,  // popup window reference (if any)
