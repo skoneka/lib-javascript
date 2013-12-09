@@ -21,7 +21,7 @@ Pryv.prototype.eventTypes = require('./eventTypes.js');
 
 module.exports = new Pryv();
 
-},{"./Connection.js":1,"./Event.js":2,"./Filter.js":4,"./Messages.js":8,"./Stream.js":3,"./access/Access.js":5,"./eventTypes.js":9,"./system/System.js":6,"./utility/Utility.js":7}],8:[function(require,module,exports){
+},{"./Connection.js":1,"./Event.js":2,"./Filter.js":3,"./Messages.js":8,"./Stream.js":4,"./access/Access.js":5,"./eventTypes.js":7,"./system/System.js":6,"./utility/Utility.js":9}],8:[function(require,module,exports){
 var Messages = module.exports = { };
 
 Messages.Monitor = {
@@ -57,7 +57,7 @@ Messages.Filter = {
   DATE_CHANGE : 'dateChange'
 
 };
-},{}],9:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 
 var System = require('./system/System.js');
 var eventTypes = module.exports = { };
@@ -151,7 +151,7 @@ var Utility = require('../utility/Utility.js');
 
 module.exports =  Utility.isBrowser() ?
     require('./Access-browser.js') : require('./Access-node.js');
-},{"../utility/Utility.js":7,"./Access-browser.js":10,"./Access-node.js":11}],12:[function(require,module,exports){
+},{"../utility/Utility.js":9,"./Access-browser.js":10,"./Access-node.js":11}],12:[function(require,module,exports){
 var apiPathProfile = '/profile/app';
 
 
@@ -375,364 +375,7 @@ var _initXHR = function () {
 
 },{}],14:[function(require,module,exports){
 
-},{}],1:[function(require,module,exports){
-var _ = require('underscore'),
-  System = require('./system/System.js'),
-  ConnectionEvents = require('./connection/ConnectionEvents.js'),
-  ConnectionStreams = require('./connection/ConnectionStreams.js'),
-  ConnectionProfile = require('./connection/ConnectionProfile.js'),
-  ConnectionMonitors = require('./connection/ConnectionMonitors.js'),
-  Datastore = require('./Datastore.js');
-
-
-/**
- * @class Connection
- * Create an instance of Connection to Pryv API.
- * The connection will be opened on
- * http[s]://&lt;username>.&lt;domain>:&lt;port>/&lt;extraPath>?auth=&lt;auth>
- *
- * @example
- * // create a connection for the user 'perkikiki' with the token 'TTZycvBTiq'
- * var conn = new Pryv.Connection('perkikiki', 'TTZycvBTiq');
- *
- * @constructor
- * @this {Connection}
- * @param {string} username
- * @param {string} auth - the authorization token for this username
- * @param {Object} [settings]
- * @param {boolean} [settings.staging = false] use Pryv's staging servers
- * @param {number} [settings.port = 443]
- * @param {string} [settings.domain = 'pryv.io'] change the domain. use "settings.staging = true" to
- * activate 'pryv.in' staging domain.
- * @param {boolean} [settings.ssl = true] Use ssl (https) or no
- * @param {string} [settings.extraPath = ''] append to the connections. Must start with a '/'
- */
-function Connection(username, auth, settings) {
-  this._serialId = Connection._serialCounter++;
-
-  this.username = username;
-  this.auth = auth;
-
-  this.settings = _.extend({
-    port: 443,
-    ssl: true,
-    domain: 'pryv.io',
-    extraPath: '',
-    staging: false
-  }, settings);
-
-  if (settings && settings.staging) { this.settings.domain = 'pryv.in'; }
-
-  this.serverInfos = {
-    // nowLocalTime - nowServerTime
-    deltaTime: null,
-    apiVersion: null,
-    lastSeenLT: null
-  };
-
-  this._accessInfo = null;
-
-  this._streamSerialCounter = 0;
-  this._eventSerialCounter = 0;
-
-  /**
-   * Manipulate events for this connection
-   * @type {ConnectionEvents}
-   */
-  this.events = new ConnectionEvents(this);
-  /**
-   * Manipulate streams for this connection
-   * @type {ConnectionStreams}
-   */
-  this.streams = new ConnectionStreams(this);
-  /**
-  * Manipulate app profile for this connection
-  * @type {ConnectionProfile}
-  */
-  this.profile = new ConnectionProfile(this);
-  /**
-   * Manipulate this connection monitors
-   */
-  this.monitors = new ConnectionMonitors(this);
-
-  this.datastore = null;
-
-}
-
-Connection._serialCounter = 0;
-
-
-/**
- * In order to access some properties such as event.stream and get a {Stream} object, you
- * need to fetch the structure at least once. For now, there is now way to be sure that the
- * structure is up to date. Soon we will implement an optional parameter "keepItUpToDate", that
- * will do that for you.
- *
- * TODO implements "keepItUpToDate" logic.
- * @param {Streams~getCallback} callback - array of "root" Streams
- * @returns {Connection} this
- */
-Connection.prototype.fetchStructure = function (callback /*, keepItUpToDate*/) {
-  if (this.datastore) { return this.datastore.init(callback); }
-  this.datastore = new Datastore(this);
-  this.accessInfo(function (error) {
-    if (error) { return callback(error); }
-    this.datastore.init(callback);
-  }.bind(this));
-  return this;
-};
-
-/**
- * Get access information related this connection. This is also the best way to test
- * that the combination username/token is valid.
- * @param {Connection~accessInfoCallback} callback
- * @returns {Connection} this
- */
-Connection.prototype.accessInfo = function (callback) {
-  if (this._accessInfo) { return this._accessInfo; }
-  var url = '/access-info';
-  this.request('GET', url, function (error, result) {
-    if (! error) {
-      this._accessInfo = result;
-    }
-    return callback(error, result);
-  }.bind(this));
-  return this;
-};
-
-/**
- * Translate this timestamp (server dimension) to local system dimension
- * This could have been named to "translate2LocalTime"
- * @param {number} serverTime timestamp  (server dimension)
- * @returns {number} timestamp (local dimension) same time space as (new Date()).getTime();
- */
-Connection.prototype.getLocalTime = function (serverTime) {
-  return (serverTime + this.serverInfos.deltaTime) * 1000;
-};
-
-/**
- * Translate this timestamp (local system dimension) to server dimension
- * This could have been named to "translate2ServerTime"
- * @param {number} localTime timestamp  (local dimension) same time space as (new Date()).getTime();
- * @returns {number} timestamp (server dimension)
- */
-Connection.prototype.getServerTime = function (localTime) {
-  if (typeof localTime === 'undefined') { localTime = new Date().getTime(); }
-  return (localTime / 1000) - this.serverInfos.deltaTime;
-};
-
-
-// ------------- monitor this connection --------//
-
-/**
- * Start monitoring this Connection. Any change that occurs on the connection (add, delete, change)
- * will trigger an event. Changes to the filter will also trigger events if they have an impact on
- * the monitored data.
- * @param {Filter} filter - changes to this filter will be monitored.
- * @returns {Monitor}
- */
-Connection.prototype.monitor = function (filter) {
-  return this.monitors.create(filter);
-};
-
-// ------------- start / stop Monitoring is called by Monitor constructor / destructor -----//
-
-
-
-/**
- * Do a direct request to Pryv's API.
- * Even if exposed there must be an abstraction for every API call in this library.
- * @param {string} method - GET | POST | PUT | DELETE
- * @param {string} path - to resource, starting with '/' like '/events'
- * @param {Connection~requestCallback} callback
- * @param {Object} jsonData - data to POST or PUT
- */
-Connection.prototype.request = function (method, path, callback, jsonData, isFile) {
-  if (! callback || ! _.isFunction(callback)) {
-    throw new Error('request\'s callback must be a function');
-  }
-  var headers =  { 'authorization': this.auth };
-  var withoutCredentials = false;
-  var payload = null;
-  if (jsonData && !isFile) {
-    payload = JSON.stringify(jsonData);
-    headers['Content-Type'] = 'application/json; charset=utf-8';
-  }
-  if (isFile) {
-    payload = jsonData;
-    headers['Content-Type'] = 'multipart/form-data';
-    headers['X-Requested-With'] = 'XMLHttpRequest';
-    withoutCredentials = true;
-  }
-
-  var request = System.request({
-    method : method,
-    host : this.username + '.' + this.settings.domain,
-    port : this.settings.port,
-    ssl : this.settings.ssl,
-    path : this.settings.extraPath + path,
-    headers : headers,
-    payload : payload,
-    //TODO: decide what callback convention to use (Node or jQuery)
-    success : onSuccess.bind(this),
-    error : onError.bind(this),
-    withoutCredentials: withoutCredentials
-  });
-
-  /**
-   * @this {Connection}
-   */
-  function onSuccess(result, requestInfos) {
-    this.serverInfos.lastSeenLT = (new Date()).getTime();
-    this.serverInfos.apiVersion = requestInfos.headers['api-version'] ||
-      this.serverInfos.apiVersion;
-    if (_.has(requestInfos.headers, 'server-time')) {
-      this.serverInfos.deltaTime = (this.serverInfos.lastSeenLT / 1000) -
-        requestInfos.headers['server-time'];
-    }
-    callback(null, result);
-  }
-
-  function onError(error /*, requestInfo*/) {
-    callback(error, null);
-  }
-  return request;
-};
-
-
-
-/**
- * @property {string} Connection.id an unique id that contains all needed information to access
- * this Pryv data source. http[s]://<username>.<domain>:<port>[/extraPath]/?auth=<auth token>
- */
-Object.defineProperty(Connection.prototype, 'id', {
-  get: function () {
-    var id = this.settings.ssl ? 'https://' : 'http://';
-    id += this.username + '.' + this.settings.domain + ':' +
-      this.settings.port + this.settings.extraPath + '/?auth=' + this.auth;
-    return id;
-  },
-  set: function () { throw new Error('ConnectionNode.id property is read only'); }
-});
-
-/**
- * @property {string} Connection.displayId an id easily readable <username>:<access name>
- */
-Object.defineProperty(Connection.prototype, 'displayId', {
-  get: function () {
-    if (! this._accessInfo) {
-      throw new Error('connection must have been initialized to use displayId. ' +
-        ' You can call accessInfo() for this');
-    }
-    var id = this.username + ':' + this._accessInfo.name;
-    return id;
-  },
-  set: function () { throw new Error('Connection.displayId property is read only'); }
-});
-
-/**
- * @property {string} Connection.serialId a unique id for this instance of {Pryv}. This can be
- * also see as a **clientSideId**
- */
-Object.defineProperty(Connection.prototype, 'serialId', {
-  get: function () { return 'C' + this._serialId; }
-});
-
-module.exports = Connection;
-
-
-/**
- * Called with the desired Streams as result.
- * @callback Connection~accessInfoCallback
- * @param {Object} error - eventual error
- * @param {AccessInfo} result
- */
-
-/**
- * @typedef AccessInfo
- * @see http://api.pryv.com/reference.html#data-structure-access
- */
-
-/**
- * Called with the result of the request
- * @callback Connection~requestCallback
- * @param {Object} error - eventual error
- * @param {Object} result - jSonEncoded result
- */
-
-},{"./Datastore.js":16,"./connection/ConnectionEvents.js":18,"./connection/ConnectionMonitors.js":17,"./connection/ConnectionProfile.js":12,"./connection/ConnectionStreams.js":15,"./system/System.js":6,"underscore":19}],3:[function(require,module,exports){
-
-var _ = require('underscore');
-
-var Stream = module.exports = function (connection, data) {
-  this.connection = connection;
-
-  this.serialId = this.connection.serialId + '>S' + this.connection._streamSerialCounter++;
-  /** those are only used when no datastore **/
-  this._parent = null;
-  this._children = [];
-  _.extend(this, data);
-};
-
-/**
- * Set or erase clientData properties
- * @example // set x=25 and delete y
- * stream.setClientData({x : 25, y : null}, function(error) { console.log('done'); });
- *
- * @param {Object} keyValueMap
- * @param {Connection~requestCallback} callback
- */
-Stream.prototype.setClientData = function (keyValueMap, callback) {
-  return this.connection.streams.setClientData(this, keyValueMap, callback);
-};
-
-Object.defineProperty(Stream.prototype, 'parent', {
-  get: function () {
-
-    if (! this.parentId) { return null; }
-    if (! this.connection.datastore) { // we use this._parent and this._children
-      return this._parent;
-    }
-
-    return this.connection.datastore.getStreamById(this.parentId);
-  },
-  set: function () { throw new Error('Stream.children property is read only'); }
-});
-
-
-Object.defineProperty(Stream.prototype, 'children', {
-  get: function () {
-    if (! this.connection.datastore) { // we use this._parent and this._children
-      return this._children;
-    }
-    var children = [];
-    _.each(this.childrenIds, function (childrenId) {
-      var child = this.connection.datastore.getStreamById(childrenId);
-      children.push(child);
-    }.bind(this));
-    return children;
-  },
-  set: function () { throw new Error('Stream.children property is read only'); }
-});
-
-// TODO write test
-Object.defineProperty(Stream.prototype, 'ancestors', {
-  get: function () {
-    if (! this.parentId || this.parent === null) { return []; }
-    var result = this.parent.ancestors;
-    result.push(this.parent);
-    return result;
-  },
-  set: function () { throw new Error('Stream.ancestors property is read only'); }
-});
-
-
-
-
-
-
-
-},{"underscore":19}],2:[function(require,module,exports){
+},{}],2:[function(require,module,exports){
 
 var _ = require('underscore');
 
@@ -840,290 +483,7 @@ Object.defineProperty(Event.prototype, 'attachmentsUrl', {
  * @property {number} [time]
  */
 
-},{"underscore":19}],20:[function(require,module,exports){
-(function(){/* global document, navigator */
-
-/* jshint -W101*/
-
-var System = require('../system/System.js');
-
-/**
- * Browser only utils
- */
-
-var UtilityBrowser = {};
-
-module.exports = UtilityBrowser;
-
-/* Regular expressions. */
-
-
-/**
- * Test if hostname is a *.rec.la or pryv.li if yes. it assumes that the client
- * runs on a staging version
- */
-UtilityBrowser.testIfStagingFromHostname = function () {
-  return UtilityBrowser.endsWith(document.location.hostname, 'pryv.li') ||
-    UtilityBrowser.endsWith(document.location.hostname, 'rec.la');
-};
-
-
-/**
- *  return true if browser is seen as a mobile or tablet
- *  list grabbed from https://github.com/codefuze/js-mobile-tablet-redirect/blob/master/mobile-redirect.js
- */
-UtilityBrowser.browserIsMobileOrTablet = function () {
-  return (/iphone|ipod|android|blackberry|opera mini|opera mobi|skyfire|maemo|windows phone|palm|iemobile|symbian|symbianos|fennec|ipad|android 3|sch-i800|playbook|tablet|kindle|gt-p1000|sgh-t849|shw-m180s|a510|a511|a100|dell streak|silk/i.test(navigator.userAgent.toLowerCase()));
-};
-
-/**
- * Method to get the preferred language, either from desiredLanguage or from the browser settings
- * @method getPreferredLanguage
- * @param {Array} supportedLanguages an array of supported languages encoded on 2characters
- * @param {String} desiredLanguage (optional) get this language if supported
- */
-UtilityBrowser.getPreferredLanguage = function (supportedLanguages, desiredLanguage) {
-  if (desiredLanguage) {
-    if (supportedLanguages.indexOf(desiredLanguage) >= 0) { return desiredLanguage; }
-  }
-  var lct = null;
-  if (navigator.language) {
-    lct = navigator.language.toLowerCase().substring(0, 2);
-  } else if (navigator.userLanguage) {
-    lct = navigator.userLanguage.toLowerCase().substring(0, 2);
-  } else if (navigator.userAgent.indexOf('[') !== -1) {
-    var start = navigator.userAgent.indexOf('[');
-    var end = navigator.userAgent.indexOf(']');
-    lct = navigator.userAgent.substring(start + 1, end).toLowerCase();
-  }
-  if (desiredLanguage) {
-    if (lct.indexOf(desiredLanguage) >= 0) { return lct; }
-  }
-
-  return supportedLanguages[0];
-};
-
-
-/**
- * //TODO check if it's robust
- * Method to check the browser supports CSS3.
- * @method supportCSS3
- * @return boolean
- */
-UtilityBrowser.supportCSS3 = function ()  {
-  var stub = document.createElement('div'),
-    testProperty = 'textShadow';
-
-  if (testProperty in stub.style) { return true; }
-
-  testProperty = testProperty.replace(/^[a-z]/, function (val) {
-    return val.toUpperCase();
-  });
-
-  return false;
-};
-
-/**
- * Method to load external files like javascript and stylesheet. this version
- * of method only support to file types - js|javascript and css|stylesheet.
- * @method loadExternalFiles
- * @param {String} string filename
- * @param {String} type -- 'js' or 'css'
- */
-UtilityBrowser.loadExternalFiles = function (filename, type)  {
-  var tag = null;
-
-  type = type.toLowerCase();
-
-  if (type === 'js' || type === 'javascript') {
-    tag = document.createElement('script');
-    tag.setAttribute('type', 'text/javascript');
-    tag.setAttribute('src', filename);
-  } else if (type === 'css' || type === 'stylesheet')  {
-    tag = document.createElement('link');
-    tag.setAttribute('rel', 'stylesheet');
-    tag.setAttribute('type', 'text/css');
-    tag.setAttribute('href', filename);
-  }
-
-  if (tag !== null || tag !== undefined) {
-    document.getElementsByTagName('head')[0].appendChild(tag);
-  }
-};
-
-/**
- * Get the content on an URL as a String ,
- * Mainly designed to load HTML ressources
- * @param {String} url
- * @param {Function} callBack  function(error,content,xhr)
- * @return {Object} xhr request
- */
-UtilityBrowser.getURLContent = function (url, callback) {
-
-  function onSuccess(result, xhr) {
-    callback(null, result, xhr);
-  }
-
-  function onError(error) {
-    callback(error, null, error.xhr);
-  }
-
-  return System.request({
-    method : 'GET',
-    url : url,
-    parseResult : 'text',
-    success: onSuccess,
-    error: onError
-  });
-};
-
-/**
- * Load the content of a URL into a div
- * !! No error will go to the console.
- */
-UtilityBrowser.loadURLContentInElementId = function (url, elementId, next) {
-  next = next || function () {};
-  var content = document.getElementById(elementId);
-  UtilityBrowser.getURLContent(url,
-    function (error, result) {
-      content.innerHTML = result;
-      next();
-      if (error) {
-        console.error(error);
-      }
-    }
-  );
-};
-
-
-
-
-/* jshint ignore:start */
-/*\
- |*|
- |*|  :: cookies.js ::
- |*|
- |*|  A complete cookies reader/writer framework with full unicode support.
- |*|
- |*|  https://developer.mozilla.org/en-US/docs/DOM/document.cookie
- |*|
- |*|  Syntaxes:
- |*|
- |*|  * docCookies.setItem(name, value[, end[, path[, domain[, secure]]]])
- |*|  * docCookies.getItem(name)
- |*|  * docCookies.removeItem(name[, path])
- |*|  * docCookies.hasItem(name)
- |*|  * docCookies.keys()
- |*|
- \*/
-UtilityBrowser.docCookies = {
-  getItem: function (sKey) {
-    if (!sKey || !this.hasItem(sKey)) { return null; }
-    return unescape(document.cookie.replace(new RegExp("(?:^|.*;\\s*)" +
-      escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=\\s*((?:[^;](?!;))*[^;]?).*"), "$1"));
-  },
-  setItem: function (sKey, sValue, vEnd, sPath, sDomain, bSecure) {
-    if (!sKey || /^(?:expires|max\-age|path|domain|secure)$/i.test(sKey)) { return; }
-    var sExpires = "";
-    if (vEnd) {
-      switch (vEnd.constructor) {
-        case Number:
-          sExpires = vEnd === Infinity ?
-            "; expires=Tue, 19 Jan 2038 03:14:07 GMT" : "; max-age=" + vEnd;
-          break;
-        case String:
-          sExpires = "; expires=" + vEnd;
-          break;
-        case Date:
-          sExpires = "; expires=" + vEnd.toGMTString();
-          break;
-      }
-    }
-    document.cookie = escape(sKey) + "=" + escape(sValue) + sExpires + (sDomain ? "; domain=" + sDomain : "") + (sPath ? "; path=" + sPath : "") + (bSecure ? "; secure" : "");
-  },
-  removeItem: function (sKey, sPath) {
-    if (!sKey || !this.hasItem(sKey)) { return; }
-    document.cookie = escape(sKey) + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT" + (sPath ? "; path=" + sPath : "");
-  },
-  hasItem: function (sKey) {
-    return (new RegExp("(?:^|;\\s*)" + escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=")).test(document.cookie);
-  },
-  keys: /* optional method: you can safely remove it! */ function () {
-    var aKeys = document.cookie.replace(/((?:^|\s*;)[^\=]+)(?=;|$)|^\s*|\s*(?:\=[^;]*)?(?:\1|$)/g, "").split(/\s*(?:\=[^;]*)?;\s*/);
-    for (var nIdx = 0; nIdx < aKeys.length; nIdx++) { aKeys[nIdx] = unescape(aKeys[nIdx]); }
-    return aKeys;
-  }
-};
-
-/* jshint ignore:end */
-
-
-//----------- DomReady ----------//
-
-
-/*!
- * domready (c) Dustin Diaz 2012 - License MIT
- */
-
-/* jshint ignore:start */
-UtilityBrowser.domReady = function (ready) {
-
-
-  var fns = [], fn, f = false,
-    doc = document,
-    testEl = doc.documentElement,
-    hack = testEl.doScroll,
-    domContentLoaded = 'DOMContentLoaded',
-    addEventListener = 'addEventListener',
-    onreadystatechange = 'onreadystatechange',
-    readyState = 'readyState',
-    loaded = /^loade|c/.test(doc[readyState]);
-
-  function flush(f) {
-    loaded = 1;
-    while (f = fns.shift()) { 
-      f()
-    }
-  }
-
-  doc[addEventListener] && doc[addEventListener](domContentLoaded, fn = function () {
-    doc.removeEventListener(domContentLoaded, fn, f);
-    flush();
-  }, f);
-
-
-  hack && doc.attachEvent(onreadystatechange, fn = function () {
-    if (/^c/.test(doc[readyState])) {
-      doc.detachEvent(onreadystatechange, fn);
-      flush();
-    }
-  });
-
-  return (ready = hack ?
-    function (fn) {
-      self != top ?
-        loaded ? fn() : fns.push(fn) :
-        function () {
-          console.log("on dom ready 2");
-          try {
-            testEl.doScroll('left')
-          } catch (e) {
-            return setTimeout(function() { ready(fn) }, 50)
-          }
-          fn()
-        }()
-    } :
-    function (fn) {
-      loaded ? fn() : fns.push(fn)
-    })
-}();
-
-/* jshint ignore:end */
-
-
-
-})()
-},{"../system/System.js":6}],4:[function(require,module,exports){
+},{"underscore":15}],3:[function(require,module,exports){
 var _ = require('underscore');
 
 var SignalEmitter = require('./utility/SignalEmitter.js');
@@ -1430,7 +790,647 @@ module.exports = Filter;
  */
 
 
-},{"./Messages.js":8,"./utility/SignalEmitter.js":21,"underscore":19}],19:[function(require,module,exports){
+},{"./Messages.js":8,"./utility/SignalEmitter.js":16,"underscore":15}],1:[function(require,module,exports){
+var _ = require('underscore'),
+  System = require('./system/System.js'),
+  ConnectionEvents = require('./connection/ConnectionEvents.js'),
+  ConnectionStreams = require('./connection/ConnectionStreams.js'),
+  ConnectionProfile = require('./connection/ConnectionProfile.js'),
+  ConnectionMonitors = require('./connection/ConnectionMonitors.js'),
+  Datastore = require('./Datastore.js');
+
+
+/**
+ * @class Connection
+ * Create an instance of Connection to Pryv API.
+ * The connection will be opened on
+ * http[s]://&lt;username>.&lt;domain>:&lt;port>/&lt;extraPath>?auth=&lt;auth>
+ *
+ * @example
+ * // create a connection for the user 'perkikiki' with the token 'TTZycvBTiq'
+ * var conn = new Pryv.Connection('perkikiki', 'TTZycvBTiq');
+ *
+ * @constructor
+ * @this {Connection}
+ * @param {string} username
+ * @param {string} auth - the authorization token for this username
+ * @param {Object} [settings]
+ * @param {boolean} [settings.staging = false] use Pryv's staging servers
+ * @param {number} [settings.port = 443]
+ * @param {string} [settings.domain = 'pryv.io'] change the domain. use "settings.staging = true" to
+ * activate 'pryv.in' staging domain.
+ * @param {boolean} [settings.ssl = true] Use ssl (https) or no
+ * @param {string} [settings.extraPath = ''] append to the connections. Must start with a '/'
+ */
+function Connection(username, auth, settings) {
+  this._serialId = Connection._serialCounter++;
+
+  this.username = username;
+  this.auth = auth;
+
+  this.settings = _.extend({
+    port: 443,
+    ssl: true,
+    domain: 'pryv.io',
+    extraPath: '',
+    staging: false
+  }, settings);
+
+  if (settings && settings.staging) { this.settings.domain = 'pryv.in'; }
+
+  this.serverInfos = {
+    // nowLocalTime - nowServerTime
+    deltaTime: null,
+    apiVersion: null,
+    lastSeenLT: null
+  };
+
+  this._accessInfo = null;
+
+  this._streamSerialCounter = 0;
+  this._eventSerialCounter = 0;
+
+  /**
+   * Manipulate events for this connection
+   * @type {ConnectionEvents}
+   */
+  this.events = new ConnectionEvents(this);
+  /**
+   * Manipulate streams for this connection
+   * @type {ConnectionStreams}
+   */
+  this.streams = new ConnectionStreams(this);
+  /**
+  * Manipulate app profile for this connection
+  * @type {ConnectionProfile}
+  */
+  this.profile = new ConnectionProfile(this);
+  /**
+   * Manipulate this connection monitors
+   */
+  this.monitors = new ConnectionMonitors(this);
+
+  this.datastore = null;
+
+}
+
+Connection._serialCounter = 0;
+
+
+/**
+ * In order to access some properties such as event.stream and get a {Stream} object, you
+ * need to fetch the structure at least once. For now, there is now way to be sure that the
+ * structure is up to date. Soon we will implement an optional parameter "keepItUpToDate", that
+ * will do that for you.
+ *
+ * TODO implements "keepItUpToDate" logic.
+ * @param {Streams~getCallback} callback - array of "root" Streams
+ * @returns {Connection} this
+ */
+Connection.prototype.fetchStructure = function (callback /*, keepItUpToDate*/) {
+  if (this.datastore) { return this.datastore.init(callback); }
+  this.datastore = new Datastore(this);
+  this.accessInfo(function (error) {
+    if (error) { return callback(error); }
+    this.datastore.init(callback);
+  }.bind(this));
+  return this;
+};
+
+/**
+ * Get access information related this connection. This is also the best way to test
+ * that the combination username/token is valid.
+ * @param {Connection~accessInfoCallback} callback
+ * @returns {Connection} this
+ */
+Connection.prototype.accessInfo = function (callback) {
+  if (this._accessInfo) { return this._accessInfo; }
+  var url = '/access-info';
+  this.request('GET', url, function (error, result) {
+    if (! error) {
+      this._accessInfo = result;
+    }
+    return callback(error, result);
+  }.bind(this));
+  return this;
+};
+
+/**
+ * Translate this timestamp (server dimension) to local system dimension
+ * This could have been named to "translate2LocalTime"
+ * @param {number} serverTime timestamp  (server dimension)
+ * @returns {number} timestamp (local dimension) same time space as (new Date()).getTime();
+ */
+Connection.prototype.getLocalTime = function (serverTime) {
+  return (serverTime + this.serverInfos.deltaTime) * 1000;
+};
+
+/**
+ * Translate this timestamp (local system dimension) to server dimension
+ * This could have been named to "translate2ServerTime"
+ * @param {number} localTime timestamp  (local dimension) same time space as (new Date()).getTime();
+ * @returns {number} timestamp (server dimension)
+ */
+Connection.prototype.getServerTime = function (localTime) {
+  if (typeof localTime === 'undefined') { localTime = new Date().getTime(); }
+  return (localTime / 1000) - this.serverInfos.deltaTime;
+};
+
+
+// ------------- monitor this connection --------//
+
+/**
+ * Start monitoring this Connection. Any change that occurs on the connection (add, delete, change)
+ * will trigger an event. Changes to the filter will also trigger events if they have an impact on
+ * the monitored data.
+ * @param {Filter} filter - changes to this filter will be monitored.
+ * @returns {Monitor}
+ */
+Connection.prototype.monitor = function (filter) {
+  return this.monitors.create(filter);
+};
+
+// ------------- start / stop Monitoring is called by Monitor constructor / destructor -----//
+
+
+
+/**
+ * Do a direct request to Pryv's API.
+ * Even if exposed there must be an abstraction for every API call in this library.
+ * @param {string} method - GET | POST | PUT | DELETE
+ * @param {string} path - to resource, starting with '/' like '/events'
+ * @param {Connection~requestCallback} callback
+ * @param {Object} jsonData - data to POST or PUT
+ */
+Connection.prototype.request = function (method, path, callback, jsonData, isFile) {
+  if (! callback || ! _.isFunction(callback)) {
+    throw new Error('request\'s callback must be a function');
+  }
+  var headers =  { 'authorization': this.auth };
+  var withoutCredentials = false;
+  var payload = null;
+  if (jsonData && !isFile) {
+    payload = JSON.stringify(jsonData);
+    headers['Content-Type'] = 'application/json; charset=utf-8';
+  }
+  if (isFile) {
+    payload = jsonData;
+    headers['Content-Type'] = 'multipart/form-data';
+    headers['X-Requested-With'] = 'XMLHttpRequest';
+    withoutCredentials = true;
+  }
+
+  var request = System.request({
+    method : method,
+    host : this.username + '.' + this.settings.domain,
+    port : this.settings.port,
+    ssl : this.settings.ssl,
+    path : this.settings.extraPath + path,
+    headers : headers,
+    payload : payload,
+    //TODO: decide what callback convention to use (Node or jQuery)
+    success : onSuccess.bind(this),
+    error : onError.bind(this),
+    withoutCredentials: withoutCredentials
+  });
+
+  /**
+   * @this {Connection}
+   */
+  function onSuccess(result, requestInfos) {
+    this.serverInfos.lastSeenLT = (new Date()).getTime();
+    this.serverInfos.apiVersion = requestInfos.headers['api-version'] ||
+      this.serverInfos.apiVersion;
+    if (_.has(requestInfos.headers, 'server-time')) {
+      this.serverInfos.deltaTime = (this.serverInfos.lastSeenLT / 1000) -
+        requestInfos.headers['server-time'];
+    }
+    callback(null, result);
+  }
+
+  function onError(error /*, requestInfo*/) {
+    callback(error, null);
+  }
+  return request;
+};
+
+
+
+/**
+ * @property {string} Connection.id an unique id that contains all needed information to access
+ * this Pryv data source. http[s]://<username>.<domain>:<port>[/extraPath]/?auth=<auth token>
+ */
+Object.defineProperty(Connection.prototype, 'id', {
+  get: function () {
+    var id = this.settings.ssl ? 'https://' : 'http://';
+    id += this.username + '.' + this.settings.domain + ':' +
+      this.settings.port + this.settings.extraPath + '/?auth=' + this.auth;
+    return id;
+  },
+  set: function () { throw new Error('ConnectionNode.id property is read only'); }
+});
+
+/**
+ * @property {string} Connection.displayId an id easily readable <username>:<access name>
+ */
+Object.defineProperty(Connection.prototype, 'displayId', {
+  get: function () {
+    if (! this._accessInfo) {
+      throw new Error('connection must have been initialized to use displayId. ' +
+        ' You can call accessInfo() for this');
+    }
+    var id = this.username + ':' + this._accessInfo.name;
+    return id;
+  },
+  set: function () { throw new Error('Connection.displayId property is read only'); }
+});
+
+/**
+ * @property {string} Connection.serialId a unique id for this instance of {Pryv}. This can be
+ * also see as a **clientSideId**
+ */
+Object.defineProperty(Connection.prototype, 'serialId', {
+  get: function () { return 'C' + this._serialId; }
+});
+
+module.exports = Connection;
+
+
+/**
+ * Called with the desired Streams as result.
+ * @callback Connection~accessInfoCallback
+ * @param {Object} error - eventual error
+ * @param {AccessInfo} result
+ */
+
+/**
+ * @typedef AccessInfo
+ * @see http://api.pryv.com/reference.html#data-structure-access
+ */
+
+/**
+ * Called with the result of the request
+ * @callback Connection~requestCallback
+ * @param {Object} error - eventual error
+ * @param {Object} result - jSonEncoded result
+ */
+
+},{"./Datastore.js":18,"./connection/ConnectionEvents.js":19,"./connection/ConnectionMonitors.js":17,"./connection/ConnectionProfile.js":12,"./connection/ConnectionStreams.js":20,"./system/System.js":6,"underscore":15}],4:[function(require,module,exports){
+
+var _ = require('underscore');
+
+var Stream = module.exports = function (connection, data) {
+  this.connection = connection;
+
+  this.serialId = this.connection.serialId + '>S' + this.connection._streamSerialCounter++;
+  /** those are only used when no datastore **/
+  this._parent = null;
+  this._children = [];
+  _.extend(this, data);
+};
+
+/**
+ * Set or erase clientData properties
+ * @example // set x=25 and delete y
+ * stream.setClientData({x : 25, y : null}, function(error) { console.log('done'); });
+ *
+ * @param {Object} keyValueMap
+ * @param {Connection~requestCallback} callback
+ */
+Stream.prototype.setClientData = function (keyValueMap, callback) {
+  return this.connection.streams.setClientData(this, keyValueMap, callback);
+};
+
+Object.defineProperty(Stream.prototype, 'parent', {
+  get: function () {
+
+    if (! this.parentId) { return null; }
+    if (! this.connection.datastore) { // we use this._parent and this._children
+      return this._parent;
+    }
+
+    return this.connection.datastore.getStreamById(this.parentId);
+  },
+  set: function () { throw new Error('Stream.children property is read only'); }
+});
+
+
+Object.defineProperty(Stream.prototype, 'children', {
+  get: function () {
+    if (! this.connection.datastore) { // we use this._parent and this._children
+      return this._children;
+    }
+    var children = [];
+    _.each(this.childrenIds, function (childrenId) {
+      var child = this.connection.datastore.getStreamById(childrenId);
+      children.push(child);
+    }.bind(this));
+    return children;
+  },
+  set: function () { throw new Error('Stream.children property is read only'); }
+});
+
+// TODO write test
+Object.defineProperty(Stream.prototype, 'ancestors', {
+  get: function () {
+    if (! this.parentId || this.parent === null) { return []; }
+    var result = this.parent.ancestors;
+    result.push(this.parent);
+    return result;
+  },
+  set: function () { throw new Error('Stream.ancestors property is read only'); }
+});
+
+
+
+
+
+
+
+},{"underscore":15}],21:[function(require,module,exports){
+(function(){/* global document, navigator */
+
+/* jshint -W101*/
+
+var System = require('../system/System.js');
+
+/**
+ * Browser only utils
+ */
+
+var UtilityBrowser = {};
+
+module.exports = UtilityBrowser;
+
+/* Regular expressions. */
+
+
+/**
+ * Test if hostname is a *.rec.la or pryv.li if yes. it assumes that the client
+ * runs on a staging version
+ */
+UtilityBrowser.testIfStagingFromHostname = function () {
+  return UtilityBrowser.endsWith(document.location.hostname, 'pryv.li') ||
+    UtilityBrowser.endsWith(document.location.hostname, 'rec.la');
+};
+
+
+/**
+ *  return true if browser is seen as a mobile or tablet
+ *  list grabbed from https://github.com/codefuze/js-mobile-tablet-redirect/blob/master/mobile-redirect.js
+ */
+UtilityBrowser.browserIsMobileOrTablet = function () {
+  return (/iphone|ipod|android|blackberry|opera mini|opera mobi|skyfire|maemo|windows phone|palm|iemobile|symbian|symbianos|fennec|ipad|android 3|sch-i800|playbook|tablet|kindle|gt-p1000|sgh-t849|shw-m180s|a510|a511|a100|dell streak|silk/i.test(navigator.userAgent.toLowerCase()));
+};
+
+/**
+ * Method to get the preferred language, either from desiredLanguage or from the browser settings
+ * @method getPreferredLanguage
+ * @param {Array} supportedLanguages an array of supported languages encoded on 2characters
+ * @param {String} desiredLanguage (optional) get this language if supported
+ */
+UtilityBrowser.getPreferredLanguage = function (supportedLanguages, desiredLanguage) {
+  if (desiredLanguage) {
+    if (supportedLanguages.indexOf(desiredLanguage) >= 0) { return desiredLanguage; }
+  }
+  var lct = null;
+  if (navigator.language) {
+    lct = navigator.language.toLowerCase().substring(0, 2);
+  } else if (navigator.userLanguage) {
+    lct = navigator.userLanguage.toLowerCase().substring(0, 2);
+  } else if (navigator.userAgent.indexOf('[') !== -1) {
+    var start = navigator.userAgent.indexOf('[');
+    var end = navigator.userAgent.indexOf(']');
+    lct = navigator.userAgent.substring(start + 1, end).toLowerCase();
+  }
+  if (desiredLanguage) {
+    if (lct.indexOf(desiredLanguage) >= 0) { return lct; }
+  }
+
+  return supportedLanguages[0];
+};
+
+
+/**
+ * //TODO check if it's robust
+ * Method to check the browser supports CSS3.
+ * @method supportCSS3
+ * @return boolean
+ */
+UtilityBrowser.supportCSS3 = function ()  {
+  var stub = document.createElement('div'),
+    testProperty = 'textShadow';
+
+  if (testProperty in stub.style) { return true; }
+
+  testProperty = testProperty.replace(/^[a-z]/, function (val) {
+    return val.toUpperCase();
+  });
+
+  return false;
+};
+
+/**
+ * Method to load external files like javascript and stylesheet. this version
+ * of method only support to file types - js|javascript and css|stylesheet.
+ * @method loadExternalFiles
+ * @param {String} string filename
+ * @param {String} type -- 'js' or 'css'
+ */
+UtilityBrowser.loadExternalFiles = function (filename, type)  {
+  var tag = null;
+
+  type = type.toLowerCase();
+
+  if (type === 'js' || type === 'javascript') {
+    tag = document.createElement('script');
+    tag.setAttribute('type', 'text/javascript');
+    tag.setAttribute('src', filename);
+  } else if (type === 'css' || type === 'stylesheet')  {
+    tag = document.createElement('link');
+    tag.setAttribute('rel', 'stylesheet');
+    tag.setAttribute('type', 'text/css');
+    tag.setAttribute('href', filename);
+  }
+
+  if (tag !== null || tag !== undefined) {
+    document.getElementsByTagName('head')[0].appendChild(tag);
+  }
+};
+
+/**
+ * Get the content on an URL as a String ,
+ * Mainly designed to load HTML ressources
+ * @param {String} url
+ * @param {Function} callBack  function(error,content,xhr)
+ * @return {Object} xhr request
+ */
+UtilityBrowser.getURLContent = function (url, callback) {
+
+  function onSuccess(result, xhr) {
+    callback(null, result, xhr);
+  }
+
+  function onError(error) {
+    callback(error, null, error.xhr);
+  }
+
+  return System.request({
+    method : 'GET',
+    url : url,
+    parseResult : 'text',
+    success: onSuccess,
+    error: onError
+  });
+};
+
+/**
+ * Load the content of a URL into a div
+ * !! No error will go to the console.
+ */
+UtilityBrowser.loadURLContentInElementId = function (url, elementId, next) {
+  next = next || function () {};
+  var content = document.getElementById(elementId);
+  UtilityBrowser.getURLContent(url,
+    function (error, result) {
+      content.innerHTML = result;
+      next();
+      if (error) {
+        console.error(error);
+      }
+    }
+  );
+};
+
+
+
+
+/* jshint ignore:start */
+/*\
+ |*|
+ |*|  :: cookies.js ::
+ |*|
+ |*|  A complete cookies reader/writer framework with full unicode support.
+ |*|
+ |*|  https://developer.mozilla.org/en-US/docs/DOM/document.cookie
+ |*|
+ |*|  Syntaxes:
+ |*|
+ |*|  * docCookies.setItem(name, value[, end[, path[, domain[, secure]]]])
+ |*|  * docCookies.getItem(name)
+ |*|  * docCookies.removeItem(name[, path])
+ |*|  * docCookies.hasItem(name)
+ |*|  * docCookies.keys()
+ |*|
+ \*/
+UtilityBrowser.docCookies = {
+  getItem: function (sKey) {
+    if (!sKey || !this.hasItem(sKey)) { return null; }
+    return unescape(document.cookie.replace(new RegExp("(?:^|.*;\\s*)" +
+      escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=\\s*((?:[^;](?!;))*[^;]?).*"), "$1"));
+  },
+  setItem: function (sKey, sValue, vEnd, sPath, sDomain, bSecure) {
+    if (!sKey || /^(?:expires|max\-age|path|domain|secure)$/i.test(sKey)) { return; }
+    var sExpires = "";
+    if (vEnd) {
+      switch (vEnd.constructor) {
+        case Number:
+          sExpires = vEnd === Infinity ?
+            "; expires=Tue, 19 Jan 2038 03:14:07 GMT" : "; max-age=" + vEnd;
+          break;
+        case String:
+          sExpires = "; expires=" + vEnd;
+          break;
+        case Date:
+          sExpires = "; expires=" + vEnd.toGMTString();
+          break;
+      }
+    }
+    document.cookie = escape(sKey) + "=" + escape(sValue) + sExpires + (sDomain ? "; domain=" + sDomain : "") + (sPath ? "; path=" + sPath : "") + (bSecure ? "; secure" : "");
+  },
+  removeItem: function (sKey, sPath) {
+    if (!sKey || !this.hasItem(sKey)) { return; }
+    document.cookie = escape(sKey) + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT" + (sPath ? "; path=" + sPath : "");
+  },
+  hasItem: function (sKey) {
+    return (new RegExp("(?:^|;\\s*)" + escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=")).test(document.cookie);
+  },
+  keys: /* optional method: you can safely remove it! */ function () {
+    var aKeys = document.cookie.replace(/((?:^|\s*;)[^\=]+)(?=;|$)|^\s*|\s*(?:\=[^;]*)?(?:\1|$)/g, "").split(/\s*(?:\=[^;]*)?;\s*/);
+    for (var nIdx = 0; nIdx < aKeys.length; nIdx++) { aKeys[nIdx] = unescape(aKeys[nIdx]); }
+    return aKeys;
+  }
+};
+
+/* jshint ignore:end */
+
+
+//----------- DomReady ----------//
+
+
+/*!
+ * domready (c) Dustin Diaz 2012 - License MIT
+ */
+
+/* jshint ignore:start */
+UtilityBrowser.domReady = function (ready) {
+
+
+  var fns = [], fn, f = false,
+    doc = document,
+    testEl = doc.documentElement,
+    hack = testEl.doScroll,
+    domContentLoaded = 'DOMContentLoaded',
+    addEventListener = 'addEventListener',
+    onreadystatechange = 'onreadystatechange',
+    readyState = 'readyState',
+    loaded = /^loade|c/.test(doc[readyState]);
+
+  function flush(f) {
+    loaded = 1;
+    while (f = fns.shift()) { 
+      f()
+    }
+  }
+
+  doc[addEventListener] && doc[addEventListener](domContentLoaded, fn = function () {
+    doc.removeEventListener(domContentLoaded, fn, f);
+    flush();
+  }, f);
+
+
+  hack && doc.attachEvent(onreadystatechange, fn = function () {
+    if (/^c/.test(doc[readyState])) {
+      doc.detachEvent(onreadystatechange, fn);
+      flush();
+    }
+  });
+
+  return (ready = hack ?
+    function (fn) {
+      self != top ?
+        loaded ? fn() : fns.push(fn) :
+        function () {
+          console.log("on dom ready 2");
+          try {
+            testEl.doScroll('left')
+          } catch (e) {
+            return setTimeout(function() { ready(fn) }, 50)
+          }
+          fn()
+        }()
+    } :
+    function (fn) {
+      loaded ? fn() : fns.push(fn)
+    })
+}();
+
+/* jshint ignore:end */
+
+
+
+})()
+},{"../system/System.js":6}],15:[function(require,module,exports){
 (function(){//     Underscore.js 1.5.2
 //     http://underscorejs.org
 //     (c) 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -2731,7 +2731,7 @@ System.ioConnect = function (settings) {
 };
 
 
-},{"../utility/Utility.js":7,"./System-browser.js":13,"./System-node.js":14,"socket.io-client":22}],7:[function(require,module,exports){
+},{"../utility/Utility.js":9,"./System-browser.js":13,"./System-node.js":14,"socket.io-client":22}],9:[function(require,module,exports){
 var _ = require('underscore');
 
 var isBrowser = function () {
@@ -2812,7 +2812,7 @@ Utility.endsWith = function (str, suffix) {
 };
 
 
-},{"./SignalEmitter.js":21,"./Utility-browser.js":20,"./Utility-node.js":14,"underscore":19}],16:[function(require,module,exports){
+},{"./SignalEmitter.js":16,"./Utility-browser.js":21,"./Utility-node.js":14,"underscore":15}],18:[function(require,module,exports){
 var _ = require('underscore');
 
 function Datastore(connection) {
@@ -2877,7 +2877,7 @@ Datastore.prototype.getStreamById = function (streamId, test) {
 module.exports = Datastore;
 
 
-},{"underscore":19}],22:[function(require,module,exports){
+},{"underscore":15}],22:[function(require,module,exports){
 (function(){/*! Socket.IO.js build:0.9.16, development. Copyright(c) 2011 LearnBoost <dev@learnboost.com> MIT Licensed */
 
 var io = ('undefined' === typeof module ? {} : module.exports);
@@ -6752,7 +6752,138 @@ if (typeof define === "function" && define.amd) {
 }
 })();
 })()
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
+(function(){/**
+ * (event)Emitter renamed to avoid confusion with prvy's events
+ */
+
+
+var _ = require('underscore');
+
+var SignalEmitter = module.exports = function (messagesMap) {
+  SignalEmitter.extend(this, messagesMap);
+};
+
+
+SignalEmitter.extend = function (object, messagesMap, name) {
+  if (! name) {
+    throw new Error('"name" parameter must be set');
+  }
+  object._signalEmitterEvents = {};
+  _.each(_.values(messagesMap), function (value) {
+    object._signalEmitterEvents[value] = [];
+  });
+  _.extend(object, SignalEmitter.prototype);
+  object._signalEmitterName = name;
+};
+
+
+SignalEmitter.Messages = {
+  /** called when a batch of changes is expected, content: <batchId> unique**/
+  BATCH_BEGIN : 'beginBatch',
+  /** called when a batch of changes is done, content: <batchId> unique**/
+  BATCH_DONE : 'doneBatch',
+  /** if an eventListener return this string, it will be removed automatically **/
+  UNREGISTER_LISTENER : 'unregisterMePlease'
+};
+
+/**
+ * Add an event listener
+ * @param signal one of  MSGs.SIGNAL.*.*
+ * @param callback function(content) .. content vary on each signal.
+ * If the callback returns SignalEmitter.Messages.UNREGISTER_LISTENER it will be removed
+ * @return the callback function for further reference
+ */
+SignalEmitter.prototype.addEventListener = function (signal, callback) {
+  this._signalEmitterEvents[signal].push(callback);
+  return callback;
+};
+
+
+/**
+ * remove the callback matching this signal
+ */
+SignalEmitter.prototype.removeEventListener = function (signal, callback) {
+  for (var i = 0; i < this._signalEmitterEvents[signal].length; i++) {
+    if (this._signalEmitterEvents[signal][i] === callback) {
+      this._signalEmitterEvents[signal][i] = null;
+    }
+  }
+};
+
+
+/**
+ * A changes occurred on the filter
+ * @param signal
+ * @param content
+ * @param batch
+ * @private
+ */
+SignalEmitter.prototype._fireEvent = function (signal, content, batch) {
+  var batchId = batch ? batch.id : null;
+  if (! signal) { throw new Error(); }
+
+  var batchStr = batchId ? ' batch: ' + batchId + ', ' + batch.batchName : '';
+  console.log('FireEvent-' + this._signalEmitterName  + ' : ' + signal + batchStr);
+
+  _.each(this._signalEmitterEvents[signal], function (callback) {
+    if (callback !== null &&
+      SignalEmitter.Messages.UNREGISTER_LISTENER === callback(content, batchId, batch)) {
+      this.removeEventListener(signal, callback);
+    }
+  }, this);
+};
+
+
+SignalEmitter.batchSerial = 0;
+/**
+ * start a batch process
+ * @param eventual superBatch you can hook on. In this case it will call superBatch.waitForMe(..)
+ * @return an object where you have to call stop when done
+ */
+SignalEmitter.prototype.startBatch = function (batchName, orHookOnBatch) {
+  if (orHookOnBatch && orHookOnBatch.sender === this) { // test if this batch comes form me
+    return orHookOnBatch.waitForMeToFinish();
+  }
+  var batch = {
+    sender : this,
+    batchName : batchName || '',
+    id : this._signalEmitterName + SignalEmitter.batchSerial++,
+    filter : this,
+    waitFor : 1,
+    doneCallbacks : {},
+
+    waitForMeToFinish : function () {
+      batch.waitFor++;
+      return this;
+    },
+
+    /**
+     * listener are stored in key/map fashion, so addOnDoneListener('bob',..)
+     * may be called several time, callback 'bob', will be done just once
+     * @param key a unique key per callback
+     * @param callback
+     */
+    addOnDoneListener : function (key, callback) {
+      this.doneCallbacks[key] = callback;
+    },
+    done : function (name) {
+      this.waitFor--;
+      if (this.waitFor === 0) {
+        _.each(this.doneCallbacks, function (callback) { callback(); });
+        this.filter._fireEvent(SignalEmitter.Messages.BATCH_DONE, this.id, this);
+      }
+      if (this.waitFor < 0) {
+        console.error('This batch has been done() to much :' + name);
+      }
+    }
+  };
+  this._fireEvent(SignalEmitter.Messages.BATCH_BEGIN, batch.id, batch);
+  return batch;
+};
+
+})()
+},{"underscore":15}],20:[function(require,module,exports){
 var _ = require('underscore'),
     Utility = require('../utility/Utility.js'),
     Stream = require('../Stream.js');
@@ -7042,7 +7173,87 @@ module.exports = ConnectionStreams;
  */
 
 
-},{"../Stream.js":3,"../utility/Utility.js":7,"underscore":19}],18:[function(require,module,exports){
+},{"../Stream.js":4,"../utility/Utility.js":9,"underscore":15}],17:[function(require,module,exports){
+var _ = require('underscore'),
+  System = require('../system/System.js'),
+  Monitor = require('../Monitor.js');
+
+/**
+ * @class ConnectionMonitors
+ * @private
+ *
+ * @param {Connection} connection
+ * @constructor
+ */
+function ConnectionMonitors(connection) {
+  this.connection = connection;
+  this._monitors = {};
+  this.ioSocket = null;
+}
+
+/**
+ * Start monitoring this Connection. Any change that occurs on the connection (add, delete, change)
+ * will trigger an event. Changes to the filter will also trigger events if they have an impact on
+ * the monitored data.
+ * @param {Filter} filter - changes to this filter will be monitored.
+ * @returns {Monitor}
+ */
+ConnectionMonitors.prototype.create = function (filter) {
+  return new Monitor(this.connection, filter);
+};
+
+
+
+/**
+ * TODO
+ * @private
+ */
+ConnectionMonitors.prototype._stopMonitoring = function (/*callback*/) {
+
+};
+
+/**
+ * Internal for Connection.Monitor
+ * Maybe moved in Monitor by the way
+ * @param callback
+ * @private
+ * @return {Object} XHR or Node http request
+ */
+ConnectionMonitors.prototype._startMonitoring = function (callback) {
+
+  if (this.ioSocket) { return callback(null/*, ioSocket*/); }
+
+  var settings = {
+    host : this.connection.username + '.' + this.connection.settings.domain,
+    port : this.connection.settings.port,
+    ssl : this.connection.settings.ssl,
+    path : this.connection.settings.extraPath + '/' + this.connection.username,
+    namespace : '/' + this.connection.username,
+    auth : this.connection.auth
+  };
+
+  this.ioSocket = System.ioConnect(settings);
+
+  this.ioSocket.on('connect', function () {
+    _.each(this._monitors, function (monitor) { monitor._onIoConnect(); });
+  }.bind(this));
+  this.ioSocket.on('error', function (error) {
+    _.each(this._monitors, function (monitor) { monitor._onIoError(error); });
+  }.bind(this));
+  this.ioSocket.on('eventsChanged', function () {
+    _.each(this._monitors, function (monitor) { monitor._onIoEventsChanged(); });
+  }.bind(this));
+  this.ioSocket.on('streamsChanged', function () {
+    _.each(this._monitors, function (monitor) { monitor._onIoStreamsChanged(); });
+  }.bind(this));
+  callback(null);
+};
+
+module.exports = ConnectionMonitors;
+
+
+
+},{"../Monitor.js":23,"../system/System.js":6,"underscore":15}],19:[function(require,module,exports){
 var Utility = require('../utility/Utility.js'),
   _ = require('underscore'),
   Filter = require('../Filter'),
@@ -7280,218 +7491,7 @@ module.exports = ConnectionEvents;
  * @param {Event[]} events
  */
 
-},{"../Event":2,"../Filter":4,"../utility/Utility.js":7,"underscore":19}],17:[function(require,module,exports){
-var _ = require('underscore'),
-  System = require('../system/System.js'),
-  Monitor = require('../Monitor.js');
-
-/**
- * @class ConnectionMonitors
- * @private
- *
- * @param {Connection} connection
- * @constructor
- */
-function ConnectionMonitors(connection) {
-  this.connection = connection;
-  this._monitors = {};
-  this.ioSocket = null;
-}
-
-/**
- * Start monitoring this Connection. Any change that occurs on the connection (add, delete, change)
- * will trigger an event. Changes to the filter will also trigger events if they have an impact on
- * the monitored data.
- * @param {Filter} filter - changes to this filter will be monitored.
- * @returns {Monitor}
- */
-ConnectionMonitors.prototype.create = function (filter) {
-  return new Monitor(this.connection, filter);
-};
-
-
-
-/**
- * TODO
- * @private
- */
-ConnectionMonitors.prototype._stopMonitoring = function (/*callback*/) {
-
-};
-
-/**
- * Internal for Connection.Monitor
- * Maybe moved in Monitor by the way
- * @param callback
- * @private
- * @return {Object} XHR or Node http request
- */
-ConnectionMonitors.prototype._startMonitoring = function (callback) {
-
-  if (this.ioSocket) { return callback(null/*, ioSocket*/); }
-
-  var settings = {
-    host : this.connection.username + '.' + this.connection.settings.domain,
-    port : this.connection.settings.port,
-    ssl : this.connection.settings.ssl,
-    path : this.connection.settings.extraPath + '/' + this.connection.username,
-    namespace : '/' + this.connection.username,
-    auth : this.connection.auth
-  };
-
-  this.ioSocket = System.ioConnect(settings);
-
-  this.ioSocket.on('connect', function () {
-    _.each(this._monitors, function (monitor) { monitor._onIoConnect(); });
-  }.bind(this));
-  this.ioSocket.on('error', function (error) {
-    _.each(this._monitors, function (monitor) { monitor._onIoError(error); });
-  }.bind(this));
-  this.ioSocket.on('eventsChanged', function () {
-    _.each(this._monitors, function (monitor) { monitor._onIoEventsChanged(); });
-  }.bind(this));
-  this.ioSocket.on('streamsChanged', function () {
-    _.each(this._monitors, function (monitor) { monitor._onIoStreamsChanged(); });
-  }.bind(this));
-  callback(null);
-};
-
-module.exports = ConnectionMonitors;
-
-
-
-},{"../Monitor.js":23,"../system/System.js":6,"underscore":19}],21:[function(require,module,exports){
-(function(){/**
- * (event)Emitter renamed to avoid confusion with prvy's events
- */
-
-
-var _ = require('underscore');
-
-var SignalEmitter = module.exports = function (messagesMap) {
-  SignalEmitter.extend(this, messagesMap);
-};
-
-
-SignalEmitter.extend = function (object, messagesMap, name) {
-  if (! name) {
-    throw new Error('"name" parameter must be set');
-  }
-  object._signalEmitterEvents = {};
-  _.each(_.values(messagesMap), function (value) {
-    object._signalEmitterEvents[value] = [];
-  });
-  _.extend(object, SignalEmitter.prototype);
-  object._signalEmitterName = name;
-};
-
-
-SignalEmitter.Messages = {
-  /** called when a batch of changes is expected, content: <batchId> unique**/
-  BATCH_BEGIN : 'beginBatch',
-  /** called when a batch of changes is done, content: <batchId> unique**/
-  BATCH_DONE : 'doneBatch',
-  /** if an eventListener return this string, it will be removed automatically **/
-  UNREGISTER_LISTENER : 'unregisterMePlease'
-};
-
-/**
- * Add an event listener
- * @param signal one of  MSGs.SIGNAL.*.*
- * @param callback function(content) .. content vary on each signal.
- * If the callback returns SignalEmitter.Messages.UNREGISTER_LISTENER it will be removed
- * @return the callback function for further reference
- */
-SignalEmitter.prototype.addEventListener = function (signal, callback) {
-  this._signalEmitterEvents[signal].push(callback);
-  return callback;
-};
-
-
-/**
- * remove the callback matching this signal
- */
-SignalEmitter.prototype.removeEventListener = function (signal, callback) {
-  for (var i = 0; i < this._signalEmitterEvents[signal].length; i++) {
-    if (this._signalEmitterEvents[signal][i] === callback) {
-      this._signalEmitterEvents[signal][i] = null;
-    }
-  }
-};
-
-
-/**
- * A changes occurred on the filter
- * @param signal
- * @param content
- * @param batch
- * @private
- */
-SignalEmitter.prototype._fireEvent = function (signal, content, batch) {
-  var batchId = batch ? batch.id : null;
-  if (! signal) { throw new Error(); }
-
-  var batchStr = batchId ? ' batch: ' + batchId + ', ' + batch.batchName : '';
-  console.log('FireEvent-' + this._signalEmitterName  + ' : ' + signal + batchStr);
-
-  _.each(this._signalEmitterEvents[signal], function (callback) {
-    if (callback !== null &&
-      SignalEmitter.Messages.UNREGISTER_LISTENER === callback(content, batchId, batch)) {
-      this.removeEventListener(signal, callback);
-    }
-  }, this);
-};
-
-
-SignalEmitter.batchSerial = 0;
-/**
- * start a batch process
- * @param eventual superBatch you can hook on. In this case it will call superBatch.waitForMe(..)
- * @return an object where you have to call stop when done
- */
-SignalEmitter.prototype.startBatch = function (batchName, orHookOnBatch) {
-  if (orHookOnBatch && orHookOnBatch.sender === this) { // test if this batch comes form me
-    return orHookOnBatch.waitForMeToFinish();
-  }
-  var batch = {
-    sender : this,
-    batchName : batchName || '',
-    id : this._signalEmitterName + SignalEmitter.batchSerial++,
-    filter : this,
-    waitFor : 1,
-    doneCallbacks : {},
-
-    waitForMeToFinish : function () {
-      batch.waitFor++;
-      return this;
-    },
-
-    /**
-     * listener are stored in key/map fashion, so addOnDoneListener('bob',..)
-     * may be called several time, callback 'bob', will be done just once
-     * @param key a unique key per callback
-     * @param callback
-     */
-    addOnDoneListener : function (key, callback) {
-      this.doneCallbacks[key] = callback;
-    },
-    done : function (name) {
-      this.waitFor--;
-      if (this.waitFor === 0) {
-        _.each(this.doneCallbacks, function (callback) { callback(); });
-        this.filter._fireEvent(SignalEmitter.Messages.BATCH_DONE, this.id, this);
-      }
-      if (this.waitFor < 0) {
-        console.error('This batch has been done() to much :' + name);
-      }
-    }
-  };
-  this._fireEvent(SignalEmitter.Messages.BATCH_BEGIN, batch.id, batch);
-  return batch;
-};
-
-})()
-},{"underscore":19}],10:[function(require,module,exports){
+},{"../Event":2,"../Filter":3,"../utility/Utility.js":9,"underscore":15}],10:[function(require,module,exports){
 (function(){/* global confirm, document, navigator, location, window */
 
 var Utility = require('../utility/Utility.js');
@@ -7517,6 +7517,7 @@ _.extend(Access, {
   window: null,  // popup window reference (if any)
   spanButton: null, // an element on the app web page that can be controlled
   buttonHTML: '',
+  onClick: {}, // functions called when button is clicked
   settings: null,
   pollingID: false,
   pollingIsOn: true, //may be turned off if we can communicate between windows
@@ -7560,13 +7561,14 @@ Access.uiSupportedLanguages = ['en', 'fr'];
 
 Access.uiButton = function (onClick, buttonText) {
   if (Utility.supportCSS3()) {
-    return '<div class="pryv-access-btn-signin" onclick="' + onClick + '">' +
+    return '<div id="pryv-access-btn" class="pryv-access-btn-signin" data-onclick-action="' +
+      onClick + '">' +
       '<a class="pryv-access-btn pryv-access-btn-pryv-access-color" href="#">' +
       '<span class="logoSignin">Y</span></a>' +
       '<a class="pryv-access-btn pryv-access-btn-pryv-access-color"  href="#"><span>' +
       buttonText + '</span></a></div>';
   } else   {
-    return '<a href="#" onclick="' + onClick +
+    return '<a href="#" id ="pryv-access-btn" data-onclick-action="' + onClick +
       '" class="pryv-access-btn-signinImage" ' +
       'src="' + this.config.sdkFullPath + '/media/btnSignIn.png" >' + buttonText + '</a>';
   }
@@ -7577,8 +7579,11 @@ Access.uiErrorButton = function () {
     'en': { 'msg': 'Error :(' },
     'fr': { 'msg': 'Erreur :('}
   }[this.settings.languageCode];
-
-  return Access.uiButton('Pryv.Access.logout(); return false;', strs.msg);
+  this.onClick.Error = function () {
+    Access.logout();
+    return false;
+  };
+  return Access.uiButton('Error', strs.msg);
 
 };
 
@@ -7587,8 +7592,10 @@ Access.uiLoadingButton = function () {
     'en': { 'msg': 'Loading ...' },
     'fr': { 'msg': 'Chargement ...'}
   }[this.settings.languageCode];
-
-  return Access.uiButton('return false;', strs.msg);
+  this.onClick.Loading = function () {
+    return false;
+  };
+  return Access.uiButton('Loading', strs.msg);
 
 };
 
@@ -7597,8 +7604,11 @@ Access.uiSigninButton = function () {
     'en': { 'msg': 'Pryv Sign-In' },
     'fr': { 'msg': 'Connection à PrYv'}
   }[this.settings.languageCode];
-
-  return Access.uiButton('Pryv.Access.popupLogin(); return false;', strs.msg);
+  this.onClick.Signin = function () {
+    Access.popupLogin();
+    return false;
+  };
+  return Access.uiButton('Signin', strs.msg);
 
 };
 
@@ -7614,7 +7624,11 @@ Access.uiConfirmLogout = function () {
 };
 
 Access.uiInButton = function (username) {
-  return Access.uiButton('Pryv.Access.uiConfirmLogout(); return false;', username);
+  this.onClick.In = function () {
+    Access.uiConfirmLogout();
+    return false;
+  };
+  return Access.uiButton('In', username);
 };
 
 Access.uiRefusedButton = function (message) {
@@ -7623,8 +7637,11 @@ Access.uiRefusedButton = function (message) {
     'en': { 'msg': 'access refused'},
     'fr': { 'msg': 'Accès refusé'}
   }[this.settings.languageCode];
-
-  return Access.uiButton('Pryv.Access.retry(); return false;', strs.msg);
+  this.onClick.Refused = function () {
+    Access.retry();
+    return false;
+  };
+  return Access.uiButton('Refused', strs.msg);
 
 };
 
@@ -7646,7 +7663,13 @@ Access.updateButton = function (html) {
       }
     }
     Access.spanButton.innerHTML = Access.buttonHTML;
-
+    Access.spanButton.onclick = function (e) {
+      e.preventDefault();
+      var element = document.getElementById('pryv-access-btn');
+      console.log('onClick', Access.spanButton,
+        element.getAttribute('data-onclick-action'));
+      Access.onClick[element.getAttribute('data-onclick-action')]();
+    };
   });
 };
 
@@ -7959,7 +7982,7 @@ Access._cleanStatusFromURL = function () {
 
 module.exports = Access;
 })()
-},{"../system/System.js":6,"../utility/Utility.js":7,"underscore":19}],23:[function(require,module,exports){
+},{"../system/System.js":6,"../utility/Utility.js":9,"underscore":15}],23:[function(require,module,exports){
 var _ = require('underscore');
 var SignalEmitter = require('./utility/SignalEmitter.js');
 var MSGs =  require('./Messages.js');
@@ -8209,5 +8232,5 @@ module.exports = Monitor;
 
 
 
-},{"./Messages.js":8,"./utility/SignalEmitter.js":21,"underscore":19}]},{},["om+jJw"])
+},{"./Messages.js":8,"./utility/SignalEmitter.js":16,"underscore":15}]},{},["om+jJw"])
 ;

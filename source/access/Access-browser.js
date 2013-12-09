@@ -23,6 +23,7 @@ _.extend(Access, {
   window: null,  // popup window reference (if any)
   spanButton: null, // an element on the app web page that can be controlled
   buttonHTML: '',
+  onClick: {}, // functions called when button is clicked
   settings: null,
   pollingID: false,
   pollingIsOn: true, //may be turned off if we can communicate between windows
@@ -66,13 +67,14 @@ Access.uiSupportedLanguages = ['en', 'fr'];
 
 Access.uiButton = function (onClick, buttonText) {
   if (Utility.supportCSS3()) {
-    return '<div class="pryv-access-btn-signin" onclick="' + onClick + '">' +
+    return '<div id="pryv-access-btn" class="pryv-access-btn-signin" data-onclick-action="' +
+      onClick + '">' +
       '<a class="pryv-access-btn pryv-access-btn-pryv-access-color" href="#">' +
       '<span class="logoSignin">Y</span></a>' +
       '<a class="pryv-access-btn pryv-access-btn-pryv-access-color"  href="#"><span>' +
       buttonText + '</span></a></div>';
   } else   {
-    return '<a href="#" onclick="' + onClick +
+    return '<a href="#" id ="pryv-access-btn" data-onclick-action="' + onClick +
       '" class="pryv-access-btn-signinImage" ' +
       'src="' + this.config.sdkFullPath + '/media/btnSignIn.png" >' + buttonText + '</a>';
   }
@@ -83,8 +85,11 @@ Access.uiErrorButton = function () {
     'en': { 'msg': 'Error :(' },
     'fr': { 'msg': 'Erreur :('}
   }[this.settings.languageCode];
-
-  return Access.uiButton('Pryv.Access.logout(); return false;', strs.msg);
+  this.onClick.Error = function () {
+    Access.logout();
+    return false;
+  };
+  return Access.uiButton('Error', strs.msg);
 
 };
 
@@ -93,8 +98,10 @@ Access.uiLoadingButton = function () {
     'en': { 'msg': 'Loading ...' },
     'fr': { 'msg': 'Chargement ...'}
   }[this.settings.languageCode];
-
-  return Access.uiButton('return false;', strs.msg);
+  this.onClick.Loading = function () {
+    return false;
+  };
+  return Access.uiButton('Loading', strs.msg);
 
 };
 
@@ -103,8 +110,11 @@ Access.uiSigninButton = function () {
     'en': { 'msg': 'Pryv Sign-In' },
     'fr': { 'msg': 'Connection à PrYv'}
   }[this.settings.languageCode];
-
-  return Access.uiButton('Pryv.Access.popupLogin(); return false;', strs.msg);
+  this.onClick.Signin = function () {
+    Access.popupLogin();
+    return false;
+  };
+  return Access.uiButton('Signin', strs.msg);
 
 };
 
@@ -120,7 +130,11 @@ Access.uiConfirmLogout = function () {
 };
 
 Access.uiInButton = function (username) {
-  return Access.uiButton('Pryv.Access.uiConfirmLogout(); return false;', username);
+  this.onClick.In = function () {
+    Access.uiConfirmLogout();
+    return false;
+  };
+  return Access.uiButton('In', username);
 };
 
 Access.uiRefusedButton = function (message) {
@@ -129,8 +143,11 @@ Access.uiRefusedButton = function (message) {
     'en': { 'msg': 'access refused'},
     'fr': { 'msg': 'Accès refusé'}
   }[this.settings.languageCode];
-
-  return Access.uiButton('Pryv.Access.retry(); return false;', strs.msg);
+  this.onClick.Refused = function () {
+    Access.retry();
+    return false;
+  };
+  return Access.uiButton('Refused', strs.msg);
 
 };
 
@@ -152,7 +169,13 @@ Access.updateButton = function (html) {
       }
     }
     Access.spanButton.innerHTML = Access.buttonHTML;
-
+    Access.spanButton.onclick = function (e) {
+      e.preventDefault();
+      var element = document.getElementById('pryv-access-btn');
+      console.log('onClick', Access.spanButton,
+        element.getAttribute('data-onclick-action'));
+      Access.onClick[element.getAttribute('data-onclick-action')]();
+    };
   });
 };
 
