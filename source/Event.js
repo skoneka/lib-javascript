@@ -44,6 +44,13 @@ Event.prototype.addAttachment = function (file, callback) {
  *
  * @param {Connection~requestCallback} callback
  */
+Event.prototype.removeAttachment = function (fileName, callback) {
+  this.connection.events.removeAttachment(this.id, fileName, callback);
+};
+/**
+ *
+ * @param {Connection~requestCallback} callback
+ */
 Event.prototype.trash = function (callback) {
   this.connection.events.trash(this, callback);
 };
