@@ -2,6 +2,7 @@
 
 var Utility = require('../utility/Utility.js');
 var System = require('../system/System.js');
+var Connection = require('../Connection.js');
 var _ = require('underscore');
 
 
@@ -12,7 +13,8 @@ var _ = require('underscore');
 var Access = function () {
 };
 
-_.extend(Access, {
+_.extend(Access.prototype, {
+  connection: null, // actual connection managed by Access
   config: {
     registerURL: {ssl: true, host: 'reg.pryv.io'},
     registerStagingURL: {ssl: true, host: 'reg.pryv.in'},
@@ -47,11 +49,11 @@ Access._init = function (i) {
   }
 
   Utility.loadExternalFiles(
-    this.config.sdkFullPath + '/media/buttonSigninPryv.css', 'css');
+    Access.prototype.config.sdkFullPath + '/media/buttonSigninPryv.css', 'css');
 
   if (Utility.testIfStagingFromHostname()) {
     console.log('staging mode');
-    Access.config.registerURL = Access.config.registerStagingURL;
+    Access.prototype.config.registerURL = Access.prototype.config.registerStagingURL;
   }
 
   console.log('init done');
@@ -63,9 +65,9 @@ Access._init(1);
 //--------------------- UI Content -----------//
 
 
-Access.uiSupportedLanguages = ['en', 'fr'];
+Access.prototype.uiSupportedLanguages = ['en', 'fr'];
 
-Access.uiButton = function (onClick, buttonText) {
+Access.prototype.uiButton = function (onClick, buttonText) {
   if (Utility.supportCSS3()) {
     return '<div id="pryv-access-btn" class="pryv-access-btn-signin" data-onclick-action="' +
       onClick + '">' +
@@ -80,20 +82,20 @@ Access.uiButton = function (onClick, buttonText) {
   }
 };
 
-Access.uiErrorButton = function () {
+Access.prototype.uiErrorButton = function () {
   var strs = {
     'en': { 'msg': 'Error :(' },
     'fr': { 'msg': 'Erreur :('}
   }[this.settings.languageCode];
   this.onClick.Error = function () {
-    Access.logout();
+    this.logout();
     return false;
-  };
+  }.bind(this);
   return Access.uiButton('Error', strs.msg);
 
 };
 
-Access.uiLoadingButton = function () {
+Access.prototype.uiLoadingButton = function () {
   var strs = {
     'en': { 'msg': 'Loading ...' },
     'fr': { 'msg': 'Chargement ...'}
@@ -101,94 +103,96 @@ Access.uiLoadingButton = function () {
   this.onClick.Loading = function () {
     return false;
   };
-  return Access.uiButton('Loading', strs.msg);
+  return this.uiButton('Loading', strs.msg);
 
 };
 
-Access.uiSigninButton = function () {
+Access.prototype.uiSigninButton = function () {
   var strs = {
     'en': { 'msg': 'Pryv Sign-In' },
     'fr': { 'msg': 'Connection à PrYv'}
   }[this.settings.languageCode];
   this.onClick.Signin = function () {
-    Access.popupLogin();
+    this.popupLogin();
     return false;
-  };
-  return Access.uiButton('Signin', strs.msg);
+  }.bind(this);
+  return this.uiButton('Signin', strs.msg);
 
 };
 
-Access.uiConfirmLogout = function () {
+Access.prototype.uiConfirmLogout = function () {
   var strs = {
     'en': { 'logout': 'Logout ?'},
     'fr': { 'logout': 'Se déconnecter?'}
   }[this.settings.languageCode];
 
   if (confirm(strs.logout)) {
-    Access.logout();
+    this.logout();
   }
 };
 
-Access.uiInButton = function (username) {
+Access.prototype.uiInButton = function (username) {
   this.onClick.In = function () {
-    Access.uiConfirmLogout();
+    this.uiConfirmLogout();
     return false;
-  };
-  return Access.uiButton('In', username);
+  }.bind(this);
+  return this.uiButton('In', username);
 };
 
-Access.uiRefusedButton = function (message) {
+Access.prototype.uiRefusedButton = function (message) {
   console.log('Pryv access [REFUSED]' + message);
   var strs = {
     'en': { 'msg': 'access refused'},
     'fr': { 'msg': 'Accès refusé'}
   }[this.settings.languageCode];
   this.onClick.Refused = function () {
-    Access.retry();
+    this.retry();
     return false;
-  };
-  return Access.uiButton('Refused', strs.msg);
+  }.bind(this);
+  return this.uiButton('Refused', strs.msg);
 
 };
 
 //--------------- end of UI ------------------//
 
 
-Access.updateButton = function (html) {
+Access.prototype.updateButton = function (html) {
   this.buttonHTML = html;
   if (! this.settings.spanButtonID) { return; }
 
   Utility.domReady(function () {
-    if (! Access.spanButton) {
-      var element = document.getElementById(Access.settings.spanButtonID);
+    if (! this.spanButton) {
+      var element = document.getElementById(this.settings.spanButtonID);
       if (typeof(element) === 'undefined' || element === null) {
         throw new Error('access-SDK cannot find span ID: "' +
-          Access.settings.spanButtonID + '"');
+          this.settings.spanButtonID + '"');
       } else {
-        Access.spanButton = element;
+        this.spanButton = element;
       }
     }
-    Access.spanButton.innerHTML = Access.buttonHTML;
-    Access.spanButton.onclick = function (e) {
+    this.spanButton.innerHTML = this.buttonHTML;
+    this.spanButton.onclick = function (e) {
       e.preventDefault();
       var element = document.getElementById('pryv-access-btn');
-      console.log('onClick', Access.spanButton,
+      console.log('onClick', this.spanButton,
         element.getAttribute('data-onclick-action'));
-      Access.onClick[element.getAttribute('data-onclick-action')]();
-    };
-  });
+      this.onClick[element.getAttribute('data-onclick-action')]();
+    }.bind(this);
+  }.bind(this));
 };
 
-Access.internalError = function (message, jsonData) {
-  Access.stateChanged({id: 'INTERNAL_ERROR', message: message, data: jsonData});
+Access.prototype.internalError = function (message, jsonData) {
+  this.stateChanged({id: 'INTERNAL_ERROR', message: message, data: jsonData});
 };
 
 //STATE HUB
-Access.stateChanged  = function (data) {
+Access.prototype.stateChanged  = function (data) {
 
 
   if (data.id) { // error
-    this.settings.callbacks.error(data.id, data.message);
+    if (this.settings.callbacks.error) {
+      this.settings.callbacks.error(data.id, data.message);
+    }
     this.updateButton(this.uiErrorButton());
     console.log('Error: ' + JSON.stringify(data));
     // this.logout();   Why should I retry if it failed already once?
@@ -219,59 +223,85 @@ Access.stateChanged  = function (data) {
 };
 
 //STATE 0 Init
-Access.stateInitialization = function () {
+Access.prototype.stateInitialization = function () {
   this.state = {status : 'initialization'};
   this.updateButton(this.uiLoadingButton());
-  this.settings.callbacks.initialization();
+  if (this.settings.callbacks.initialization) {
+    this.settings.callbacks.initialization();
+  }
 };
 
 //STATE 1 Need Signin
-Access.stateNeedSignin = function () {
+Access.prototype.stateNeedSignin = function () {
   this.updateButton(this.uiSigninButton());
-  this.settings.callbacks.needSignin(this.state.url, this.state.poll,
-    this.state.poll_rate_ms);
+  if (this.settings.callbacks.needSignin) {
+    this.settings.callbacks.needSignin(this.state.url, this.state.poll,
+      this.state.poll_rate_ms);
+  }
 };
 
 
 //STATE 2 User logged in and authorized
-Access.stateAccepted = function () {
+Access.prototype.stateAccepted = function () {
   if (this.cookieEnabled) {
     Utility.docCookies.setItem('access_username', this.state.username, 3600);
     Utility.docCookies.setItem('access_token', this.state.token, 3600);
   }
   this.updateButton(this.uiInButton(this.state.username));
-  this.settings.callbacks.accepted(this.state.username, this.state.token, this.state.lang);
+
+  this.connection.username = this.state.username;
+  this.connection.auth = this.state.token;
+  if (this.settings.callbacks.accepted) {
+    this.settings.callbacks.accepted(this.state.username, this.state.token, this.state.lang);
+  }
+  if (this.settings.callbacks.signedIn) {
+    this.settings.callbacks.signedIn(this.connection, this.state.lang);
+  }
 };
 
 //STATE 3 User refused
-Access.stateRefused = function () {
+Access.prototype.stateRefused = function () {
   this.updateButton(this.uiRefusedButton(this.state.message));
-  this.settings.callbacks.refused('refused:' + this.state.message);
+  if (this.settings.callbacks.refused) {
+    this.settings.callbacks.refused('refused:' + this.state.message);
+  }
 };
 
 
 /**
  * clear all references
  */
-Access.logout = function () {
+Access.prototype.logout = function () {
   this.ignoreStateFromURL = true;
   if (this.cookieEnabled) {
     Utility.docCookies.removeItem('access_username');
     Utility.docCookies.removeItem('access_token');
   }
   this.state = null;
-  this.settings.callbacks.accepted(false, false, false);
+  if (this.settings.callbacks.accepted) {
+    this.settings.callbacks.accepted(false, false, false);
+  }
+  if (this.settings.callbacks.signedOut) {
+    this.settings.callbacks.signedOut(this.connection);
+  }
+  this.connection = null;
   this.setup(this.settings);
 };
 
 /**
  * clear references and try again
  */
-Access.retry = Access.logout;
+Access.prototype.retry = Access.prototype.logout;
 
-
-Access.setup = function (settings) {
+/**
+ *
+ * @param settings
+ * @returns {Connection} the connection managed by Access.. A new one is created each time setup is
+ * called.
+ */
+Access.prototype.setup = function (settings) {
   this.state = null;
+
   //--- check the browser capabilities
 
 
@@ -327,9 +357,9 @@ Access.setup = function (settings) {
     returnURL : settings.returnURL
   };
 
-  if (Access.config.localDevel) {
+  if (this.config.localDevel) {
     // return url will be forced to https://l.pryv.in:4443/Access.html
-    params.localDevel = Access.config.localDevel;
+    params.localDevel = this.config.localDevel;
   }
 
   this.stateInitialization();
@@ -363,24 +393,28 @@ Access.setup = function (settings) {
       }.bind(this)
     };
 
-    System.request(_.extend(pack, Access.config.registerURL));
+    System.request(_.extend(pack, this.config.registerURL));
 
 
   }
-  return true;
+
+  var domain = (this.config.registerURL.host === 'reg.pryv.io') ? 'pryv.io' : 'pryv.in';
+
+  this.connection = new Connection(null, null, {ssl: this.config.registerURL.ssl, domain: domain});
+  return this.connection;
 };
 
 //logout the user if 
 
 //read the polling 
-Access.poll = function poll() {
+Access.prototype.poll = function poll() {
   if (this.pollingIsOn && this.state.poll_rate_ms) {
     // remove eventually waiting poll.. 
     if (this.pollingID) { clearTimeout(this.pollingID); }
 
 
     var pack = {
-      path :  '/access/' + Access.state.key,
+      path :  '/access/' + this.state.key,
       method : 'GET',
       success : function (data)  {
         this.stateChanged(data);
@@ -390,10 +424,10 @@ Access.poll = function poll() {
       }.bind(this)
     };
 
-    System.request(_.extend(pack, Access.config.registerURL));
+    System.request(_.extend(pack, this.config.registerURL));
 
 
-    this.pollingID = setTimeout(Access.poll.bind(this), this.state.poll_rate_ms);
+    this.pollingID = setTimeout(this.poll.bind(this), this.state.poll_rate_ms);
   } else {
     console.log('stopped polling: on=' + this.pollingIsOn + ' rate:' + this.state.poll_rate_ms);
   }
@@ -401,21 +435,21 @@ Access.poll = function poll() {
 
 
 //messaging between browser window and window.opener
-Access.popupCallBack = function (event) {
+Access.prototype.popupCallBack = function (event) {
   // Do not use 'this' here !
-  if (Access.settings.forcePolling) { return; }
-  if (event.source !== Access.window) {
+  if (this.settings.forcePolling) { return; }
+  if (event.source !== this.window) {
     console.log('popupCallBack event.source does not match Access.window');
     return false;
   }
   console.log('from popup >>> ' + JSON.stringify(event.data));
-  Access.pollingIsOn = false; // if we can receive messages we stop polling
-  Access.stateChanged(event.data);
+  this.pollingIsOn = false; // if we can receive messages we stop polling
+  this.stateChanged(event.data);
 };
 
 
 
-Access.popupLogin = function popupLogin() {
+Access.prototype.popupLogin = function popupLogin() {
   if ((! this.state) || (! this.state.url)) {
     throw new Error('Pryv Sign-In Error: NO SETUP. Please call Access.setup() first.');
   }
@@ -426,7 +460,7 @@ Access.popupLogin = function popupLogin() {
   }
 
   // start polling
-  setTimeout(Access.poll(), 1000);
+  setTimeout(this.poll(), 1000);
 
   var screenX = typeof window.screenX !== 'undefined' ? window.screenX : window.screenLeft,
     screenY = typeof window.screenY !== 'undefined' ? window.screenY : window.screenTop,
@@ -447,7 +481,7 @@ Access.popupLogin = function popupLogin() {
       );
 
 
-  window.addEventListener('message', Access.popupCallBack, false);
+  window.addEventListener('message', this.popupCallBack.bind(this), false);
 
   this.window = window.open(this.state.url, 'prYv Sign-in', features);
 
@@ -467,7 +501,7 @@ Access.popupLogin = function popupLogin() {
 
 
 //util to grab parameters from url query string
-Access._getStatusFromURL = function () {
+Access.prototype._getStatusFromURL = function () {
   var vars = {};
   window.location.href.replace(/[?#&]+prYv([^=&]+)=([^&]*)/gi,
     function (m, key, value) {
@@ -480,10 +514,10 @@ Access._getStatusFromURL = function () {
 };
 
 //util to grab parameters from url query string
-Access._cleanStatusFromURL = function () {
+Access.prototype._cleanStatusFromURL = function () {
   return window.location.href.replace(/[?#&]+prYv([^=&]+)=([^&]*)/gi, '');
 };
 
 //-------------------- UTILS ---------------------//
 
-module.exports = Access;
+module.exports = new Access();
