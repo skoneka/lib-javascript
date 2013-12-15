@@ -1,9 +1,85 @@
-<!DOCTYPE html>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
-  <title></title>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>PRYV first</title>
+  <script type="text/javascript" src="../../dist/pryv.js"></script>
 </head>
 <body>
+<script>
 
+  var Pryv = require('pryv');
+
+  // force usage of staging remove this line for production
+  Pryv.access.config.registerURL = { host: 'reg.pryv.in', 'ssl': true};
+
+  /**
+   * process the form and request access
+   */
+  var requestedPermissions = [
+    {
+      "streamId" : "first-test",
+      "defaultName" : "First test",
+      "level" : "manage"
+    }
+  ];
+
+  // ----------------------- //
+  var pyConn = Pryv.access.setup({
+    requestingAppId : 'test-first-web',
+    requestedPermissions : requestedPermissions,
+    spanButtonID : 'pryvButton', // (optional)
+    callbacks : {
+      signedIn : myStart,
+      signedOut : myStop
+    }
+  });
+
+  function myStart() {
+    pyConn.accessInfo(function(error, infos) {
+
+      alert('MY FIRT APP signed in \n' + JSON.stringify(infos, null, 2));
+
+      // create an event to remeber that you logged in
+
+      showLastNote();
+
+    });
+
+  };
+
+  function myStop() {
+    alert('MY FIRT APP signed ou');
+  };
+
+  function showLastNote() {
+    var filter = new Pryv.Filter({limit : 20});
+    pyConn.events.get(filter, function(error, events) {
+      var rawEvents = [];
+      for (var i = 0; i < events.length; i++) {
+        rawEvents.push(events[i].getData()); // get the Event with no circular reference
+      }
+      window.alert('last 20 notes', JSON.stringify(rawEvents, null, 2));
+    });
+  }
+
+  function takeNote() {
+    pyConn.events.create({
+      type: 'note/txt',
+      streamId: 'first-test',
+      content: window.prompt('save a note')});
+  }
+
+
+
+
+</script>
+<div id="body">
+  <h1>First Step</h1>
+</div>
+<BR>
+You can test with username: <b>perkikiki</b> or <b>tech@pryv.com</b> Password: <b>poilonez</b><br>
+<br>
+<center><span id="pryvButton"></span></center>
 </body>
 </html>

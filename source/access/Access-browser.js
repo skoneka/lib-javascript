@@ -13,6 +13,7 @@ var _ = require('underscore');
 var Access = function () {
 };
 
+
 _.extend(Access.prototype, {
   connection: null, // actual connection managed by Access
   config: {
@@ -318,6 +319,7 @@ Access.prototype.setup = function (settings) {
     Utility.getPreferredLanguage(this.uiSupportedLanguages, settings.languageCode);
 
   //-- returnURL
+  settings.returnURL = settings.returnURL || 'auto#';
   if (settings.returnURL) {
     // check the trailer
     var trailer = settings.returnURL.charAt(settings.returnURL.length - 1);
