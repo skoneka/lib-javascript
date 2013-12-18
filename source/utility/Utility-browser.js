@@ -41,6 +41,21 @@ UtilityBrowser.getUsernameFromHostname = function () {
   }
 };
 
+UtilityBrowser.getSharingsFromPath = function () {
+  var username = UtilityBrowser.getUsernameFromHostname();
+  if (!username) {
+    return [];
+  }
+  var path = document.location.hash.split('/'),
+    sharingsIndex = path.indexOf('sharings');
+  if (sharingsIndex !== -1) {
+    return path.splice(sharingsIndex + 1).filter(function (el) { return el.length > 0; });
+  } else {
+    return [];
+  }
+
+};
+
 /**
  *  return true if browser is seen as a mobile or tablet
  *  list grabbed from https://github.com/codefuze/js-mobile-tablet-redirect/blob/master/mobile-redirect.js
