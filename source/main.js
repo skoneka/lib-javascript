@@ -9,7 +9,7 @@ Pryv.prototype.Event = require('./Event.js');
 Pryv.prototype.Stream = require('./Stream.js');
 Pryv.prototype.Filter = require('./Filter.js');
 Pryv.prototype.System = require('./system/System.js');
-Pryv.prototype.access = require('./access/access.js');
+Pryv.prototype.access = require('./access/Access.js');
 Pryv.prototype.Utility = require('./utility/Utility.js');
 Pryv.prototype.Messages = require('./Messages.js');
 

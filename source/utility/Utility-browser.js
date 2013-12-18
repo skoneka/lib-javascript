@@ -24,6 +24,22 @@ UtilityBrowser.testIfStagingFromHostname = function () {
     UtilityBrowser.endsWith(document.location.hostname, 'rec.la');
 };
 
+UtilityBrowser.getUsernameFromHostname = function () {
+  var hostname = document.location.hostname.split('.'),
+    recIndex = hostname.indexOf('rec'),
+    pryvIndex = hostname.indexOf('pryv');
+  if (recIndex <= 0 && pryvIndex <= 0) {
+    console.log('getUsernameFromHostname:', 'unknown hostname:', hostname);
+    return null;
+  }
+  var usernameIndex = pryvIndex > 0 ? pryvIndex - 1: recIndex - 1;
+  if (hostname[usernameIndex].match(UtilityBrowser.regex.username)) {
+    return hostname[usernameIndex];
+  } else {
+    console.log('getUsernameFromHostname:', 'invalid username:', hostname[usernameIndex]);
+    return null;
+  }
+};
 
 /**
  *  return true if browser is seen as a mobile or tablet

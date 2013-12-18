@@ -365,7 +365,9 @@ Access.prototype.setup = function (settings) {
   }
 
   this.stateInitialization();
+  var domain = (this.config.registerURL.host === 'reg.pryv.io') ? 'pryv.io' : 'pryv.in';
 
+  this.connection = new Connection(null, null, {ssl: this.config.registerURL.ssl, domain: domain});
   // look if we have a returning user (document.cookie)
   var cookieUserName = this.cookieEnabled ? Utility.docCookies.getItem('access_username') : false;
   var cookieToken = this.cookieEnabled ? Utility.docCookies.getItem('access_token') : false;
@@ -400,9 +402,7 @@ Access.prototype.setup = function (settings) {
 
   }
 
-  var domain = (this.config.registerURL.host === 'reg.pryv.io') ? 'pryv.io' : 'pryv.in';
 
-  this.connection = new Connection(null, null, {ssl: this.config.registerURL.ssl, domain: domain});
   return this.connection;
 };
 
