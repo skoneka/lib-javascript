@@ -92,8 +92,7 @@ Auth.prototype.uiErrorButton = function () {
     this.logout();
     return false;
   }.bind(this);
-  return Auth.uiButton('Error', strs.msg);
-
+  return this.uiButton('Error', strs.msg);
 };
 
 Auth.prototype.uiLoadingButton = function () {
