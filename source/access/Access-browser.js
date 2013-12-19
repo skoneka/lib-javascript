@@ -92,7 +92,7 @@ Access.prototype.uiErrorButton = function () {
     this.logout();
     return false;
   }.bind(this);
-  return Access.uiButton('Error', strs.msg);
+  return this.uiButton('Error', strs.msg);
 
 };
 
