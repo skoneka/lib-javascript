@@ -1,26 +1,12 @@
-/**
- * @class Pryv
- * @constructor
- */
-function Pryv() { }
+module.exports = {
+  Connection: require('./Connection.js'),
+  Event: require('./Event.js'),
+  Stream: require('./Stream.js'),
+  Filter: require('./Filter.js'),
+  System: require('./system/System.js'),
+  access: require('./auth/Auth.js'),
+  Utility: require('./utility/Utility.js'),
+  Messages: require('./Messages.js'),
 
-Pryv.prototype.Connection = require('./Connection.js');
-Pryv.prototype.Event = require('./Event.js');
-Pryv.prototype.Stream = require('./Stream.js');
-Pryv.prototype.Filter = require('./Filter.js');
-Pryv.prototype.System = require('./system/System.js');
-Pryv.prototype.access = require('./access/Access.js');
-Pryv.prototype.Utility = require('./utility/Utility.js');
-Pryv.prototype.Messages = require('./Messages.js');
-
-Pryv.prototype.eventTypes = require('./eventTypes.js');
-
-Object.defineProperty(Pryv.prototype, 'Access', {
-  get: function () {
-    console.log('WARNING : Pryv.Access is deprecated, use Pryv.access');
-    return this.access;
-  }
-});
-
-
-module.exports = new Pryv();
+  eventTypes: require('./eventTypes.js')
+};

@@ -8,14 +8,14 @@ var _ = require('underscore');
 
 //--------------------- access ----------//
 /**
- * @class Access
+ * @class Auth
  * */
-var Access = function () {
+var Auth = function () {
 };
 
 
-_.extend(Access.prototype, {
-  connection: null, // actual connection managed by Access
+_.extend(Auth.prototype, {
+  connection: null, // actual connection managed by Auth
   config: {
     registerURL: {ssl: true, host: 'reg.pryv.io'},
     registerStagingURL: {ssl: true, host: 'reg.pryv.in'},
@@ -39,36 +39,36 @@ _.extend(Access.prototype, {
  * @method _init
  * @access private
  */
-Access._init = function (i) {
+Auth._init = function (i) {
   // start only if Utility is loaded
   if (typeof Utility === 'undefined') {
     if (i > 100) {
       throw new Error('Cannot find Utility');
     }
     i++;
-    return setTimeout('Access._init(' + i + ')', 10 * i);
+    return setTimeout('Auth._init(' + i + ')', 10 * i);
   }
 
   Utility.loadExternalFiles(
-    Access.prototype.config.sdkFullPath + '/media/buttonSigninPryv.css', 'css');
+    Auth.prototype.config.sdkFullPath + '/media/buttonSigninPryv.css', 'css');
 
   if (Utility.testIfStagingFromHostname()) {
     console.log('staging mode');
-    Access.prototype.config.registerURL = Access.prototype.config.registerStagingURL;
+    Auth.prototype.config.registerURL = Auth.prototype.config.registerStagingURL;
   }
 
   console.log('init done');
 };
 
 
-Access._init(1);
+Auth._init(1);
 
 //--------------------- UI Content -----------//
 
 
-Access.prototype.uiSupportedLanguages = ['en', 'fr'];
+Auth.prototype.uiSupportedLanguages = ['en', 'fr'];
 
-Access.prototype.uiButton = function (onClick, buttonText) {
+Auth.prototype.uiButton = function (onClick, buttonText) {
   if (Utility.supportCSS3()) {
     return '<div id="pryv-access-btn" class="pryv-access-btn-signin" data-onclick-action="' +
       onClick + '">' +
@@ -83,7 +83,7 @@ Access.prototype.uiButton = function (onClick, buttonText) {
   }
 };
 
-Access.prototype.uiErrorButton = function () {
+Auth.prototype.uiErrorButton = function () {
   var strs = {
     'en': { 'msg': 'Error :(' },
     'fr': { 'msg': 'Erreur :('}
@@ -92,11 +92,11 @@ Access.prototype.uiErrorButton = function () {
     this.logout();
     return false;
   }.bind(this);
-  return Access.uiButton('Error', strs.msg);
+  return Auth.uiButton('Error', strs.msg);
 
 };
 
-Access.prototype.uiLoadingButton = function () {
+Auth.prototype.uiLoadingButton = function () {
   var strs = {
     'en': { 'msg': 'Loading ...' },
     'fr': { 'msg': 'Chargement ...'}
@@ -108,7 +108,7 @@ Access.prototype.uiLoadingButton = function () {
 
 };
 
-Access.prototype.uiSigninButton = function () {
+Auth.prototype.uiSigninButton = function () {
   var strs = {
     'en': { 'msg': 'Pryv Sign-In' },
     'fr': { 'msg': 'Connection à PrYv'}
@@ -121,7 +121,7 @@ Access.prototype.uiSigninButton = function () {
 
 };
 
-Access.prototype.uiConfirmLogout = function () {
+Auth.prototype.uiConfirmLogout = function () {
   var strs = {
     'en': { 'logout': 'Logout ?'},
     'fr': { 'logout': 'Se déconnecter?'}
@@ -132,7 +132,7 @@ Access.prototype.uiConfirmLogout = function () {
   }
 };
 
-Access.prototype.uiInButton = function (username) {
+Auth.prototype.uiInButton = function (username) {
   this.onClick.In = function () {
     this.uiConfirmLogout();
     return false;
@@ -140,7 +140,7 @@ Access.prototype.uiInButton = function (username) {
   return this.uiButton('In', username);
 };
 
-Access.prototype.uiRefusedButton = function (message) {
+Auth.prototype.uiRefusedButton = function (message) {
   console.log('Pryv access [REFUSED]' + message);
   var strs = {
     'en': { 'msg': 'access refused'},
@@ -157,7 +157,7 @@ Access.prototype.uiRefusedButton = function (message) {
 //--------------- end of UI ------------------//
 
 
-Access.prototype.updateButton = function (html) {
+Auth.prototype.updateButton = function (html) {
   this.buttonHTML = html;
   if (! this.settings.spanButtonID) { return; }
 
@@ -182,12 +182,12 @@ Access.prototype.updateButton = function (html) {
   }.bind(this));
 };
 
-Access.prototype.internalError = function (message, jsonData) {
+Auth.prototype.internalError = function (message, jsonData) {
   this.stateChanged({id: 'INTERNAL_ERROR', message: message, data: jsonData});
 };
 
 //STATE HUB
-Access.prototype.stateChanged  = function (data) {
+Auth.prototype.stateChanged  = function (data) {
 
 
   if (data.id) { // error
@@ -224,7 +224,7 @@ Access.prototype.stateChanged  = function (data) {
 };
 
 //STATE 0 Init
-Access.prototype.stateInitialization = function () {
+Auth.prototype.stateInitialization = function () {
   this.state = {status : 'initialization'};
   this.updateButton(this.uiLoadingButton());
   if (this.settings.callbacks.initialization) {
@@ -233,7 +233,7 @@ Access.prototype.stateInitialization = function () {
 };
 
 //STATE 1 Need Signin
-Access.prototype.stateNeedSignin = function () {
+Auth.prototype.stateNeedSignin = function () {
   this.updateButton(this.uiSigninButton());
   if (this.settings.callbacks.needSignin) {
     this.settings.callbacks.needSignin(this.state.url, this.state.poll,
@@ -243,7 +243,7 @@ Access.prototype.stateNeedSignin = function () {
 
 
 //STATE 2 User logged in and authorized
-Access.prototype.stateAccepted = function () {
+Auth.prototype.stateAccepted = function () {
   if (this.cookieEnabled) {
     Utility.docCookies.setItem('access_username', this.state.username, 3600);
     Utility.docCookies.setItem('access_token', this.state.token, 3600);
@@ -261,7 +261,7 @@ Access.prototype.stateAccepted = function () {
 };
 
 //STATE 3 User refused
-Access.prototype.stateRefused = function () {
+Auth.prototype.stateRefused = function () {
   this.updateButton(this.uiRefusedButton(this.state.message));
   if (this.settings.callbacks.refused) {
     this.settings.callbacks.refused('refused:' + this.state.message);
@@ -272,7 +272,7 @@ Access.prototype.stateRefused = function () {
 /**
  * clear all references
  */
-Access.prototype.logout = function () {
+Auth.prototype.logout = function () {
   this.ignoreStateFromURL = true;
   if (this.cookieEnabled) {
     Utility.docCookies.removeItem('access_username');
@@ -292,15 +292,15 @@ Access.prototype.logout = function () {
 /**
  * clear references and try again
  */
-Access.prototype.retry = Access.prototype.logout;
+Auth.prototype.retry = Auth.prototype.logout;
 
 /**
  *
  * @param settings
- * @returns {Connection} the connection managed by Access.. A new one is created each time setup is
+ * @returns {Connection} the connection managed by Auth.. A new one is created each time setup is
  * called.
  */
-Access.prototype.setup = function (settings) {
+Auth.prototype.setup = function (settings) {
   this.state = null;
 
   //--- check the browser capabilities
@@ -313,7 +313,7 @@ Access.prototype.setup = function (settings) {
     this.cookieEnabled = (document.cookie.indexOf('testcookie') !== -1) ? true : false;
   }
 
-  //TODO check settings.. 
+  //TODO check settings..
 
   settings.languageCode =
     Utility.getPreferredLanguage(this.uiSupportedLanguages, settings.languageCode);
@@ -349,7 +349,7 @@ Access.prototype.setup = function (settings) {
     }
   }
 
-  //  spanButtonID is checked only when possible  
+  //  spanButtonID is checked only when possible
   this.settings = settings;
 
   var params = {
@@ -360,7 +360,7 @@ Access.prototype.setup = function (settings) {
   };
 
   if (this.config.localDevel) {
-    // return url will be forced to https://l.pryv.in:4443/Access.html
+    // return url will be forced to https://l.pryv.in:4443/Auth.html
     params.localDevel = this.config.localDevel;
   }
 
@@ -406,12 +406,12 @@ Access.prototype.setup = function (settings) {
   return this.connection;
 };
 
-//logout the user if 
+//logout the user if
 
-//read the polling 
-Access.prototype.poll = function poll() {
+//read the polling
+Auth.prototype.poll = function poll() {
   if (this.pollingIsOn && this.state.poll_rate_ms) {
-    // remove eventually waiting poll.. 
+    // remove eventually waiting poll..
     if (this.pollingID) { clearTimeout(this.pollingID); }
 
 
@@ -437,11 +437,11 @@ Access.prototype.poll = function poll() {
 
 
 //messaging between browser window and window.opener
-Access.prototype.popupCallBack = function (event) {
+Auth.prototype.popupCallBack = function (event) {
   // Do not use 'this' here !
   if (this.settings.forcePolling) { return; }
   if (event.source !== this.window) {
-    console.log('popupCallBack event.source does not match Access.window');
+    console.log('popupCallBack event.source does not match Auth.window');
     return false;
   }
   console.log('from popup >>> ' + JSON.stringify(event.data));
@@ -451,9 +451,9 @@ Access.prototype.popupCallBack = function (event) {
 
 
 
-Access.prototype.popupLogin = function popupLogin() {
+Auth.prototype.popupLogin = function popupLogin() {
   if ((! this.state) || (! this.state.url)) {
-    throw new Error('Pryv Sign-In Error: NO SETUP. Please call Access.setup() first.');
+    throw new Error('Pryv Sign-In Error: NO SETUP. Please call Auth.setup() first.');
   }
 
   if (this.settings.returnURL) {
@@ -503,7 +503,7 @@ Access.prototype.popupLogin = function popupLogin() {
 
 
 //util to grab parameters from url query string
-Access.prototype._getStatusFromURL = function () {
+Auth.prototype._getStatusFromURL = function () {
   var vars = {};
   window.location.href.replace(/[?#&]+prYv([^=&]+)=([^&]*)/gi,
     function (m, key, value) {
@@ -516,10 +516,10 @@ Access.prototype._getStatusFromURL = function () {
 };
 
 //util to grab parameters from url query string
-Access.prototype._cleanStatusFromURL = function () {
+Auth.prototype._cleanStatusFromURL = function () {
   return window.location.href.replace(/[?#&]+prYv([^=&]+)=([^&]*)/gi, '');
 };
 
 //-------------------- UTILS ---------------------//
 
-module.exports = new Access();
+module.exports = new Auth();
