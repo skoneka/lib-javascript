@@ -66,7 +66,7 @@ exports.request = function (pack)  {
         try {
           result = JSON.parse(bodyarr.join(''));
         } catch (error) {
-          return onError('System-node.request failed to parse JSON in response' +
+          return onError('system-node.request failed to parse JSON in response' +
             bodyarr.join('')
           );
         }

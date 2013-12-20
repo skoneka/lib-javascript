@@ -1,5 +1,5 @@
 var _ = require('underscore'),
-  System = require('./system/System.js'),
+  system = require('./system/system.js'),
   ConnectionEvents = require('./connection/ConnectionEvents.js'),
   ConnectionStreams = require('./connection/ConnectionStreams.js'),
   ConnectionProfile = require('./connection/ConnectionProfile.js'),
@@ -186,7 +186,7 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
     withoutCredentials = true;
   }
 
-  var request = System.request({
+  var request = system.request({
     method : method,
     host : this.username + '.' + this.settings.domain,
     port : this.settings.port,

@@ -14,9 +14,15 @@ module.exports = {
   eventTypes: require('./eventTypes.js')
 };
 
-},{"./Connection.js":2,"./Event.js":3,"./Filter.js":5,"./Stream.js":4,"./auth/Auth.js":1,"./eventTypes.js":8,"./system/system.js":6,"./utility/utility.js":7}],8:[function(require,module,exports){
+},{"./Connection.js":2,"./Event.js":3,"./Filter.js":5,"./Stream.js":4,"./auth/Auth.js":1,"./eventTypes.js":8,"./system/system.js":6,"./utility/utility.js":7}],1:[function(require,module,exports){
+var utility = require('../utility/utility.js');
 
-var System = require('./system/System.js');
+module.exports =  utility.isBrowser() ?
+    require('./Auth-browser.js') : require('./Auth-node.js');
+
+},{"../utility/utility.js":7,"./Auth-browser.js":9,"./Auth-node.js":10}],8:[function(require,module,exports){
+
+var system = require('./system/system.js');
 var eventTypes = module.exports = { };
 
 // staging cloudfront https://d1kp76srklnnah.cloudfront.net/dist/data-types/event-extras.json
@@ -32,7 +38,7 @@ var PATH = '/dist/data-types/';
  * @param callback
  */
 function _getFile(fileName, callback) {
-  System.request({
+  system.request({
     method : 'GET',
     host : HOSTNAME,
     path : PATH + fileName,
@@ -102,14 +108,7 @@ eventTypes.extras = function (eventType) {
  * @param {Object} result - jSonEncoded result
  */
 
-},{"./system/System.js":9}],1:[function(require,module,exports){
-var Utility = require('../utility/Utility.js');
-
-
-module.exports =  Utility.isBrowser() ?
-    require('./Auth-browser.js') : require('./Auth-node.js');
-
-},{"../utility/Utility.js":10,"./Auth-browser.js":11,"./Auth-node.js":12}],13:[function(require,module,exports){
+},{"./system/system.js":6}],11:[function(require,module,exports){
 var apiPathProfile = '/profile/app';
 
 
@@ -152,10 +151,12 @@ Profile.prototype.set = function (keyValuePairs, callback) {
 
 
 module.exports = Profile;
-},{}],12:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 
 module.exports = {};
-},{}],14:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
+
+},{}],13:[function(require,module,exports){
 //file: system browser
 
 
@@ -331,108 +332,9 @@ var _initXHR = function () {
 
 
 
-},{}],15:[function(require,module,exports){
-//file: system node
-
-//TODO align with XHR error
-
-//TODO: sort out the callback convention
-
-/**
- *
- * @param {Object} pack json with
- * @param {Object} [pack.type = 'POST'] : 'GET/DELETE/POST/PUT'
- * @param {String} pack.host : fully qualified host name
- * @param {Number} pack.port : port to use
- * @param {String} pack.path : the request PATH
- * @param {Object} [pack.headers] : key / value map of headers
- * @param {Object} [pack.params] : the payload -- only with POST/PUT
- * @param {String} [pack.parseResult = 'json'] : 'text' for no parsing
- * @param {Function} pack.success : function (result, requestInfos)
- * @param {Function} pack.error : function (error, requestInfos)
- * @param {String} [pack.info] : a text
- * @param {Boolean} [pack.async = true]
- * @param {Number} [pack.expectedStatus] : http result code
- * @param {Boolean} [pack.ssl = true]
- */
-exports.request = function (pack)  {
-  if (pack.payload) {
-    pack.headers['Content-Length'] = pack.payload.length;
-  }
-
-
-  var httpOptions = {
-    host: pack.host,
-    port: pack.port,
-    path: pack.path,
-    method: pack.method,
-    rejectUnauthorized: false,
-    headers : pack.headers
-  };
-
-  var parseResult = pack.parseResult || 'json';
-  var httpMode = pack.ssl ? 'https' : 'http';
-  var http = require(httpMode);
-
-
-
-  var detail = 'Request: ' + httpOptions.method + ' ' +
-    httpMode + '://' + httpOptions.host + ':' + httpOptions.port + '' + httpOptions.path;
-
-
-
-
-  var onError = function (reason) {
-    return pack.error(reason + '\n' + detail, null);
-  };
-
-
-  var req = http.request(httpOptions, function (res) {
-    var bodyarr = [];
-    res.on('data', function (chunk) {  bodyarr.push(chunk); });
-    res.on('end', function () {
-      var requestInfo = {
-        code : res.statusCode,
-        headers : res.headers
-      };
-      var result = null;
-      if (parseResult === 'json') {
-        try {
-          result = JSON.parse(bodyarr.join(''));
-        } catch (error) {
-          return onError('System-node.request failed to parse JSON in response' +
-            bodyarr.join('')
-          );
-        }
-      }
-      return pack.success(result, requestInfo);
-    });
-
-  }).on('error', function (e) {
-      return onError('Error: ' + e.message);
-    });
-
-
-  req.on('socket', function (socket) {
-    socket.setTimeout(5000);
-    socket.on('timeout', function () {
-      req.abort();
-      return pack.error('Timeout');
-    });
-  });
-
-  if (pack.payload) { req.write(pack.payload); }
-  req.end();
-
-  return req;
-};
-
-},{}],16:[function(require,module,exports){
-
-module.exports = {};
 },{}],2:[function(require,module,exports){
 var _ = require('underscore'),
-  System = require('./system/System.js'),
+  system = require('./system/system.js'),
   ConnectionEvents = require('./connection/ConnectionEvents.js'),
   ConnectionStreams = require('./connection/ConnectionStreams.js'),
   ConnectionProfile = require('./connection/ConnectionProfile.js'),
@@ -619,7 +521,7 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
     withoutCredentials = true;
   }
 
-  var request = System.request({
+  var request = system.request({
     method : method,
     host : this.username + '.' + this.settings.domain,
     port : this.settings.port,
@@ -711,321 +613,7 @@ Object.defineProperty(Connection.prototype, 'serialId', {
  * @param {Object} result - jSonEncoded result
  */
 
-},{"./Datastore.js":20,"./connection/ConnectionEvents.js":17,"./connection/ConnectionMonitors.js":19,"./connection/ConnectionProfile.js":13,"./connection/ConnectionStreams.js":18,"./system/System.js":9,"underscore":21}],22:[function(require,module,exports){
-(function(){/* global document, navigator */
-
-/* jshint -W101*/
-
-var System = require('../system/System.js');
-
-/**
- * Browser only utils
- */
-
-var UtilityBrowser = {};
-
-module.exports = UtilityBrowser;
-
-/* Regular expressions. */
-
-
-/**
- * Test if hostname is a *.rec.la or pryv.li if yes. it assumes that the client
- * runs on a staging version
- */
-UtilityBrowser.testIfStagingFromHostname = function () {
-  return UtilityBrowser.endsWith(document.location.hostname, 'pryv.li') ||
-    UtilityBrowser.endsWith(document.location.hostname, 'rec.la');
-};
-
-UtilityBrowser.getUsernameFromHostname = function () {
-  var hostname = document.location.hostname.split('.'),
-    recIndex = hostname.indexOf('rec'),
-    pryvIndex = hostname.indexOf('pryv');
-  if (recIndex <= 0 && pryvIndex <= 0) {
-    console.log('getUsernameFromHostname:', 'unknown hostname:', hostname);
-    return null;
-  }
-  var usernameIndex = pryvIndex > 0 ? pryvIndex - 1: recIndex - 1;
-  if (hostname[usernameIndex].match(UtilityBrowser.regex.username)) {
-    return hostname[usernameIndex];
-  } else {
-    console.log('getUsernameFromHostname:', 'invalid username:', hostname[usernameIndex]);
-    return null;
-  }
-};
-
-UtilityBrowser.getSharingsFromPath = function () {
-  var username = UtilityBrowser.getUsernameFromHostname();
-  if (!username) {
-    return [];
-  }
-  var path = document.location.hash.split('/'),
-    sharingsIndex = path.indexOf('sharings');
-  if (sharingsIndex !== -1) {
-    return path.splice(sharingsIndex + 1).filter(function (el) { return el.length > 0; });
-  } else {
-    return [];
-  }
-
-};
-
-/**
- *  return true if browser is seen as a mobile or tablet
- *  list grabbed from https://github.com/codefuze/js-mobile-tablet-redirect/blob/master/mobile-redirect.js
- */
-UtilityBrowser.browserIsMobileOrTablet = function () {
-  return (/iphone|ipod|android|blackberry|opera mini|opera mobi|skyfire|maemo|windows phone|palm|iemobile|symbian|symbianos|fennec|ipad|android 3|sch-i800|playbook|tablet|kindle|gt-p1000|sgh-t849|shw-m180s|a510|a511|a100|dell streak|silk/i.test(navigator.userAgent.toLowerCase()));
-};
-
-/**
- * Method to get the preferred language, either from desiredLanguage or from the browser settings
- * @method getPreferredLanguage
- * @param {Array} supportedLanguages an array of supported languages encoded on 2characters
- * @param {String} desiredLanguage (optional) get this language if supported
- */
-UtilityBrowser.getPreferredLanguage = function (supportedLanguages, desiredLanguage) {
-  if (desiredLanguage) {
-    if (supportedLanguages.indexOf(desiredLanguage) >= 0) { return desiredLanguage; }
-  }
-  var lct = null;
-  if (navigator.language) {
-    lct = navigator.language.toLowerCase().substring(0, 2);
-  } else if (navigator.userLanguage) {
-    lct = navigator.userLanguage.toLowerCase().substring(0, 2);
-  } else if (navigator.userAgent.indexOf('[') !== -1) {
-    var start = navigator.userAgent.indexOf('[');
-    var end = navigator.userAgent.indexOf(']');
-    lct = navigator.userAgent.substring(start + 1, end).toLowerCase();
-  }
-  if (desiredLanguage) {
-    if (lct.indexOf(desiredLanguage) >= 0) { return lct; }
-  }
-
-  return supportedLanguages[0];
-};
-
-
-/**
- * //TODO check if it's robust
- * Method to check the browser supports CSS3.
- * @method supportCSS3
- * @return boolean
- */
-UtilityBrowser.supportCSS3 = function ()  {
-  var stub = document.createElement('div'),
-    testProperty = 'textShadow';
-
-  if (testProperty in stub.style) { return true; }
-
-  testProperty = testProperty.replace(/^[a-z]/, function (val) {
-    return val.toUpperCase();
-  });
-
-  return false;
-};
-
-/**
- * Method to load external files like javascript and stylesheet. this version
- * of method only support to file types - js|javascript and css|stylesheet.
- * @method loadExternalFiles
- * @param {String} string filename
- * @param {String} type -- 'js' or 'css'
- */
-UtilityBrowser.loadExternalFiles = function (filename, type)  {
-  var tag = null;
-
-  type = type.toLowerCase();
-
-  if (type === 'js' || type === 'javascript') {
-    tag = document.createElement('script');
-    tag.setAttribute('type', 'text/javascript');
-    tag.setAttribute('src', filename);
-  } else if (type === 'css' || type === 'stylesheet')  {
-    tag = document.createElement('link');
-    tag.setAttribute('rel', 'stylesheet');
-    tag.setAttribute('type', 'text/css');
-    tag.setAttribute('href', filename);
-  }
-
-  if (tag !== null || tag !== undefined) {
-    document.getElementsByTagName('head')[0].appendChild(tag);
-  }
-};
-
-/**
- * Get the content on an URL as a String ,
- * Mainly designed to load HTML ressources
- * @param {String} url
- * @param {Function} callBack  function(error,content,xhr)
- * @return {Object} xhr request
- */
-UtilityBrowser.getURLContent = function (url, callback) {
-
-  function onSuccess(result, xhr) {
-    callback(null, result, xhr);
-  }
-
-  function onError(error) {
-    callback(error, null, error.xhr);
-  }
-
-  return System.request({
-    method : 'GET',
-    url : url,
-    parseResult : 'text',
-    success: onSuccess,
-    error: onError
-  });
-};
-
-/**
- * Load the content of a URL into a div
- * !! No error will go to the console.
- */
-UtilityBrowser.loadURLContentInElementId = function (url, elementId, next) {
-  next = next || function () {};
-  var content = document.getElementById(elementId);
-  UtilityBrowser.getURLContent(url,
-    function (error, result) {
-      content.innerHTML = result;
-      next();
-      if (error) {
-        console.error(error);
-      }
-    }
-  );
-};
-
-
-
-
-/* jshint ignore:start */
-/*\
- |*|
- |*|  :: cookies.js ::
- |*|
- |*|  A complete cookies reader/writer framework with full unicode support.
- |*|
- |*|  https://developer.mozilla.org/en-US/docs/DOM/document.cookie
- |*|
- |*|  Syntaxes:
- |*|
- |*|  * docCookies.setItem(name, value[, end[, path[, domain[, secure]]]])
- |*|  * docCookies.getItem(name)
- |*|  * docCookies.removeItem(name[, path])
- |*|  * docCookies.hasItem(name)
- |*|  * docCookies.keys()
- |*|
- \*/
-UtilityBrowser.docCookies = {
-  getItem: function (sKey) {
-    if (!sKey || !this.hasItem(sKey)) { return null; }
-    return unescape(document.cookie.replace(new RegExp("(?:^|.*;\\s*)" +
-      escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=\\s*((?:[^;](?!;))*[^;]?).*"), "$1"));
-  },
-  setItem: function (sKey, sValue, vEnd, sPath, sDomain, bSecure) {
-    if (!sKey || /^(?:expires|max\-age|path|domain|secure)$/i.test(sKey)) { return; }
-    var sExpires = "";
-    if (vEnd) {
-      switch (vEnd.constructor) {
-        case Number:
-          sExpires = vEnd === Infinity ?
-            "; expires=Tue, 19 Jan 2038 03:14:07 GMT" : "; max-age=" + vEnd;
-          break;
-        case String:
-          sExpires = "; expires=" + vEnd;
-          break;
-        case Date:
-          sExpires = "; expires=" + vEnd.toGMTString();
-          break;
-      }
-    }
-    document.cookie = escape(sKey) + "=" + escape(sValue) + sExpires + (sDomain ? "; domain=" + sDomain : "") + (sPath ? "; path=" + sPath : "") + (bSecure ? "; secure" : "");
-  },
-  removeItem: function (sKey, sPath) {
-    if (!sKey || !this.hasItem(sKey)) { return; }
-    document.cookie = escape(sKey) + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT" + (sPath ? "; path=" + sPath : "");
-  },
-  hasItem: function (sKey) {
-    return (new RegExp("(?:^|;\\s*)" + escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=")).test(document.cookie);
-  },
-  keys: /* optional method: you can safely remove it! */ function () {
-    var aKeys = document.cookie.replace(/((?:^|\s*;)[^\=]+)(?=;|$)|^\s*|\s*(?:\=[^;]*)?(?:\1|$)/g, "").split(/\s*(?:\=[^;]*)?;\s*/);
-    for (var nIdx = 0; nIdx < aKeys.length; nIdx++) { aKeys[nIdx] = unescape(aKeys[nIdx]); }
-    return aKeys;
-  }
-};
-
-/* jshint ignore:end */
-
-
-//----------- DomReady ----------//
-
-
-/*!
- * domready (c) Dustin Diaz 2012 - License MIT
- */
-
-/* jshint ignore:start */
-UtilityBrowser.domReady = function (ready) {
-
-
-  var fns = [], fn, f = false,
-    doc = document,
-    testEl = doc.documentElement,
-    hack = testEl.doScroll,
-    domContentLoaded = 'DOMContentLoaded',
-    addEventListener = 'addEventListener',
-    onreadystatechange = 'onreadystatechange',
-    readyState = 'readyState',
-    loaded = /^loade|c/.test(doc[readyState]);
-
-  function flush(f) {
-    loaded = 1;
-    while (f = fns.shift()) { 
-      f()
-    }
-  }
-
-  doc[addEventListener] && doc[addEventListener](domContentLoaded, fn = function () {
-    doc.removeEventListener(domContentLoaded, fn, f);
-    flush();
-  }, f);
-
-
-  hack && doc.attachEvent(onreadystatechange, fn = function () {
-    if (/^c/.test(doc[readyState])) {
-      doc.detachEvent(onreadystatechange, fn);
-      flush();
-    }
-  });
-
-  return (ready = hack ?
-    function (fn) {
-      self != top ?
-        loaded ? fn() : fns.push(fn) :
-        function () {
-          console.log("on dom ready 2");
-          try {
-            testEl.doScroll('left')
-          } catch (e) {
-            return setTimeout(function() { ready(fn) }, 50)
-          }
-          fn()
-        }()
-    } :
-    function (fn) {
-      loaded ? fn() : fns.push(fn)
-    })
-}();
-
-/* jshint ignore:end */
-
-
-
-})()
-},{"../system/System.js":9}],3:[function(require,module,exports){
+},{"./Datastore.js":17,"./connection/ConnectionEvents.js":14,"./connection/ConnectionMonitors.js":16,"./connection/ConnectionProfile.js":11,"./connection/ConnectionStreams.js":15,"./system/system.js":6,"underscore":18}],3:[function(require,module,exports){
 
 var _ = require('underscore');
 
@@ -1133,7 +721,7 @@ Object.defineProperty(Event.prototype, 'attachmentsUrl', {
  * @property {number} [time]
  */
 
-},{"underscore":21}],4:[function(require,module,exports){
+},{"underscore":18}],4:[function(require,module,exports){
 
 var _ = require('underscore');
 
@@ -1205,7 +793,7 @@ Object.defineProperty(Stream.prototype, 'ancestors', {
 
 
 
-},{"underscore":21}],5:[function(require,module,exports){
+},{"underscore":18}],5:[function(require,module,exports){
 var _ = require('underscore'),
     SignalEmitter = require('./utility/SignalEmitter.js');
 
@@ -1531,7 +1119,317 @@ Filter.prototype.focusedOnSingleStream = function () {
  */
 
 
-},{"./utility/SignalEmitter.js":23,"underscore":21}],21:[function(require,module,exports){
+},{"./utility/SignalEmitter.js":19,"underscore":18}],20:[function(require,module,exports){
+(function(){/* global document, navigator */
+/* jshint -W101*/
+
+var system = require('../system/system.js');
+
+/**
+ * Browser only utils
+ */
+var utility = module.exports = {};
+
+/* Regular expressions. */
+
+
+/**
+ * Test if hostname is a *.rec.la or pryv.li if yes. it assumes that the client
+ * runs on a staging version
+ */
+utility.testIfStagingFromHostname = function () {
+  return utility.endsWith(document.location.hostname, 'pryv.li') ||
+    utility.endsWith(document.location.hostname, 'rec.la');
+};
+
+utility.getUsernameFromHostname = function () {
+  var hostname = document.location.hostname.split('.'),
+    recIndex = hostname.indexOf('rec'),
+    pryvIndex = hostname.indexOf('pryv');
+  if (recIndex <= 0 && pryvIndex <= 0) {
+    console.log('getUsernameFromHostname:', 'unknown hostname:', hostname);
+    return null;
+  }
+  var usernameIndex = pryvIndex > 0 ? pryvIndex - 1: recIndex - 1;
+  if (hostname[usernameIndex].match(utility.regex.username)) {
+    return hostname[usernameIndex];
+  } else {
+    console.log('getUsernameFromHostname:', 'invalid username:', hostname[usernameIndex]);
+    return null;
+  }
+};
+
+utility.getSharingsFromPath = function () {
+  var username = utility.getUsernameFromHostname();
+  if (!username) {
+    return [];
+  }
+  var path = document.location.hash.split('/'),
+    sharingsIndex = path.indexOf('sharings');
+  if (sharingsIndex !== -1) {
+    return path.splice(sharingsIndex + 1).filter(function (el) { return el.length > 0; });
+  } else {
+    return [];
+  }
+
+};
+
+/**
+ *  return true if browser is seen as a mobile or tablet
+ *  list grabbed from https://github.com/codefuze/js-mobile-tablet-redirect/blob/master/mobile-redirect.js
+ */
+utility.browserIsMobileOrTablet = function () {
+  return (/iphone|ipod|android|blackberry|opera mini|opera mobi|skyfire|maemo|windows phone|palm|iemobile|symbian|symbianos|fennec|ipad|android 3|sch-i800|playbook|tablet|kindle|gt-p1000|sgh-t849|shw-m180s|a510|a511|a100|dell streak|silk/i.test(navigator.userAgent.toLowerCase()));
+};
+
+/**
+ * Method to get the preferred language, either from desiredLanguage or from the browser settings
+ * @method getPreferredLanguage
+ * @param {Array} supportedLanguages an array of supported languages encoded on 2characters
+ * @param {String} desiredLanguage (optional) get this language if supported
+ */
+utility.getPreferredLanguage = function (supportedLanguages, desiredLanguage) {
+  if (desiredLanguage) {
+    if (supportedLanguages.indexOf(desiredLanguage) >= 0) { return desiredLanguage; }
+  }
+  var lct = null;
+  if (navigator.language) {
+    lct = navigator.language.toLowerCase().substring(0, 2);
+  } else if (navigator.userLanguage) {
+    lct = navigator.userLanguage.toLowerCase().substring(0, 2);
+  } else if (navigator.userAgent.indexOf('[') !== -1) {
+    var start = navigator.userAgent.indexOf('[');
+    var end = navigator.userAgent.indexOf(']');
+    lct = navigator.userAgent.substring(start + 1, end).toLowerCase();
+  }
+  if (desiredLanguage) {
+    if (lct.indexOf(desiredLanguage) >= 0) { return lct; }
+  }
+
+  return supportedLanguages[0];
+};
+
+
+/**
+ * //TODO check if it's robust
+ * Method to check the browser supports CSS3.
+ * @method supportCSS3
+ * @return boolean
+ */
+utility.supportCSS3 = function ()  {
+  var stub = document.createElement('div'),
+    testProperty = 'textShadow';
+
+  if (testProperty in stub.style) { return true; }
+
+  testProperty = testProperty.replace(/^[a-z]/, function (val) {
+    return val.toUpperCase();
+  });
+
+  return false;
+};
+
+/**
+ * Method to load external files like javascript and stylesheet. this version
+ * of method only support to file types - js|javascript and css|stylesheet.
+ * @method loadExternalFiles
+ * @param {String} string filename
+ * @param {String} type -- 'js' or 'css'
+ */
+utility.loadExternalFiles = function (filename, type)  {
+  var tag = null;
+
+  type = type.toLowerCase();
+
+  if (type === 'js' || type === 'javascript') {
+    tag = document.createElement('script');
+    tag.setAttribute('type', 'text/javascript');
+    tag.setAttribute('src', filename);
+  } else if (type === 'css' || type === 'stylesheet')  {
+    tag = document.createElement('link');
+    tag.setAttribute('rel', 'stylesheet');
+    tag.setAttribute('type', 'text/css');
+    tag.setAttribute('href', filename);
+  }
+
+  if (tag !== null || tag !== undefined) {
+    document.getElementsByTagName('head')[0].appendChild(tag);
+  }
+};
+
+/**
+ * Get the content on an URL as a String ,
+ * Mainly designed to load HTML ressources
+ * @param {String} url
+ * @param {Function} callBack  function(error,content,xhr)
+ * @return {Object} xhr request
+ */
+utility.getURLContent = function (url, callback) {
+
+  function onSuccess(result, xhr) {
+    callback(null, result, xhr);
+  }
+
+  function onError(error) {
+    callback(error, null, error.xhr);
+  }
+
+  return system.request({
+    method : 'GET',
+    url : url,
+    parseResult : 'text',
+    success: onSuccess,
+    error: onError
+  });
+};
+
+/**
+ * Load the content of a URL into a div
+ * !! No error will go to the console.
+ */
+utility.loadURLContentInElementId = function (url, elementId, next) {
+  next = next || function () {};
+  var content = document.getElementById(elementId);
+  utility.getURLContent(url,
+    function (error, result) {
+      content.innerHTML = result;
+      next();
+      if (error) {
+        console.error(error);
+      }
+    }
+  );
+};
+
+
+
+
+/* jshint ignore:start */
+/*\
+ |*|
+ |*|  :: cookies.js ::
+ |*|
+ |*|  A complete cookies reader/writer framework with full unicode support.
+ |*|
+ |*|  https://developer.mozilla.org/en-US/docs/DOM/document.cookie
+ |*|
+ |*|  Syntaxes:
+ |*|
+ |*|  * docCookies.setItem(name, value[, end[, path[, domain[, secure]]]])
+ |*|  * docCookies.getItem(name)
+ |*|  * docCookies.removeItem(name[, path])
+ |*|  * docCookies.hasItem(name)
+ |*|  * docCookies.keys()
+ |*|
+ \*/
+utility.docCookies = {
+  getItem: function (sKey) {
+    if (!sKey || !this.hasItem(sKey)) { return null; }
+    return unescape(document.cookie.replace(new RegExp("(?:^|.*;\\s*)" +
+      escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=\\s*((?:[^;](?!;))*[^;]?).*"), "$1"));
+  },
+  setItem: function (sKey, sValue, vEnd, sPath, sDomain, bSecure) {
+    if (!sKey || /^(?:expires|max\-age|path|domain|secure)$/i.test(sKey)) { return; }
+    var sExpires = "";
+    if (vEnd) {
+      switch (vEnd.constructor) {
+        case Number:
+          sExpires = vEnd === Infinity ?
+            "; expires=Tue, 19 Jan 2038 03:14:07 GMT" : "; max-age=" + vEnd;
+          break;
+        case String:
+          sExpires = "; expires=" + vEnd;
+          break;
+        case Date:
+          sExpires = "; expires=" + vEnd.toGMTString();
+          break;
+      }
+    }
+    document.cookie = escape(sKey) + "=" + escape(sValue) + sExpires + (sDomain ? "; domain=" + sDomain : "") + (sPath ? "; path=" + sPath : "") + (bSecure ? "; secure" : "");
+  },
+  removeItem: function (sKey, sPath) {
+    if (!sKey || !this.hasItem(sKey)) { return; }
+    document.cookie = escape(sKey) + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT" + (sPath ? "; path=" + sPath : "");
+  },
+  hasItem: function (sKey) {
+    return (new RegExp("(?:^|;\\s*)" + escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=")).test(document.cookie);
+  },
+  keys: /* optional method: you can safely remove it! */ function () {
+    var aKeys = document.cookie.replace(/((?:^|\s*;)[^\=]+)(?=;|$)|^\s*|\s*(?:\=[^;]*)?(?:\1|$)/g, "").split(/\s*(?:\=[^;]*)?;\s*/);
+    for (var nIdx = 0; nIdx < aKeys.length; nIdx++) { aKeys[nIdx] = unescape(aKeys[nIdx]); }
+    return aKeys;
+  }
+};
+
+/* jshint ignore:end */
+
+
+//----------- DomReady ----------//
+
+
+/*!
+ * domready (c) Dustin Diaz 2012 - License MIT
+ */
+
+/* jshint ignore:start */
+utility.domReady = function (ready) {
+
+
+  var fns = [], fn, f = false,
+    doc = document,
+    testEl = doc.documentElement,
+    hack = testEl.doScroll,
+    domContentLoaded = 'DOMContentLoaded',
+    addEventListener = 'addEventListener',
+    onreadystatechange = 'onreadystatechange',
+    readyState = 'readyState',
+    loaded = /^loade|c/.test(doc[readyState]);
+
+  function flush(f) {
+    loaded = 1;
+    while (f = fns.shift()) { 
+      f()
+    }
+  }
+
+  doc[addEventListener] && doc[addEventListener](domContentLoaded, fn = function () {
+    doc.removeEventListener(domContentLoaded, fn, f);
+    flush();
+  }, f);
+
+
+  hack && doc.attachEvent(onreadystatechange, fn = function () {
+    if (/^c/.test(doc[readyState])) {
+      doc.detachEvent(onreadystatechange, fn);
+      flush();
+    }
+  });
+
+  return (ready = hack ?
+    function (fn) {
+      self != top ?
+        loaded ? fn() : fns.push(fn) :
+        function () {
+          console.log("on dom ready 2");
+          try {
+            testEl.doScroll('left')
+          } catch (e) {
+            return setTimeout(function() { ready(fn) }, 50)
+          }
+          fn()
+        }()
+    } :
+    function (fn) {
+      loaded ? fn() : fns.push(fn)
+    })
+}();
+
+/* jshint ignore:end */
+
+
+
+})()
+},{"../system/system.js":6}],18:[function(require,module,exports){
 (function(){//     Underscore.js 1.5.2
 //     http://underscorejs.org
 //     (c) 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -2810,7 +2708,29 @@ Filter.prototype.focusedOnSingleStream = function () {
 }).call(this);
 
 })()
-},{}],7:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
+//TODO: consider merging system into utility
+
+var utility = require('../utility/utility.js');
+
+
+var socketIO = require('socket.io-client');
+
+
+var system =
+  module.exports =  utility.isBrowser() ?
+    require('./system-browser.js') : require('./system-node.js');
+
+system.ioConnect = function (settings) {
+  var httpMode = settings.ssl ? 'https' : 'http';
+  var url = httpMode + '://' + settings.host + ':' + settings.port + '' +
+    settings.path + '?auth=' + settings.auth + '&resource=' + settings.namespace;
+
+  return socketIO.connect(url, {'force new connection': true});
+};
+
+
+},{"../utility/utility.js":7,"./system-browser.js":13,"./system-node.js":12,"socket.io-client":21}],7:[function(require,module,exports){
 var _ = require('underscore');
 
 var isBrowser = function () {
@@ -2818,19 +2738,17 @@ var isBrowser = function () {
 };
 
 
-var Utility =  module.exports =  isBrowser() ?
-  require('./Utility-browser.js') : require('./Utility-node.js');
-
-module.exports = Utility;
+var utility = module.exports = isBrowser() ?
+  require('./utility-browser.js') : require('./utility-node.js');
 
 /**
  * return true if environment is a web browser
  * @returns {boolean}
  */
-Utility.isBrowser = isBrowser;
+utility.isBrowser = isBrowser;
 
 
-Utility.SignalEmitter = require('./SignalEmitter.js');
+utility.SignalEmitter = require('./SignalEmitter.js');
 
 /**
  * Merge two object (key/value map) and remove "null" properties
@@ -2838,7 +2756,7 @@ Utility.SignalEmitter = require('./SignalEmitter.js');
  * @param {Object} sourceB
  * @returns {*|Block|Node|Tag}
  */
-Utility.mergeAndClean = function (sourceA, sourceB) {
+utility.mergeAndClean = function (sourceA, sourceB) {
   sourceA = sourceA || {};
   sourceB = sourceB || {};
   var result = _.clone(sourceA);
@@ -2854,7 +2772,7 @@ Utility.mergeAndClean = function (sourceA, sourceB) {
  * @param {Object} data
  * @returns {String} key1=value1&key2=value2....
  */
-Utility.getQueryParametersString = function (data) {
+utility.getQueryParametersString = function (data) {
   data = this.mergeAndClean(data);
   return Object.keys(data).map(function (key) {
     if (data[key] !== null) {
@@ -2875,7 +2793,7 @@ Utility.getQueryParametersString = function (data) {
  * Common regexp
  * @type {{username: RegExp, email: RegExp}}
  */
-Utility.regex = {
+utility.regex = {
   username :  /^([a-zA-Z0-9])(([a-zA-Z0-9\-]){3,21})([a-zA-Z0-9])$/,
   email : /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/
 };
@@ -2886,34 +2804,12 @@ Utility.regex = {
  * @param {String} suffix
  * @returns {boolean}
  */
-Utility.endsWith = function (str, suffix) {
+utility.endsWith = function (str, suffix) {
   return str.indexOf(suffix, str.length - suffix.length) !== -1;
 };
 
 
-},{"./SignalEmitter.js":23,"./Utility-browser.js":22,"./Utility-node.js":16,"underscore":21}],6:[function(require,module,exports){
-//TODO: consider merging System into Utility
-
-var Utility = require('../utility/Utility.js');
-
-
-var socketIO = require('socket.io-client');
-
-
-var System =
-  module.exports =  Utility.isBrowser() ?
-    require('./System-browser.js') : require('./System-node.js');
-
-System.ioConnect = function (settings) {
-  var httpMode = settings.ssl ? 'https' : 'http';
-  var url = httpMode + '://' + settings.host + ':' + settings.port + '' +
-    settings.path + '?auth=' + settings.auth + '&resource=' + settings.namespace;
-
-  return socketIO.connect(url, {'force new connection': true});
-};
-
-
-},{"../utility/Utility.js":10,"./System-browser.js":14,"./System-node.js":15,"socket.io-client":24}],20:[function(require,module,exports){
+},{"./SignalEmitter.js":19,"./utility-browser.js":20,"./utility-node.js":12,"underscore":18}],17:[function(require,module,exports){
 var _ = require('underscore');
 
 function Datastore(connection) {
@@ -2978,7 +2874,7 @@ Datastore.prototype.getStreamById = function (streamId, test) {
 module.exports = Datastore;
 
 
-},{"underscore":21}],24:[function(require,module,exports){
+},{"underscore":18}],21:[function(require,module,exports){
 (function(){/*! Socket.IO.js build:0.9.16, development. Copyright(c) 2011 LearnBoost <dev@learnboost.com> MIT Licensed */
 
 var io = ('undefined' === typeof module ? {} : module.exports);
@@ -6853,30 +6749,8 @@ if (typeof define === "function" && define.amd) {
 }
 })();
 })()
-},{}],9:[function(require,module,exports){
-//TODO: consider merging System into Utility
-
-var Utility = require('../utility/Utility.js');
-
-
-var socketIO = require('socket.io-client');
-
-
-var System =
-  module.exports =  Utility.isBrowser() ?
-    require('./System-browser.js') : require('./System-node.js');
-
-System.ioConnect = function (settings) {
-  var httpMode = settings.ssl ? 'https' : 'http';
-  var url = httpMode + '://' + settings.host + ':' + settings.port + '' +
-    settings.path + '?auth=' + settings.auth + '&resource=' + settings.namespace;
-
-  return socketIO.connect(url, {'force new connection': true});
-};
-
-
-},{"../utility/Utility.js":10,"./System-browser.js":14,"./System-node.js":15,"socket.io-client":24}],17:[function(require,module,exports){
-var Utility = require('../utility/Utility.js'),
+},{}],14:[function(require,module,exports){
+var utility = require('../utility/utility.js'),
   _ = require('underscore'),
   Filter = require('../Filter'),
   Event = require('../Event');
@@ -7065,7 +6939,7 @@ ConnectionEvents.prototype._get = function (filter, callback) {
   if (_.has(tParams, 'streams') && tParams.streams.length === 0) { // dead end filter..
     return callback(null, []);
   }
-  var url = '/events?' + Utility.getQueryParametersString(tParams);
+  var url = '/events?' + utility.getQueryParametersString(tParams);
   this.connection.request('GET', url, callback, null);
 };
 
@@ -7113,9 +6987,9 @@ module.exports = ConnectionEvents;
  * @param {Event[]} events
  */
 
-},{"../Event":3,"../Filter":5,"../utility/Utility.js":10,"underscore":21}],18:[function(require,module,exports){
+},{"../Event":3,"../Filter":5,"../utility/utility.js":7,"underscore":18}],15:[function(require,module,exports){
 var _ = require('underscore'),
-    Utility = require('../utility/Utility.js'),
+    utility = require('../utility/utility.js'),
     Stream = require('../Stream.js');
 
 /**
@@ -7209,7 +7083,7 @@ ConnectionStreams.prototype.getById = function (streamId) {
  * @param callback
  */
 ConnectionStreams.prototype._getData = function (opts, callback) {
-  var url = opts ? '/streams?' + Utility.getQueryParametersString(opts) : '/streams';
+  var url = opts ? '/streams?' + utility.getQueryParametersString(opts) : '/streams';
   this.connection.request('GET', url, callback, null);
 };
 
@@ -7329,7 +7203,7 @@ ConnectionStreams.prototype.getDisplayTree = function (arrayOfStreams) {
 };
 
 
-// TODO Validate that it's the good place for them .. Could have been in Stream or Utility
+// TODO Validate that it's the good place for them .. Could have been in Stream or utility
 ConnectionStreams.Utils = {
 
 
@@ -7403,9 +7277,9 @@ module.exports = ConnectionStreams;
  */
 
 
-},{"../Stream.js":4,"../utility/Utility.js":10,"underscore":21}],19:[function(require,module,exports){
+},{"../Stream.js":4,"../utility/utility.js":7,"underscore":18}],16:[function(require,module,exports){
 var _ = require('underscore'),
-  System = require('../system/System.js'),
+  system = require('../system/system.js'),
   Monitor = require('../Monitor.js');
 
 /**
@@ -7462,7 +7336,7 @@ ConnectionMonitors.prototype._startMonitoring = function (callback) {
     auth : this.connection.auth
   };
 
-  this.ioSocket = System.ioConnect(settings);
+  this.ioSocket = system.ioConnect(settings);
 
   this.ioSocket.on('connect', function () {
     _.each(this._monitors, function (monitor) { monitor._onIoConnect(); });
@@ -7483,7 +7357,7 @@ module.exports = ConnectionMonitors;
 
 
 
-},{"../Monitor.js":25,"../system/System.js":9,"underscore":21}],23:[function(require,module,exports){
+},{"../Monitor.js":22,"../system/system.js":6,"underscore":18}],19:[function(require,module,exports){
 (function(){/**
  * (event)Emitter renamed to avoid confusion with prvy's events
  */
@@ -7614,92 +7488,11 @@ SignalEmitter.prototype.startBatch = function (batchName, orHookOnBatch) {
 };
 
 })()
-},{"underscore":21}],10:[function(require,module,exports){
-var _ = require('underscore');
-
-var isBrowser = function () {
-  return typeof(window) !== 'undefined';
-};
-
-
-var Utility =  module.exports =  isBrowser() ?
-  require('./Utility-browser.js') : require('./Utility-node.js');
-
-module.exports = Utility;
-
-/**
- * return true if environment is a web browser
- * @returns {boolean}
- */
-Utility.isBrowser = isBrowser;
-
-
-Utility.SignalEmitter = require('./SignalEmitter.js');
-
-/**
- * Merge two object (key/value map) and remove "null" properties
- * @param {Object} sourceA
- * @param {Object} sourceB
- * @returns {*|Block|Node|Tag}
- */
-Utility.mergeAndClean = function (sourceA, sourceB) {
-  sourceA = sourceA || {};
-  sourceB = sourceB || {};
-  var result = _.clone(sourceA);
-  _.extend(result, sourceB);
-  _.each(_.keys(result), function (key) {
-    if (result[key] === null) { delete result[key]; }
-  });
-  return result;
-};
-
-/**
- * Create a query string from an object (key/value map)
- * @param {Object} data
- * @returns {String} key1=value1&key2=value2....
- */
-Utility.getQueryParametersString = function (data) {
-  data = this.mergeAndClean(data);
-  return Object.keys(data).map(function (key) {
-    if (data[key] !== null) {
-      if (_.isArray(data[key])) {
-        data[key] = this.mergeAndClean(data[key]);
-        var keyE = encodeURIComponent(key + '[]');
-        return data[key].map(function (subData) {
-          return keyE + '=' + encodeURIComponent(subData);
-        }).join('&');
-      } else {
-        return encodeURIComponent(key) + '=' + encodeURIComponent(data[key]);
-      }
-    }
-  }, this).join('&');
-};
-
-/**
- * Common regexp
- * @type {{username: RegExp, email: RegExp}}
- */
-Utility.regex = {
-  username :  /^([a-zA-Z0-9])(([a-zA-Z0-9\-]){3,21})([a-zA-Z0-9])$/,
-  email : /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/
-};
-
-/**
- * Cross platform string endsWith
- * @param {String} str
- * @param {String} suffix
- * @returns {boolean}
- */
-Utility.endsWith = function (str, suffix) {
-  return str.indexOf(suffix, str.length - suffix.length) !== -1;
-};
-
-
-},{"./SignalEmitter.js":23,"./Utility-browser.js":22,"./Utility-node.js":16,"underscore":21}],11:[function(require,module,exports){
+},{"underscore":18}],9:[function(require,module,exports){
 (function(){/* global confirm, document, navigator, location, window */
 
-var Utility = require('../utility/Utility.js');
-var System = require('../system/System.js');
+var utility = require('../utility/utility.js');
+var system = require('../system/system.js');
 var Connection = require('../Connection.js');
 var _ = require('underscore');
 
@@ -7738,19 +7531,19 @@ _.extend(Auth.prototype, {
  * @access private
  */
 Auth._init = function (i) {
-  // start only if Utility is loaded
-  if (typeof Utility === 'undefined') {
+  // start only if utility is loaded
+  if (typeof utility === 'undefined') {
     if (i > 100) {
-      throw new Error('Cannot find Utility');
+      throw new Error('Cannot find utility');
     }
     i++;
     return setTimeout('Auth._init(' + i + ')', 10 * i);
   }
 
-  Utility.loadExternalFiles(
+  utility.loadExternalFiles(
     Auth.prototype.config.sdkFullPath + '/media/buttonSigninPryv.css', 'css');
 
-  if (Utility.testIfStagingFromHostname()) {
+  if (utility.testIfStagingFromHostname()) {
     console.log('staging mode');
     Auth.prototype.config.registerURL = Auth.prototype.config.registerStagingURL;
   }
@@ -7767,7 +7560,7 @@ Auth._init(1);
 Auth.prototype.uiSupportedLanguages = ['en', 'fr'];
 
 Auth.prototype.uiButton = function (onClick, buttonText) {
-  if (Utility.supportCSS3()) {
+  if (utility.supportCSS3()) {
     return '<div id="pryv-access-btn" class="pryv-access-btn-signin" data-onclick-action="' +
       onClick + '">' +
       '<a class="pryv-access-btn pryv-access-btn-pryv-access-color" href="#">' +
@@ -7858,7 +7651,7 @@ Auth.prototype.updateButton = function (html) {
   this.buttonHTML = html;
   if (! this.settings.spanButtonID) { return; }
 
-  Utility.domReady(function () {
+  utility.domReady(function () {
     if (! this.spanButton) {
       var element = document.getElementById(this.settings.spanButtonID);
       if (typeof(element) === 'undefined' || element === null) {
@@ -7942,8 +7735,8 @@ Auth.prototype.stateNeedSignin = function () {
 //STATE 2 User logged in and authorized
 Auth.prototype.stateAccepted = function () {
   if (this.cookieEnabled) {
-    Utility.docCookies.setItem('access_username', this.state.username, 3600);
-    Utility.docCookies.setItem('access_token', this.state.token, 3600);
+    utility.docCookies.setItem('access_username', this.state.username, 3600);
+    utility.docCookies.setItem('access_token', this.state.token, 3600);
   }
   this.updateButton(this.uiInButton(this.state.username));
 
@@ -7972,8 +7765,8 @@ Auth.prototype.stateRefused = function () {
 Auth.prototype.logout = function () {
   this.ignoreStateFromURL = true;
   if (this.cookieEnabled) {
-    Utility.docCookies.removeItem('access_username');
-    Utility.docCookies.removeItem('access_token');
+    utility.docCookies.removeItem('access_username');
+    utility.docCookies.removeItem('access_token');
   }
   this.state = null;
   if (this.settings.callbacks.accepted) {
@@ -8013,7 +7806,7 @@ Auth.prototype.setup = function (settings) {
   //TODO check settings..
 
   settings.languageCode =
-    Utility.getPreferredLanguage(this.uiSupportedLanguages, settings.languageCode);
+    utility.getPreferredLanguage(this.uiSupportedLanguages, settings.languageCode);
 
   //-- returnURL
   settings.returnURL = settings.returnURL || 'auto#';
@@ -8028,7 +7821,7 @@ Auth.prototype.setup = function (settings) {
     // set self as return url?
     var returnself = (settings.returnURL.indexOf('self') === 0);
     if (settings.returnURL.indexOf('auto') === 0) {
-      returnself = Utility.browserIsMobileOrTablet();
+      returnself = utility.browserIsMobileOrTablet();
       if (!returnself) { settings.returnURL = false; }
     }
 
@@ -8066,8 +7859,8 @@ Auth.prototype.setup = function (settings) {
 
   this.connection = new Connection(null, null, {ssl: this.config.registerURL.ssl, domain: domain});
   // look if we have a returning user (document.cookie)
-  var cookieUserName = this.cookieEnabled ? Utility.docCookies.getItem('access_username') : false;
-  var cookieToken = this.cookieEnabled ? Utility.docCookies.getItem('access_token') : false;
+  var cookieUserName = this.cookieEnabled ? utility.docCookies.getItem('access_username') : false;
+  var cookieToken = this.cookieEnabled ? utility.docCookies.getItem('access_token') : false;
 
   // look in the URL if we are returning from a login process
   var stateFromURL =  this._getStatusFromURL();
@@ -8094,7 +7887,7 @@ Auth.prototype.setup = function (settings) {
       }.bind(this)
     };
 
-    System.request(_.extend(pack, this.config.registerURL));
+    system.request(_.extend(pack, this.config.registerURL));
 
 
   }
@@ -8123,7 +7916,7 @@ Auth.prototype.poll = function poll() {
       }.bind(this)
     };
 
-    System.request(_.extend(pack, this.config.registerURL));
+    system.request(_.extend(pack, this.config.registerURL));
 
 
     this.pollingID = setTimeout(this.poll.bind(this), this.state.poll_rate_ms);
@@ -8222,7 +8015,7 @@ Auth.prototype._cleanStatusFromURL = function () {
 module.exports = new Auth();
 
 })()
-},{"../Connection.js":2,"../system/System.js":9,"../utility/Utility.js":10,"underscore":21}],25:[function(require,module,exports){
+},{"../Connection.js":2,"../system/system.js":6,"../utility/utility.js":7,"underscore":18}],22:[function(require,module,exports){
 var _ = require('underscore'),
     SignalEmitter = require('./utility/SignalEmitter.js'),
     Filter = require('./Filter.js');
@@ -8483,5 +8276,5 @@ module.exports = Monitor;
 
 
 
-},{"./Filter.js":5,"./utility/SignalEmitter.js":23,"underscore":21}]},{},["yfS/Pm"])
+},{"./Filter.js":5,"./utility/SignalEmitter.js":19,"underscore":18}]},{},["yfS/Pm"])
 ;

@@ -1,16 +1,12 @@
 /* global document, navigator */
-
 /* jshint -W101*/
 
-var System = require('../system/System.js');
+var system = require('../system/system.js');
 
 /**
  * Browser only utils
  */
-
-var UtilityBrowser = {};
-
-module.exports = UtilityBrowser;
+var utility = module.exports = {};
 
 /* Regular expressions. */
 
@@ -19,12 +15,12 @@ module.exports = UtilityBrowser;
  * Test if hostname is a *.rec.la or pryv.li if yes. it assumes that the client
  * runs on a staging version
  */
-UtilityBrowser.testIfStagingFromHostname = function () {
-  return UtilityBrowser.endsWith(document.location.hostname, 'pryv.li') ||
-    UtilityBrowser.endsWith(document.location.hostname, 'rec.la');
+utility.testIfStagingFromHostname = function () {
+  return utility.endsWith(document.location.hostname, 'pryv.li') ||
+    utility.endsWith(document.location.hostname, 'rec.la');
 };
 
-UtilityBrowser.getUsernameFromHostname = function () {
+utility.getUsernameFromHostname = function () {
   var hostname = document.location.hostname.split('.'),
     recIndex = hostname.indexOf('rec'),
     pryvIndex = hostname.indexOf('pryv');
@@ -33,7 +29,7 @@ UtilityBrowser.getUsernameFromHostname = function () {
     return null;
   }
   var usernameIndex = pryvIndex > 0 ? pryvIndex - 1: recIndex - 1;
-  if (hostname[usernameIndex].match(UtilityBrowser.regex.username)) {
+  if (hostname[usernameIndex].match(utility.regex.username)) {
     return hostname[usernameIndex];
   } else {
     console.log('getUsernameFromHostname:', 'invalid username:', hostname[usernameIndex]);
@@ -41,8 +37,8 @@ UtilityBrowser.getUsernameFromHostname = function () {
   }
 };
 
-UtilityBrowser.getSharingsFromPath = function () {
-  var username = UtilityBrowser.getUsernameFromHostname();
+utility.getSharingsFromPath = function () {
+  var username = utility.getUsernameFromHostname();
   if (!username) {
     return [];
   }
@@ -60,7 +56,7 @@ UtilityBrowser.getSharingsFromPath = function () {
  *  return true if browser is seen as a mobile or tablet
  *  list grabbed from https://github.com/codefuze/js-mobile-tablet-redirect/blob/master/mobile-redirect.js
  */
-UtilityBrowser.browserIsMobileOrTablet = function () {
+utility.browserIsMobileOrTablet = function () {
   return (/iphone|ipod|android|blackberry|opera mini|opera mobi|skyfire|maemo|windows phone|palm|iemobile|symbian|symbianos|fennec|ipad|android 3|sch-i800|playbook|tablet|kindle|gt-p1000|sgh-t849|shw-m180s|a510|a511|a100|dell streak|silk/i.test(navigator.userAgent.toLowerCase()));
 };
 
@@ -70,7 +66,7 @@ UtilityBrowser.browserIsMobileOrTablet = function () {
  * @param {Array} supportedLanguages an array of supported languages encoded on 2characters
  * @param {String} desiredLanguage (optional) get this language if supported
  */
-UtilityBrowser.getPreferredLanguage = function (supportedLanguages, desiredLanguage) {
+utility.getPreferredLanguage = function (supportedLanguages, desiredLanguage) {
   if (desiredLanguage) {
     if (supportedLanguages.indexOf(desiredLanguage) >= 0) { return desiredLanguage; }
   }
@@ -98,7 +94,7 @@ UtilityBrowser.getPreferredLanguage = function (supportedLanguages, desiredLangu
  * @method supportCSS3
  * @return boolean
  */
-UtilityBrowser.supportCSS3 = function ()  {
+utility.supportCSS3 = function ()  {
   var stub = document.createElement('div'),
     testProperty = 'textShadow';
 
@@ -118,7 +114,7 @@ UtilityBrowser.supportCSS3 = function ()  {
  * @param {String} string filename
  * @param {String} type -- 'js' or 'css'
  */
-UtilityBrowser.loadExternalFiles = function (filename, type)  {
+utility.loadExternalFiles = function (filename, type)  {
   var tag = null;
 
   type = type.toLowerCase();
@@ -146,7 +142,7 @@ UtilityBrowser.loadExternalFiles = function (filename, type)  {
  * @param {Function} callBack  function(error,content,xhr)
  * @return {Object} xhr request
  */
-UtilityBrowser.getURLContent = function (url, callback) {
+utility.getURLContent = function (url, callback) {
 
   function onSuccess(result, xhr) {
     callback(null, result, xhr);
@@ -156,7 +152,7 @@ UtilityBrowser.getURLContent = function (url, callback) {
     callback(error, null, error.xhr);
   }
 
-  return System.request({
+  return system.request({
     method : 'GET',
     url : url,
     parseResult : 'text',
@@ -169,10 +165,10 @@ UtilityBrowser.getURLContent = function (url, callback) {
  * Load the content of a URL into a div
  * !! No error will go to the console.
  */
-UtilityBrowser.loadURLContentInElementId = function (url, elementId, next) {
+utility.loadURLContentInElementId = function (url, elementId, next) {
   next = next || function () {};
   var content = document.getElementById(elementId);
-  UtilityBrowser.getURLContent(url,
+  utility.getURLContent(url,
     function (error, result) {
       content.innerHTML = result;
       next();
@@ -204,7 +200,7 @@ UtilityBrowser.loadURLContentInElementId = function (url, elementId, next) {
  |*|  * docCookies.keys()
  |*|
  \*/
-UtilityBrowser.docCookies = {
+utility.docCookies = {
   getItem: function (sKey) {
     if (!sKey || !this.hasItem(sKey)) { return null; }
     return unescape(document.cookie.replace(new RegExp("(?:^|.*;\\s*)" +
@@ -254,7 +250,7 @@ UtilityBrowser.docCookies = {
  */
 
 /* jshint ignore:start */
-UtilityBrowser.domReady = function (ready) {
+utility.domReady = function (ready) {
 
 
   var fns = [], fn, f = false,

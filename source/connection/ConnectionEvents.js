@@ -1,4 +1,4 @@
-var Utility = require('../utility/Utility.js'),
+var utility = require('../utility/utility.js'),
   _ = require('underscore'),
   Filter = require('../Filter'),
   Event = require('../Event');
@@ -187,7 +187,7 @@ ConnectionEvents.prototype._get = function (filter, callback) {
   if (_.has(tParams, 'streams') && tParams.streams.length === 0) { // dead end filter..
     return callback(null, []);
   }
-  var url = '/events?' + Utility.getQueryParametersString(tParams);
+  var url = '/events?' + utility.getQueryParametersString(tParams);
   this.connection.request('GET', url, callback, null);
 };
 

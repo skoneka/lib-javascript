@@ -1,7 +1,7 @@
 /* global confirm, document, navigator, location, window */
 
-var Utility = require('../utility/Utility.js');
-var System = require('../system/System.js');
+var utility = require('../utility/utility.js');
+var system = require('../system/system.js');
 var Connection = require('../Connection.js');
 var _ = require('underscore');
 
@@ -40,19 +40,19 @@ _.extend(Auth.prototype, {
  * @access private
  */
 Auth._init = function (i) {
-  // start only if Utility is loaded
-  if (typeof Utility === 'undefined') {
+  // start only if utility is loaded
+  if (typeof utility === 'undefined') {
     if (i > 100) {
-      throw new Error('Cannot find Utility');
+      throw new Error('Cannot find utility');
     }
     i++;
     return setTimeout('Auth._init(' + i + ')', 10 * i);
   }
 
-  Utility.loadExternalFiles(
+  utility.loadExternalFiles(
     Auth.prototype.config.sdkFullPath + '/media/buttonSigninPryv.css', 'css');
 
-  if (Utility.testIfStagingFromHostname()) {
+  if (utility.testIfStagingFromHostname()) {
     console.log('staging mode');
     Auth.prototype.config.registerURL = Auth.prototype.config.registerStagingURL;
   }
@@ -69,7 +69,7 @@ Auth._init(1);
 Auth.prototype.uiSupportedLanguages = ['en', 'fr'];
 
 Auth.prototype.uiButton = function (onClick, buttonText) {
-  if (Utility.supportCSS3()) {
+  if (utility.supportCSS3()) {
     return '<div id="pryv-access-btn" class="pryv-access-btn-signin" data-onclick-action="' +
       onClick + '">' +
       '<a class="pryv-access-btn pryv-access-btn-pryv-access-color" href="#">' +
@@ -160,7 +160,7 @@ Auth.prototype.updateButton = function (html) {
   this.buttonHTML = html;
   if (! this.settings.spanButtonID) { return; }
 
-  Utility.domReady(function () {
+  utility.domReady(function () {
     if (! this.spanButton) {
       var element = document.getElementById(this.settings.spanButtonID);
       if (typeof(element) === 'undefined' || element === null) {
@@ -244,8 +244,8 @@ Auth.prototype.stateNeedSignin = function () {
 //STATE 2 User logged in and authorized
 Auth.prototype.stateAccepted = function () {
   if (this.cookieEnabled) {
-    Utility.docCookies.setItem('access_username', this.state.username, 3600);
-    Utility.docCookies.setItem('access_token', this.state.token, 3600);
+    utility.docCookies.setItem('access_username', this.state.username, 3600);
+    utility.docCookies.setItem('access_token', this.state.token, 3600);
   }
   this.updateButton(this.uiInButton(this.state.username));
 
@@ -274,8 +274,8 @@ Auth.prototype.stateRefused = function () {
 Auth.prototype.logout = function () {
   this.ignoreStateFromURL = true;
   if (this.cookieEnabled) {
-    Utility.docCookies.removeItem('access_username');
-    Utility.docCookies.removeItem('access_token');
+    utility.docCookies.removeItem('access_username');
+    utility.docCookies.removeItem('access_token');
   }
   this.state = null;
   if (this.settings.callbacks.accepted) {
@@ -315,7 +315,7 @@ Auth.prototype.setup = function (settings) {
   //TODO check settings..
 
   settings.languageCode =
-    Utility.getPreferredLanguage(this.uiSupportedLanguages, settings.languageCode);
+    utility.getPreferredLanguage(this.uiSupportedLanguages, settings.languageCode);
 
   //-- returnURL
   settings.returnURL = settings.returnURL || 'auto#';
@@ -330,7 +330,7 @@ Auth.prototype.setup = function (settings) {
     // set self as return url?
     var returnself = (settings.returnURL.indexOf('self') === 0);
     if (settings.returnURL.indexOf('auto') === 0) {
-      returnself = Utility.browserIsMobileOrTablet();
+      returnself = utility.browserIsMobileOrTablet();
       if (!returnself) { settings.returnURL = false; }
     }
 
@@ -368,8 +368,8 @@ Auth.prototype.setup = function (settings) {
 
   this.connection = new Connection(null, null, {ssl: this.config.registerURL.ssl, domain: domain});
   // look if we have a returning user (document.cookie)
-  var cookieUserName = this.cookieEnabled ? Utility.docCookies.getItem('access_username') : false;
-  var cookieToken = this.cookieEnabled ? Utility.docCookies.getItem('access_token') : false;
+  var cookieUserName = this.cookieEnabled ? utility.docCookies.getItem('access_username') : false;
+  var cookieToken = this.cookieEnabled ? utility.docCookies.getItem('access_token') : false;
 
   // look in the URL if we are returning from a login process
   var stateFromURL =  this._getStatusFromURL();
@@ -396,7 +396,7 @@ Auth.prototype.setup = function (settings) {
       }.bind(this)
     };
 
-    System.request(_.extend(pack, this.config.registerURL));
+    system.request(_.extend(pack, this.config.registerURL));
 
 
   }
@@ -425,7 +425,7 @@ Auth.prototype.poll = function poll() {
       }.bind(this)
     };
 
-    System.request(_.extend(pack, this.config.registerURL));
+    system.request(_.extend(pack, this.config.registerURL));
 
 
     this.pollingID = setTimeout(this.poll.bind(this), this.state.poll_rate_ms);

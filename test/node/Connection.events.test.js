@@ -1,6 +1,6 @@
 /* global before, describe, it */
 var Pryv = require('../../source/main'),
-  Utility = require('../../source/utility/Utility'),
+  utility = require('../../source/utility/utility'),
   nock = require('nock'),
   should = require('should'),
   _ = require('underscore'),
@@ -52,7 +52,7 @@ var testEvents = function (preFetchStructure) {
 
       it('should call the proper API method', function (done) {
         nock('https://' + username + '.' + settings.domain)
-          .get('/events?' + Utility.getQueryParametersString(defaultFilter.settings))
+          .get('/events?' + utility.getQueryParametersString(defaultFilter.settings))
           .reply(200, response);
         connection.events._get(defaultFilter, function (err, result) {
           should.not.exist(err);
@@ -67,7 +67,7 @@ var testEvents = function (preFetchStructure) {
     describe('get() ' + localEnabledStr, function () {
       it('should get Event objects for request', function (done) {
         nock('https://' + username + '.' + settings.domain)
-          .get('/events?' + Utility.getQueryParametersString(defaultFilter.settings))
+          .get('/events?' + utility.getQueryParametersString(defaultFilter.settings))
           .reply(200, responses.events);
         connection.events.get(defaultFilter, function (err, result) {
           should.not.exist(err);

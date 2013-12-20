@@ -1,5 +1,5 @@
 var _ = require('underscore'),
-  System = require('../system/System.js'),
+  system = require('../system/system.js'),
   Monitor = require('../Monitor.js');
 
 /**
@@ -56,7 +56,7 @@ ConnectionMonitors.prototype._startMonitoring = function (callback) {
     auth : this.connection.auth
   };
 
-  this.ioSocket = System.ioConnect(settings);
+  this.ioSocket = system.ioConnect(settings);
 
   this.ioSocket.on('connect', function () {
     _.each(this._monitors, function (monitor) { monitor._onIoConnect(); });

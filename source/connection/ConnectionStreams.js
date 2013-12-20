@@ -1,5 +1,5 @@
 var _ = require('underscore'),
-    Utility = require('../utility/Utility.js'),
+    utility = require('../utility/utility.js'),
     Stream = require('../Stream.js');
 
 /**
@@ -93,7 +93,7 @@ ConnectionStreams.prototype.getById = function (streamId) {
  * @param callback
  */
 ConnectionStreams.prototype._getData = function (opts, callback) {
-  var url = opts ? '/streams?' + Utility.getQueryParametersString(opts) : '/streams';
+  var url = opts ? '/streams?' + utility.getQueryParametersString(opts) : '/streams';
   this.connection.request('GET', url, callback, null);
 };
 
@@ -213,7 +213,7 @@ ConnectionStreams.prototype.getDisplayTree = function (arrayOfStreams) {
 };
 
 
-// TODO Validate that it's the good place for them .. Could have been in Stream or Utility
+// TODO Validate that it's the good place for them .. Could have been in Stream or utility
 ConnectionStreams.Utils = {
 
 

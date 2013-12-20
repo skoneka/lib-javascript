@@ -1,16 +1,16 @@
-//TODO: consider merging System into Utility
+//TODO: consider merging system into utility
 
-var Utility = require('../utility/Utility.js');
+var utility = require('../utility/utility.js');
 
 
 var socketIO = require('socket.io-client');
 
 
-var System =
-  module.exports =  Utility.isBrowser() ?
-    require('./System-browser.js') : require('./System-node.js');
+var system =
+  module.exports =  utility.isBrowser() ?
+    require('./system-browser.js') : require('./system-node.js');
 
-System.ioConnect = function (settings) {
+system.ioConnect = function (settings) {
   var httpMode = settings.ssl ? 'https' : 'http';
   var url = httpMode + '://' + settings.host + ':' + settings.port + '' +
     settings.path + '?auth=' + settings.auth + '&resource=' + settings.namespace;
