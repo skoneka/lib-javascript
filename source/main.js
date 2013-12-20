@@ -1,13 +1,12 @@
 module.exports = {
+  // TODO: fix singleton (see with me [sgoumaz] if needed)
+  Auth: require('./auth/Auth.js'),
   Connection: require('./Connection.js'),
   Event: require('./Event.js'),
   Stream: require('./Stream.js'),
   Filter: require('./Filter.js'),
-  System: require('./system/System.js'),
-  // TODO: rename this to auth and fix singleton (see with me [sgoumaz] if needed)
-  access: require('./auth/Auth.js'),
-  Utility: require('./utility/Utility.js'),
-  Messages: require('./Messages.js'),
+  system: require('./system/system.js'),
+  utility: require('./utility/utility.js'),
 
   eventTypes: require('./eventTypes.js')
 };

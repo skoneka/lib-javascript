@@ -6,7 +6,6 @@ var _ = require('underscore'),
   ConnectionMonitors = require('./connection/ConnectionMonitors.js'),
   Datastore = require('./Datastore.js');
 
-
 /**
  * @class Connection
  * Create an instance of Connection to Pryv API.
@@ -29,7 +28,7 @@ var _ = require('underscore'),
  * @param {boolean} [settings.ssl = true] Use ssl (https) or no
  * @param {string} [settings.extraPath = ''] append to the connections. Must start with a '/'
  */
-function Connection(username, auth, settings) {
+var Connection = module.exports = function Connection(username, auth, settings) {
   this._serialId = Connection._serialCounter++;
 
   this.username = username;
@@ -79,7 +78,7 @@ function Connection(username, auth, settings) {
 
   this.datastore = null;
 
-}
+};
 
 Connection._serialCounter = 0;
 
@@ -259,9 +258,6 @@ Object.defineProperty(Connection.prototype, 'displayId', {
 Object.defineProperty(Connection.prototype, 'serialId', {
   get: function () { return 'C' + this._serialId; }
 });
-
-module.exports = Connection;
-
 
 /**
  * Called with the desired Streams as result.

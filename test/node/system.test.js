@@ -1,8 +1,8 @@
 /*global require, describe, it */
-var System = require('../../source/main').System,
+var system = require('../../source/main').system,
     nock =   require('nock');
 
-describe('System', function () {
+describe('system', function () {
   var testPack = {
     type : 'GET',
     host : 'test.com',
@@ -36,7 +36,7 @@ describe('System', function () {
         request.code.should.eql(200);
         done();
       };
-      System.request(testPack);
+      system.request(testPack);
     });
 
   });

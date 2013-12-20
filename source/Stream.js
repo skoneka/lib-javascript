@@ -1,7 +1,7 @@
 
 var _ = require('underscore');
 
-var Stream = module.exports = function (connection, data) {
+var Stream = module.exports = function Stream(connection, data) {
   this.connection = connection;
 
   this.serialId = this.connection.serialId + '>S' + this.connection._streamSerialCounter++;

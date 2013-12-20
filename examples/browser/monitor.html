@@ -31,18 +31,18 @@
   var monitor = api.monitor(filter);
 
 
-  // ------ register an onLoad event that will be called once to initialize the data ----//
-  function onLoad(events) {
+  // ------ register an onStarted event that will be called once to initialize the data ----//
+  function onStarted(events) {
     console.log('monitor loaded');
     for (var i = 0; i < events.length; i++) {
       logEventChange('load +', events[i]);
     }
   }
-  monitor.addEventListener(Pryv.Messages.Monitor.ON_LOAD, onLoad);
+  monitor.addEventListener('started', onStarted);
 
-  // ------ register an onEventChange that will be called each time
+  // ------ register an onEventsChanged that will be called each time
   //                                   events changed on the server ----//
-  function onEventChange(changes) {
+  function onEventsChanged(changes) {
     var states = {modified: '~', trashed: '-', created: '+'};
     for (var key in states) {
       if( states.hasOwnProperty( key ) ) {
@@ -52,12 +52,12 @@
       }
     }
   }
-  monitor.addEventListener(Pryv.Messages.Monitor.ON_EVENT_CHANGE, onEventChange);
+  monitor.addEventListener('eventsChanged', onEventsChanged);
 
 
-  // ------ register an onFilterChange that will be called each time
+  // ------ register an onFilterChanged that will be called each time
   //                                   events changed due to the filter ----//
-  function onFilterChange(changes, signal) {
+  function onFilterChanged(changes, signal) {
     console.log(changes);
     var states = {enter: ' +', leave: ' -'};
     for (var key in states) {
@@ -68,7 +68,7 @@
       }
     }
   }
-  monitor.addEventListener(Pryv.Messages.Monitor.ON_FILTER_CHANGE, onFilterChange);
+  monitor.addEventListener('filterChanged', onFilterChanged);
 
   // ------ once all event listeners have been registered start the monitor
   //

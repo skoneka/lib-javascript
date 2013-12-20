@@ -34,7 +34,7 @@ SignalEmitter.Messages = {
 
 /**
  * Add an event listener
- * @param signal one of  MSGs.SIGNAL.*.*
+ * @param signal one of  Messages.SIGNAL.*.*
  * @param callback function(content) .. content vary on each signal.
  * If the callback returns SignalEmitter.Messages.UNREGISTER_LISTENER it will be removed
  * @return the callback function for further reference

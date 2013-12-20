@@ -1,9 +1,9 @@
 /* global describe, it */
 
 var should = require('should'),
-    Utility = require('../../source/utility/Utility.js');
+    utility = require('../../source/main').utility;
 
-describe('Utility', function () {
+describe('utility', function () {
   var params = {
     id : 'test-id',
     limit: 20,
@@ -19,7 +19,7 @@ describe('Utility', function () {
     var validQuery = 'id=test-id&limit=20&array%5B%5D=a-0&array%5B%5D=a-1';
 
     it('should return valid query', function () {
-      Utility.getQueryParametersString(params).should.eql(validQuery);
+      utility.getQueryParametersString(params).should.eql(validQuery);
     });
 
   });
@@ -27,7 +27,7 @@ describe('Utility', function () {
   describe('mergeAndClean()', function () {
 
     it('should return merged object without null value', function () {
-      var res = Utility.mergeAndClean(params, paramsToMerge);
+      var res = utility.mergeAndClean(params, paramsToMerge);
       should.exist(res);
       should.not.exist(res.opt);
       should.not.exist(res.username);

@@ -1,7 +1,6 @@
-var _ = require('underscore');
-var SignalEmitter = require('./utility/SignalEmitter.js');
-var MSGs =  require('./Messages.js');
-var MyMsgs = MSGs.Monitor;
+var _ = require('underscore'),
+    SignalEmitter = require('./utility/SignalEmitter.js'),
+    Filter = require('./Filter.js');
 
 
 var EXTRA_ALL_EVENTS = {state : 'all', modifiedSince : -100000000 };
@@ -12,7 +11,7 @@ var EXTRA_ALL_EVENTS = {state : 'all', modifiedSince : -100000000 };
  * @constructor
  */
 function Monitor(connection, filter) {
-  SignalEmitter.extend(this, MyMsgs, 'Monitor');
+  SignalEmitter.extend(this, Messages, 'Monitor');
   this.connection = connection;
   this.id = 'M' + Monitor.serial++;
 
@@ -24,13 +23,25 @@ function Monitor(connection, filter) {
     throw new Error('Monitors only work for default state, not trashed or all');
   }
 
-  this.filter.addEventListener(MSGs.Filter.ON_CHANGE, this._onFilterChange.bind(this));
+  this.filter.addEventListener(Filter.Messages.ON_CHANGE, this._onFilterChange.bind(this));
   this._events = null;
 
 }
 
 Monitor.serial = 0;
 
+var Messages = Monitor.Messages = {
+  /** content: events **/
+  ON_LOAD : 'started',
+/** content: error **/
+  ON_ERROR : 'error',
+/** content: { enter: [], leave: [], change } **/
+  ON_EVENT_CHANGE : 'eventsChanged',
+/** content: streams **/
+  ON_STRUCTURE_CHANGE : 'streamsChanged',
+/** content: ? **/
+  ON_FILTER_CHANGE : 'filterChanged'
+};
 
 // ----------- prototype  public ------------//
 
@@ -69,7 +80,7 @@ Monitor.prototype._onIoError = function (error) {
   console.log('Monitor _onIoError' + error);
 };
 Monitor.prototype._onIoEventsChanged = function () {
-  this._connectionEventsGetChanges(MyMsgs.ON_EVENT_CHANGE);
+  this._connectionEventsGetChanges(Messages.ON_EVENT_CHANGE);
 };
 Monitor.prototype._onIoStreamsChanged = function () { };
 
@@ -88,7 +99,7 @@ Monitor.prototype._onFilterChange = function (signal, batchId, batch) {
 
   var processLocalyOnly = 0;
   var foundsignal = 0;
-  if (signal.signal === MSGs.Filter.DATE_CHANGE) {  // only load events if date is wider
+  if (signal.signal === Filter.Messages.DATE_CHANGE) {  // only load events if date is wider
     foundsignal = 1;
     console.log('** DATE CHANGE ', changes.timeFrame);
     if (changes.timeFrame === 0) {
@@ -100,7 +111,7 @@ Monitor.prototype._onFilterChange = function (signal, batchId, batch) {
 
   }
 
-  if (signal.signal === MSGs.Filter.STREAMS_CHANGE) {
+  if (signal.signal === Filter.Messages.STREAMS_CHANGE) {
     foundsignal = 1;
     console.log('** STREAMS_CHANGE', changes.streams);
     if (changes.streams === 0) {
@@ -121,9 +132,9 @@ Monitor.prototype._onFilterChange = function (signal, batchId, batch) {
 
 
   if (processLocalyOnly) {
-    this._refilterLocaly(MyMsgs.ON_FILTER_CHANGE, {filterInfos: signal}, batch);
+    this._refilterLocaly(Messages.ON_FILTER_CHANGE, {filterInfos: signal}, batch);
   } else {
-    this._connectionEventsGetAllAndCompare(MyMsgs.ON_FILTER_CHANGE, {filterInfos: signal}, batch);
+    this._connectionEventsGetAllAndCompare(Messages.ON_FILTER_CHANGE, {filterInfos: signal}, batch);
   }
 };
 
@@ -151,11 +162,11 @@ Monitor.prototype._initEvents = function () {
   this._events = { active : {}};
   this.connection.events.get(this.filter.getData(true, EXTRA_ALL_EVENTS),
     function (error, events) {
-      if (error) { this._fireEvent(MyMsgs.ON_ERROR, error); }
+      if (error) { this._fireEvent(Messages.ON_ERROR, error); }
       _.each(events, function (event) {
         this._events.active[event.id] = event;
       }.bind(this));
-      this._fireEvent(MyMsgs.ON_LOAD, events);
+      this._fireEvent(Messages.ON_LOAD, events);
     }.bind(this));
 };
 
@@ -169,7 +180,7 @@ Monitor.prototype._connectionEventsGetChanges = function (signal) {
   this.connection.events.get(this.filter.getData(true, options),
     function (error, events) {
       if (error) {
-        this._fireEvent(MyMsgs.ON_ERROR, error);
+        this._fireEvent(Messages.ON_ERROR, error);
       }
 
       _.each(events, function (event) {
@@ -202,7 +213,7 @@ Monitor.prototype._connectionEventsGetAllAndCompare = function (signal, extracon
 
   this.connection.events.get(this.filter.getData(true, EXTRA_ALL_EVENTS),
     function (error, events) {
-      if (error) { this._fireEvent(MyMsgs.ON_ERROR, error); }
+      if (error) { this._fireEvent(Messages.ON_ERROR, error); }
       _.each(events, function (event) {
         if (this._events.active[event.id]) {  // already known event we don't care
           delete toremove[event.id];

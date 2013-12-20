@@ -77,4 +77,5 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-jsdoc');
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.registerTask('default', [ 'jshint', 'browserify', 'copy', 'mochaTest', 'jsdoc' ]);
+  grunt.registerTask('test', [ 'jshint', 'browserify', 'copy', 'mochaTest' ]);
 };

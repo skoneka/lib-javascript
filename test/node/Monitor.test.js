@@ -27,28 +27,23 @@ var testMonitor = function (preFetchStructure) {
     var filter = new Pryv.Filter({limit : 20 });
     var monitor = connection.monitor(filter);
 
-    var eventsListeners = {};
-
-    //it('signal: events loaded', function (done) {
-    eventsListeners.onLoad =  function (events) {
+    function onStarted(events) {
       console.log('first event received :' + events.length);
-      //done();
-    };
-    //});
-
-    function onEventChange(/*changes*/) {
-      console.log('onEventChange');
     }
 
-    function onFilterChange(changes) {
+    function onEventsChanged(/*changes*/) {
+      console.log('onEventsChanged');
+    }
+
+    function onFilterChanged(changes) {
       console.log(changes);
 
     }
 
     it('add event listeners and start', function (done) {
-      monitor.addEventListener(Pryv.Messages.Monitor.ON_LOAD, eventsListeners.onLoad);
-      monitor.addEventListener(Pryv.Messages.Monitor.ON_EVENT_CHANGE, onEventChange);
-      monitor.addEventListener(Pryv.Messages.Monitor.ON_FILTER_CHANGE, onFilterChange);
+      monitor.addEventListener('started', onStarted);
+      monitor.addEventListener('eventsChanged', onEventsChanged);
+      monitor.addEventListener('filterChanged', onFilterChanged);
       monitor.start(function (error) {
         console.log('monitor started ' + error);
         done();

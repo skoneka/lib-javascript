@@ -1,10 +1,11 @@
-var _ = require('underscore');
+var _ = require('underscore'),
+    SignalEmitter = require('./utility/SignalEmitter.js');
 
-var SignalEmitter = require('./utility/SignalEmitter.js');
-var MSGs = require('./Messages.js').Filter;
-
-function Filter(settings) {
-  SignalEmitter.extend(this, MSGs, 'Filter');
+/**
+ * @constructor
+ */
+var Filter = module.exports = function Filter(settings) {
+  SignalEmitter.extend(this, Messages, 'Filter');
 
   this._settings = _.extend({
     //TODO: set default values
@@ -17,8 +18,26 @@ function Filter(settings) {
     modifiedSince: null,
     state: null
   }, settings);
-}
+};
 
+var Messages = Filter.Messages = {
+  /**
+   * generic change event called on any change
+   * content: {filter, signal, content}
+   **/
+  ON_CHANGE : 'changed',
+  /**
+   * called on streams changes
+   * content: streams
+   */
+  STREAMS_CHANGE : 'streamsChanged',
+
+  /*
+   * called on date changes
+   * content: streams
+   */
+  DATE_CHANGE : 'timeFrameChanged'
+};
 
 // TODO
 // redundant with get
@@ -152,7 +171,9 @@ Filter.prototype.getData = function (ignoreNulls, withDelta) {
 };
 
 Filter.prototype._fireFilterChange = function (signal, content, batch) {
-  this._fireEvent(MSGs.ON_CHANGE, {filter: this, signal: signal, content: content}, batch);//generic
+  // generic
+  this._fireEvent(Messages.ON_CHANGE, {filter: this, signal: signal, content: content}, batch);
+  // specific
   this._fireEvent(signal, content, batch);
 };
 
@@ -195,7 +216,7 @@ Filter.prototype._setValue = function (key, newValue, batch) {
     if (this._settings.fromTime !== newValue[0] || this._settings.toTime !== newValue[1]) {
       this._settings.fromTime = newValue[0];
       this._settings.toTime = newValue[1];
-      this._fireFilterChange(MSGs.DATE_CHANGE, this.timeFrameST, batch);
+      this._fireFilterChange(Messages.DATE_CHANGE, this.timeFrameST, batch);
     }
     if (waitForMe) { waitForMe.done(); }
     return;
@@ -214,7 +235,7 @@ Filter.prototype._setValue = function (key, newValue, batch) {
 
     // TODO check that this stream is valid
     this._settings.streams = newValue;
-    this._fireFilterChange(MSGs.STREAMS_CHANGE, this.streams, batch);
+    this._fireFilterChange(Messages.STREAMS_CHANGE, this.streams, batch);
     if (waitForMe) { waitForMe.done(); }
     return;
   }
@@ -288,8 +309,6 @@ Filter.prototype.focusedOnSingleStream = function () {
   }
   return null;
 };
-
-module.exports = Filter;
 
 /**
  * An pryv Filter or an object corresponding at what we can get with Filter.getData().
