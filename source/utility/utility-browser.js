@@ -1,7 +1,10 @@
 /* global document, navigator */
 /* jshint -W101*/
 
-var system = require('../system/system.js');
+/*
+ return error, was used only by getURLContent() and  loadURLContentInElementId() but never used outside the lib
+ var system = require('../system/system.js');
+ */
 
 /**
  * Browser only utils
@@ -142,6 +145,7 @@ utility.loadExternalFiles = function (filename, type)  {
  * @param {Function} callBack  function(error,content,xhr)
  * @return {Object} xhr request
  */
+/*  UNUSED function
 utility.getURLContent = function (url, callback) {
 
   function onSuccess(result, xhr) {
@@ -160,11 +164,12 @@ utility.getURLContent = function (url, callback) {
     error: onError
   });
 };
-
+*/
 /**
  * Load the content of a URL into a div
  * !! No error will go to the console.
  */
+/*  UNUSED function
 utility.loadURLContentInElementId = function (url, elementId, next) {
   next = next || function () {};
   var content = document.getElementById(elementId);
@@ -178,6 +183,7 @@ utility.loadURLContentInElementId = function (url, elementId, next) {
     }
   );
 };
+*/
 
 
 
