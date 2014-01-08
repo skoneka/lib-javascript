@@ -3,6 +3,8 @@ var _ = require('underscore'),
   ConnectionEvents = require('./connection/ConnectionEvents.js'),
   ConnectionStreams = require('./connection/ConnectionStreams.js'),
   ConnectionProfile = require('./connection/ConnectionProfile.js'),
+  ConnectionBookmarks = require('./connection/ConnectionBookmarks.js'),
+  ConnectionAccesses = require('./connection/ConnectionAccesses.js'),
   ConnectionMonitors = require('./connection/ConnectionMonitors.js'),
   Datastore = require('./Datastore.js');
 
@@ -72,6 +74,16 @@ var Connection = module.exports = function Connection(username, auth, settings) 
   */
   this.profile = new ConnectionProfile(this);
   /**
+  * Manipulate bookmarks for this connection
+  * @type {ConnectionProfile}
+  */
+  this.bookmarks = new ConnectionBookmarks(this);
+  /**
+  * Manipulate accesses for this connection
+  * @type {ConnectionProfile}
+  */
+  this.accesses = new ConnectionAccesses(this);
+  /**
    * Manipulate this connection monitors
    */
   this.monitors = new ConnectionMonitors(this);
@@ -113,7 +125,10 @@ Connection.prototype.accessInfo = function (callback) {
   if (this._accessInfo) { return this._accessInfo; }
   var url = '/access-info';
   this.request('GET', url, function (error, result) {
-    if (! error) {
+    if (result.id) {
+      error = result;
+    }
+    if (! error && !result.id) {
       this._accessInfo = result;
     }
     return callback(error, result);
