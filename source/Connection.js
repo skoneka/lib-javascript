@@ -1,5 +1,6 @@
 var _ = require('underscore'),
   system = require('./system/system.js'),
+  utility = require('./utility/utility.js'),
   ConnectionEvents = require('./connection/ConnectionEvents.js'),
   ConnectionStreams = require('./connection/ConnectionStreams.js'),
   ConnectionProfile = require('./connection/ConnectionProfile.js'),
@@ -30,11 +31,26 @@ var _ = require('underscore'),
  * @param {boolean} [settings.ssl = true] Use ssl (https) or no
  * @param {string} [settings.extraPath = ''] append to the connections. Must start with a '/'
  */
-var Connection = module.exports = function Connection(username, auth, settings) {
+var Connection = module.exports = function Connection() {
+  var settings;
+  if (!arguments[0] || typeof arguments[0] === 'string') {
+    console.warn('new Connection(username, auth, settings) is deprecated.',
+      'Please use new Connection(settings)', arguments);
+    this.username = arguments[0];
+    this.auth = arguments[1];
+    settings = arguments[2];
+  } else {
+    settings = arguments[0];
+    this.username = settings.username;
+    this.auth = settings.auth;
+    if (settings.url) {
+      this.username = utility.getUsernameFromUrl(settings.url);
+      settings.port = utility.getPortFromUrl(settings.url) || 443;
+      settings.extraPath = utility.getPathFromUrl(settings.url);
+      settings.ssl = utility.isUrlSsl(settings.url);
+    }
+  }
   this._serialId = Connection._serialCounter++;
-
-  this.username = username;
-  this.auth = auth;
 
   this.settings = _.extend({
     port: 443,
@@ -44,7 +60,6 @@ var Connection = module.exports = function Connection(username, auth, settings) 
     staging: false
   }, settings);
 
-  if (settings && settings.staging) { this.settings.domain = 'pryv.in'; }
 
   this.serverInfos = {
     // nowLocalTime - nowServerTime
@@ -77,7 +92,7 @@ var Connection = module.exports = function Connection(username, auth, settings) 
   * Manipulate bookmarks for this connection
   * @type {ConnectionProfile}
   */
-  this.bookmarks = new ConnectionBookmarks(this);
+  this.bookmarks = new ConnectionBookmarks(this, Connection);
   /**
   * Manipulate accesses for this connection
   * @type {ConnectionProfile}
@@ -125,7 +140,7 @@ Connection.prototype.accessInfo = function (callback) {
   if (this._accessInfo) { return this._accessInfo; }
   var url = '/access-info';
   this.request('GET', url, function (error, result) {
-    if (result.id) {
+    if (result && result.id) {
       error = result;
     }
     if (! error && !result.id) {
@@ -203,7 +218,7 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
 
   var request = system.request({
     method : method,
-    host : this.username + '.' + this.settings.domain,
+    host : this._getDomain(),
     port : this.settings.port,
     ssl : this.settings.ssl,
     path : this.settings.extraPath + path,
@@ -219,14 +234,19 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
    * @this {Connection}
    */
   function onSuccess(result, requestInfos) {
-    this.serverInfos.lastSeenLT = (new Date()).getTime();
-    this.serverInfos.apiVersion = requestInfos.headers['api-version'] ||
-      this.serverInfos.apiVersion;
-    if (_.has(requestInfos.headers, 'server-time')) {
-      this.serverInfos.deltaTime = (this.serverInfos.lastSeenLT / 1000) -
-        requestInfos.headers['server-time'];
+    var error = null;
+    if (requestInfos.code >= 400) {
+      error = result;
+    } else {
+      this.serverInfos.lastSeenLT = (new Date()).getTime();
+      this.serverInfos.apiVersion = requestInfos.headers['api-version'] ||
+        this.serverInfos.apiVersion;
+      if (_.has(requestInfos.headers, 'server-time')) {
+        this.serverInfos.deltaTime = (this.serverInfos.lastSeenLT / 1000) -
+          requestInfos.headers['server-time'];
+      }
     }
-    callback(null, result);
+    callback(error, result);
   }
 
   function onError(error /*, requestInfo*/) {
@@ -235,7 +255,14 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
   return request;
 };
 
-
+Connection.prototype._getDomain = function () {
+  if (this.settings.url) {
+    return utility.getHostFromUrl(this.settings.url);
+  } else {
+    var host = this.settings.staging ? 'pryv.in' : this.settings.domain;
+    return this.username ? this.username + '.' + host : host;
+  }
+};
 
 /**
  * @property {string} Connection.id an unique id that contains all needed information to access
@@ -244,7 +271,7 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
 Object.defineProperty(Connection.prototype, 'id', {
   get: function () {
     var id = this.settings.ssl ? 'https://' : 'http://';
-    id += this.username + '.' + this.settings.domain + ':' +
+    id += this._getDomain() + ':' +
       this.settings.port + this.settings.extraPath + '/?auth=' + this.auth;
     return id;
   },
@@ -273,7 +300,6 @@ Object.defineProperty(Connection.prototype, 'displayId', {
 Object.defineProperty(Connection.prototype, 'serialId', {
   get: function () { return 'C' + this._serialId; }
 });
-
 /**
  * Called with the desired Streams as result.
  * @callback Connection~accessInfoCallback

@@ -18,43 +18,118 @@ var utility = module.exports = {};
  * Test if hostname is a *.rec.la or pryv.li if yes. it assumes that the client
  * runs on a staging version
  */
-utility.testIfStagingFromHostname = function () {
-  return utility.endsWith(document.location.hostname, 'pryv.li') ||
-    utility.endsWith(document.location.hostname, 'rec.la');
+utility.testIfStagingFromUrl = function (url) {
+  var location;
+  if (url) {
+    location = document.createElement('a');
+    location.href = url;
+  } else {
+    location = document.location;
+  }
+  return utility.endsWith(location.hostname, 'pryv.li') ||
+    utility.endsWith(location.hostname, 'rec.la');
 };
 
-utility.getUsernameFromHostname = function () {
-  var hostname = document.location.hostname.split('.'),
+utility.getUsernameFromUrl = function (url) {
+  var location;
+  if (url) {
+    location = document.createElement('a');
+    location.href = url;
+  } else {
+    location = document.location;
+  }
+  var hostname = location.hostname.split('.'),
     recIndex = hostname.indexOf('rec'),
     pryvIndex = hostname.indexOf('pryv');
   if (recIndex <= 0 && pryvIndex <= 0) {
-    console.log('getUsernameFromHostname:', 'unknown hostname:', hostname);
+    console.log('getUsernameFromUrl:', 'unknown hostname:', hostname);
     return null;
   }
   var usernameIndex = pryvIndex > 0 ? pryvIndex - 1: recIndex - 1;
   if (hostname[usernameIndex].match(utility.regex.username)) {
     return hostname[usernameIndex];
   } else {
-    console.log('getUsernameFromHostname:', 'invalid username:', hostname[usernameIndex]);
+    console.log('getUsernameFromUrl:', 'invalid username:', hostname[usernameIndex]);
     return null;
   }
 };
 
-utility.getSharingsFromPath = function () {
-  var username = utility.getUsernameFromHostname();
+utility.getSharingsFromUrl = function (url) {
+  var username = utility.getUsernameFromUrl(url);
   if (!username) {
     return [];
   }
-  var path = document.location.hash.split('/'),
+  var location;
+  if (url) {
+    location = document.createElement('a');
+    location.href = url;
+  } else {
+    location = document.location;
+  }
+  var path = location.hash.split('/'),
     sharingsIndex = path.indexOf('sharings');
   if (sharingsIndex !== -1) {
     return path.splice(sharingsIndex + 1).filter(function (el) { return el.length > 0; });
   } else {
     return [];
   }
-
 };
 
+utility.getParamsFromUrl = function (url) {
+  var location;
+  if (url) {
+    location = document.createElement('a');
+    location.href = url;
+  } else {
+    location = document.location;
+  }
+  var str = location.search;
+  var objURL = {};
+  str.replace(new RegExp('([^?=&]+)(=([^&]*))?', 'g'), function ($0, $1, $2, $3) {
+    objURL[$1] = $3;
+  });
+  return objURL;
+};
+utility.getPathFromUrl = function (url) {
+  var location;
+  if (url) {
+    location = document.createElement('a');
+    location.href = url;
+  } else {
+    location = document.location;
+  }
+  return location.pathname === '/' ? '' : location.pathname;
+};
+utility.getHostFromUrl = function (url) {
+  var location;
+  if (url) {
+    location = document.createElement('a');
+    location.href = url;
+  } else {
+    location = document.location;
+  }
+  return location.hostname;
+};
+utility.getPortFromUrl = function (url) {
+  var location;
+  if (url) {
+    location = document.createElement('a');
+    location.href = url;
+  } else {
+    location = document.location;
+  }
+  return location.port === '' ? null : location.port;
+};
+utility.isUrlSsl = function (url) {
+  var location;
+  if (url) {
+    location = document.createElement('a');
+    location.href = url;
+  } else {
+    location = document.location;
+  }
+  return location.protocol === 'https:';
+};
 /**
  *  return true if browser is seen as a mobile or tablet
  *  list grabbed from https://github.com/codefuze/js-mobile-tablet-redirect/blob/master/mobile-redirect.js

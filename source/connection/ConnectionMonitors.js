@@ -23,6 +23,10 @@ function ConnectionMonitors(connection) {
  * @returns {Monitor}
  */
 ConnectionMonitors.prototype.create = function (filter) {
+  if (!this.connection.username) {
+    console.error('Cannot create a monitor for a connection without username:', this.connection);
+    return null;
+  }
   return new Monitor(this.connection, filter);
 };
 
@@ -44,7 +48,10 @@ ConnectionMonitors.prototype._stopMonitoring = function (/*callback*/) {
  * @return {Object} XHR or Node http request
  */
 ConnectionMonitors.prototype._startMonitoring = function (callback) {
-
+  if (!this.connection.username) {
+    console.error('Cannot start monitoring for a connection without username:', this.connection);
+    return callback(true);
+  }
   if (this.ioSocket) { return callback(null/*, ioSocket*/); }
 
   var settings = {

@@ -52,7 +52,7 @@ Auth._init = function (i) {
   utility.loadExternalFiles(
     Auth.prototype.config.sdkFullPath + '/media/buttonSigninPryv.css', 'css');
 
-  if (utility.testIfStagingFromHostname()) {
+  if (utility.testIfStagingFromUrl()) {
     console.log('staging mode');
     Auth.prototype.config.registerURL = Auth.prototype.config.registerStagingURL;
   }
@@ -307,8 +307,8 @@ Auth.prototype.login = function (settings) {
     username : settings.username,
     password : settings.password
   };
-  var path = utility.testIfStagingFromHostname() ? '/auth/login' : '/admin/login';
-  this.config.registerURL.host = utility.testIfStagingFromHostname() ?
+  var path = utility.testIfStagingFromUrl() ? '/auth/login' : '/admin/login';
+  this.config.registerURL.host = utility.testIfStagingFromUrl() ?
     settings.username + '.pryv.in' : settings.username + '.pryv.io';
   var domain = (this.config.registerURL.host === 'reg.pryv.io') ? 'pryv.io' : 'pryv.in';
   this.connection = new Connection(null, null, {
