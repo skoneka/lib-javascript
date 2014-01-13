@@ -19,7 +19,6 @@ Bookmarks.prototype.get = function (callback) {
   this.connection.request('GET', apiPathBookmarks, function (error, bookmarks) {
     var result = [];
     _.each(bookmarks, function (bookmark) {
-      console.log('bookmark GET', Connection);
       var conn =  new Connection({
         auth: bookmark.accessToken,
         url: bookmark.url,
@@ -28,7 +27,6 @@ Bookmarks.prototype.get = function (callback) {
       });
       result.push(conn);
     });
-    console.log('BK GET', result);
     callback(error, result);
   });
 };

@@ -310,7 +310,7 @@ Auth.prototype.login = function (settings) {
   var path = utility.testIfStagingFromUrl() ? '/auth/login' : '/admin/login';
   this.config.registerURL.host = utility.testIfStagingFromUrl() ?
     settings.username + '.pryv.in' : settings.username + '.pryv.io';
-  var domain = (this.config.registerURL.host === 'reg.pryv.io') ? 'pryv.io' : 'pryv.in';
+  var domain = utility.testIfStagingFromUrl() ? 'pryv.in' : 'pryv.io';
   this.connection = new Connection(null, null, {
     ssl: this.config.registerURL.ssl,
     domain: domain
@@ -348,6 +348,39 @@ Auth.prototype.login = function (settings) {
   };
 
   system.request(_.extend(pack, this.config.registerURL));
+};
+Auth.prototype.whoAmI = function (settings) {
+  this.settings = settings;
+  var domain = (this.config.registerURL.host === 'reg.pryv.io') ? 'pryv.io' : 'pryv.in';
+  var path = '/auth/who-am-i';
+  this.config.registerURL.host = utility.testIfStagingFromUrl() ?
+    settings.username + '.pryv.in' : settings.username + '.pryv.io';
+  this.connection = new Connection(null, null, {ssl: this.config.registerURL.ssl, domain: domain});
+  var pack = {
+    path :  path,
+    method: 'GET',
+    success : function (data)  {
+      if (data.token) {
+        this.connection.username = data.username;
+        this.connection.auth = data.token;
+        if (typeof(this.settings.callbacks.signedIn)  === 'function') {
+          this.settings.callbacks.signedIn(this.connection);
+        }
+      } else {
+        if (typeof(this.settings.error) === 'function') {
+          this.settings.callbacks.error(data);
+        }
+      }
+    }.bind(this),
+    error : function (jsonError) {
+      if (typeof(this.settings.callbacks.error) === 'function') {
+        this.settings.callbacks.error(jsonError);
+      }
+    }.bind(this)
+  };
+
+  system.request(_.extend(pack, this.config.registerURL));
+
 };
 Auth.prototype.loginWithCookie = function (settings) {
   this.settings = settings;
