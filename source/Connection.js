@@ -55,7 +55,7 @@ var Connection = module.exports = function Connection() {
   this.settings = _.extend({
     port: 443,
     ssl: true,
-    domain: 'pryv.io',
+    domain: 'pryv.in',
     extraPath: '',
     staging: false
   }, settings);
