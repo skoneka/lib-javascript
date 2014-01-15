@@ -20,4 +20,14 @@ Accesses.prototype.get = function (callback) {
 Accesses.prototype.create = function (access, callback) {
   this.connection.request('POST', apiPathAccesses, callback, access);
 };
+
+Accesses.prototype.delete = function (sharingId, callback) {
+  this.connection.request('DELETE', apiPathAccesses + '/' + sharingId, function (err, result) {
+    var error = err;
+    if (result && result.message) {
+      error = result;
+    }
+    callback(error, result);
+  });
+};
 module.exports = Accesses;
