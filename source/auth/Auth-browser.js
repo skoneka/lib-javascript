@@ -363,11 +363,24 @@ Auth.prototype.whoAmI = function (settings) {
       if (data.token) {
         this.connection.username = data.username;
         this.connection.auth = data.token;
-        if (typeof(this.settings.callbacks.signedIn)  === 'function') {
-          this.settings.callbacks.signedIn(this.connection);
-        }
+        var conn = new Connection(data.username, data.token,
+          {ssl: this.config.registerURL.ssl, domain: domain});
+        console.log('before access info', this.connection);
+        conn.accessInfo(function (error) {
+          console.log('after access info', this.connection);
+          if (!error) {
+            if (typeof(this.settings.callbacks.signedIn)  === 'function') {
+              this.settings.callbacks.signedIn(this.connection);
+            }
+          } else {
+            if (typeof(this.settings.callbacks.error) === 'function') {
+              this.settings.callbacks.error(error);
+            }
+          }
+        }.bind(this));
+
       } else {
-        if (typeof(this.settings.error) === 'function') {
+        if (typeof(this.settings.callbacks.error) === 'function') {
           this.settings.callbacks.error(data);
         }
       }

@@ -17,4 +17,7 @@ Accesses.prototype.get = function (callback) {
   this.connection.request('GET', apiPathAccesses, callback);
 };
 
+Accesses.prototype.create = function (access, callback) {
+  this.connection.request('POST', apiPathAccesses, callback, access);
+};
 module.exports = Accesses;
