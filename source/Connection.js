@@ -143,10 +143,12 @@ Connection.prototype.accessInfo = function (callback) {
     if (result && result.id) {
       error = result;
     }
-    if (! error && !result.id) {
+    if (! error && !result.message) {
       this._accessInfo = result;
     }
-    return callback(error, result);
+    if (typeof(callback) === 'function') {
+      return callback(error, result);
+    }
   }.bind(this));
   return this;
 };
