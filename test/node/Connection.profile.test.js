@@ -12,28 +12,40 @@ var testProfile = function (preFetchStructure) {
   describe('Profile' + localEnabledStr, function () {
     this.timeout(15000);
     var username = 'perkikiki',
-      auth = 'TTZycvBTiq',
-      connection = new Pryv.Connection(username, auth, {staging: true});
-
+      authPublic = 'TTZycvBTiq',
+      authPrivate = 'chqs3jmm7001idawkwe6f9ydt',
+      connectionPublic = new Pryv.Connection(username, authPublic, {staging: true}),
+      connectionPrivate = new Pryv.Connection(username, authPrivate, {staging: true});
 
     if (preFetchStructure) {
       before(function (done) {
-        connection.fetchStructure(function (error) {
+        connectionPublic.fetchStructure(function (error) {
+          should.not.exist(error);
+          done();
+        });
+        connectionPrivate.fetchStructure(function (error) {
           should.not.exist(error);
           done();
         });
       });
     }
 
-    it('conn.profile.set()', function (done) {
-      connection.profile.set({test1 : 'testA', test2: null}, function (error) {
+    it('conn.profile.setPublic()', function (done) {
+      connectionPublic.profile.setPublic({test1 : 'testA', test2: null}, function (error) {
         should.not.exist(error);
         done();
       });
     });
 
-    it('conn.profile.get(null)', function (done) {
-      connection.profile.get(null, function (error, result) {
+    it('conn.profile.setPrivate()', function (done) {
+      connectionPrivate.profile.setPrivate({test1 : 'testA', test2: null}, function (error) {
+        should.not.exist(error);
+        done();
+      });
+    });
+
+    it('conn.profile.getPublic(null)', function (done) {
+      connectionPublic.profile.getPublic(null, function (error, result) {
         console.log(result);
         should.not.exist(error);
         result.test1.should.equal('testA');
@@ -42,8 +54,26 @@ var testProfile = function (preFetchStructure) {
       });
     });
 
-    it('conn.profile.get(key)', function (done) {
-      connection.profile.get('test1', function (error, result) {
+    it('conn.profile.getPrivate(null)', function (done) {
+      connectionPrivate.profile.getPrivate(null, function (error, result) {
+        console.log(result);
+        should.not.exist(error);
+        result.test1.should.equal('testA');
+        should.not.exist(result.test2);
+        done();
+      });
+    });
+
+    it('conn.profile.getPublic(key)', function (done) {
+      connectionPublic.profile.getPublic('test1', function (error, result) {
+        should.not.exist(error);
+        result.should.equal('testA');
+        done();
+      });
+    });
+
+    it('conn.profile.getPrivate(key)', function (done) {
+      connectionPrivate.profile.getPrivate('test1', function (error, result) {
         should.not.exist(error);
         result.should.equal('testA');
         done();

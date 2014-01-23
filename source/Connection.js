@@ -69,6 +69,7 @@ var Connection = module.exports = function Connection() {
   };
 
   this._accessInfo = null;
+  this._privateProfile = null;
 
   this._streamSerialCounter = 0;
   this._eventSerialCounter = 0;
@@ -145,6 +146,27 @@ Connection.prototype.accessInfo = function (callback) {
     }
     if (! error && !result.message) {
       this._accessInfo = result;
+    }
+    if (typeof(callback) === 'function') {
+      return callback(error, result);
+    }
+  }.bind(this));
+  return this;
+};
+
+/**
+ * Get the private profile related this connection.
+ * @param {Connection~privateProfileCallback} callback
+ * @returns {Connection} this
+ */
+Connection.prototype.privateProfile = function (callback) {
+  if (this._privateProfile) { return this._privateProfile; }
+  this.profile.getPrivate(null, function (error, result) {
+    if (result && result.message) {
+      error = result;
+    }
+    if (! error) {
+      this._privateProfile = result;
     }
     if (typeof(callback) === 'function') {
       return callback(error, result);
