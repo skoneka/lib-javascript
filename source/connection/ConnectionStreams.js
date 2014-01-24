@@ -121,7 +121,7 @@ ConnectionStreams.prototype._createWithData = function (streamData, callback) {
  */
 ConnectionStreams.prototype._updateWithData = function (streamData, callback) {
   var url = '/streams/' + streamData.id;
-  this.connection.request('PUT', url, callback, null);
+  this.connection.request('PUT', url, callback, streamData);
 };
 
 // -- helper for get --- //
