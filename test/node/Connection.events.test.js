@@ -47,7 +47,7 @@ var testEvents = function (preFetchStructure) {
       });
     }
 
-
+    // TODO: see about removing this
     describe('_get() ' + localEnabledStr, function () {
 
       it('should call the proper API method', function (done) {
@@ -68,7 +68,7 @@ var testEvents = function (preFetchStructure) {
       it('should get Event objects for request', function (done) {
         nock('https://' + username + '.' + settings.domain)
           .get('/events?' + utility.getQueryParametersString(defaultFilter.settings))
-          .reply(200, responses.events);
+          .reply(200, {events: responses.events});
         connection.events.get(defaultFilter, function (err, result) {
           should.not.exist(err);
           should.exist(result);
@@ -107,7 +107,7 @@ var testEvents = function (preFetchStructure) {
       });
     });
 
-
+    // TODO: all get() tests should be together
     describe('get( with a DEAD end filter) ' + localEnabledStr, function () {
       it('should get an empty list with no request', function (done) {
         var deadEndFilter = new Pryv.Filter();
@@ -126,21 +126,24 @@ var testEvents = function (preFetchStructure) {
 
     describe('create( event )' + localEnabledStr, function () {
 
-      var event = new Pryv.Event(
-        connection, {streamId : 'diary', type : 'note/txt', content: 'hello'});
+      var eventData = {streamId : 'diary', type : 'note/txt', content: 'hello'},
+          event = new Pryv.Event(connection, eventData);
 
-      var response = {id : 'Tet5slAP9q'};
+      var response = {event: _.extend({id : 'Tet5slAP9q'}, eventData)};
 
       it('should create an event', function (done) {
         nock('https://' + username + '.' + settings.domain)
           .post('/events')
           .reply(201, response);
 
-        event = connection.events.create(event, function (err, resultJson) {
+        connection.events.create(event, function (err, resultEvent) {
           should.not.exist(err);
-          should.exist(resultJson);
-          resultJson.id.should.eql(response.id);
-          event.id.should.eql(response.id);
+          should.exist(resultEvent);
+
+          //test instance of Event
+          //test
+          resultEvent.id.should.eql(response.event.id);
+          event.id.should.eql(response.event.id);
           done();
         });
 

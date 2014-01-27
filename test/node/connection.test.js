@@ -99,8 +99,8 @@ describe('Connection', function () {
 
   });
 
-  describe('get*Times()', function () {
-
+  describe('time management', function () {
+    it('should retrieve server time from server response');
     it('getLocalTime getServerTime', function (done) { 
 
       var serverTime = 0;

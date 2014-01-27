@@ -307,7 +307,7 @@ Auth.prototype.login = function (settings) {
     username : settings.username,
     password : settings.password
   };
-  var path = utility.testIfStagingFromUrl() ? '/auth/login' : '/admin/login';
+  var path = '/auth/login';
   this.config.registerURL.host = utility.testIfStagingFromUrl() ?
     settings.username + '.pryv.in' : settings.username + '.pryv.io';
   var domain = utility.testIfStagingFromUrl() ? 'pryv.in' : 'pryv.io';

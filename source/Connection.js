@@ -55,11 +55,12 @@ var Connection = module.exports = function Connection() {
   this.settings = _.extend({
     port: 443,
     ssl: true,
-    domain: 'pryv.in',
+    domain: 'pryv.io',
     extraPath: '',
     staging: false
   }, settings);
-
+  this.settings.domain = settings.domain ? settings.domain :
+    settings.staging ? 'pryv.in' : 'pryv.io';
 
   this.serverInfos = {
     // nowLocalTime - nowServerTime
@@ -259,8 +260,11 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
    */
   function onSuccess(result, requestInfos) {
     var error = null;
-    if (requestInfos.code >= 400) {
-      error = result;
+    if (result.message) {  // API < 0.6
+      error = result.message;
+    } else
+    if (result.error) { // API 0.7
+      error = result.error;
     } else {
       this.serverInfos.lastSeenLT = (new Date()).getTime();
       this.serverInfos.apiVersion = requestInfos.headers['api-version'] ||
@@ -283,7 +287,7 @@ Connection.prototype._getDomain = function () {
   if (this.settings.url) {
     return utility.getHostFromUrl(this.settings.url);
   } else {
-    var host = this.settings.staging ? 'pryv.in' : this.settings.domain;
+    var host = this.settings.domain;
     return this.username ? this.username + '.' + host : host;
   }
 };
