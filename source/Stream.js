@@ -48,8 +48,7 @@ Object.defineProperty(Stream.prototype, 'children', {
       children.push(child);
     }.bind(this));
     return children;
-  },
-  set: function () { throw new Error('Stream.children property is read only'); }
+  }
 });
 
 // TODO write test
