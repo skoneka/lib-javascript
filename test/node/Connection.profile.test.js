@@ -13,7 +13,7 @@ var testProfile = function (preFetchStructure) {
     this.timeout(15000);
     var username = 'perkikiki',
       authPublic = 'TTZycvBTiq',
-      authPrivate = 'chqs3jmm7001idawkwe6f9ydt',
+      authPrivate = 'chqtixz79001xdawkob8zvgg2',
       connectionPublic = new Pryv.Connection(username, authPublic, {staging: true}),
       connectionPrivate = new Pryv.Connection(username, authPrivate, {staging: true});
 
