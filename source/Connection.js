@@ -48,6 +48,7 @@ var Connection = module.exports = function Connection() {
       settings.port = utility.getPortFromUrl(settings.url) || 443;
       settings.extraPath = utility.getPathFromUrl(settings.url);
       settings.ssl = utility.isUrlSsl(settings.url);
+      settings.staging = utility.testIfStagingFromUrl(settings.url);
     }
   }
   this._serialId = Connection._serialCounter++;
@@ -61,6 +62,7 @@ var Connection = module.exports = function Connection() {
   }, settings);
   this.settings.domain = settings.domain ? settings.domain :
     settings.staging ? 'pryv.in' : 'pryv.io';
+  console.log('CONNECTION', this.settings.domain, settings.domain, settings.staging, this.username);
 
   this.serverInfos = {
     // nowLocalTime - nowServerTime

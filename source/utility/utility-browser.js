@@ -27,7 +27,8 @@ utility.testIfStagingFromUrl = function (url) {
     location = document.location;
   }
   return utility.endsWith(location.hostname, 'pryv.li') ||
-    utility.endsWith(location.hostname, 'rec.la');
+         utility.endsWith(location.hostname, 'pryv.in') ||
+         utility.endsWith(location.hostname, 'rec.la');
 };
 
 utility.getUsernameFromUrl = function (url) {
