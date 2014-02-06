@@ -62,7 +62,7 @@ var Connection = module.exports = function Connection() {
   }, settings);
   this.settings.domain = settings.domain ? settings.domain :
     settings.staging ? 'pryv.in' : 'pryv.io';
-  console.log('CONNECTION', this.settings.domain, settings.domain, settings.staging, this.username);
+
 
   this.serverInfos = {
     // nowLocalTime - nowServerTime

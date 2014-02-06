@@ -102,7 +102,9 @@ ConnectionEvents.prototype.create = function (newEventlike, callback) {
     if (result) {
       _.extend(event, result);
     }
-    callback(err, event);
+    if (_.isFunction(callback)) {
+      callback(err, event);
+    }
   }, event.getData());
   return event;
 };
