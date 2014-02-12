@@ -225,7 +225,8 @@ Connection.prototype.monitor = function (filter) {
  * @param {Connection~requestCallback} callback
  * @param {Object} jsonData - data to POST or PUT
  */
-Connection.prototype.request = function (method, path, callback, jsonData, isFile) {
+Connection.prototype.request = function (method, path, callback, jsonData, isFile,
+                                         progressCallback) {
   if (! callback || ! _.isFunction(callback)) {
     throw new Error('request\'s callback must be a function');
   }
@@ -251,6 +252,7 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
     path : this.settings.extraPath + path,
     headers : headers,
     payload : payload,
+    progressCallback: progressCallback,
     //TODO: decide what callback convention to use (Node or jQuery)
     success : onSuccess.bind(this),
     error : onError.bind(this),

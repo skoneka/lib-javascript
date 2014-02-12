@@ -108,7 +108,8 @@ ConnectionEvents.prototype.create = function (newEventlike, callback) {
   }, event.getData());
   return event;
 };
-ConnectionEvents.prototype.createWithAttachment = function (newEventLike, file, callback) {
+ConnectionEvents.prototype.createWithAttachment = function (newEventLike, file, callback,
+                                                            progressCallback) {
   var event = null;
   if (newEventLike instanceof Event) {
     if (newEventLike.connection !== this.connection) {
@@ -128,11 +129,11 @@ ConnectionEvents.prototype.createWithAttachment = function (newEventLike, file, 
       _.extend(event, result);
     }
     callback(err, event);
-  }, file, true);
+  }, file, true, progressCallback);
 };
-ConnectionEvents.prototype.addAttachment = function (eventId, file, callback) {
+ConnectionEvents.prototype.addAttachment = function (eventId, file, callback, progressCallback) {
   var url = '/events/' + eventId;
-  this.connection.request('POST', url, callback, file, true);
+  this.connection.request('POST', url, callback, file, true, progressCallback);
 };
 ConnectionEvents.prototype.removeAttachment = function (eventId, fileName, callback) {
   var url = '/events/' + eventId + '/' + fileName;

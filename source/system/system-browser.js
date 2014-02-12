@@ -111,23 +111,17 @@ exports.request = function (pack)  {
       pack.success(result, requestInfo);
     }
   };
-
+  if (pack.progressCallback && typeof(pack.progressCallback) === 'function') {
+    xhr.upload.addEventListener('progress', function (e) {
+      return pack.progressCallback(e);
+    }, false);
+  }
   for (var key in pack.headers) {
     if (pack.headers.hasOwnProperty(key)) {
       xhr.setRequestHeader(key, pack.headers[key]);
     }
   }
-  //--- prepare the params
-  /*var sentParams = null;
-   if (pack.params)  {
-   try {
-   sentParams = JSON.stringify(pack.params);
-   } catch (e) {
-   return pack.error({message: 'Parameters are not JSON', detail: 'params: '+pack.params+'\n
-   '+detail, id: 'INTERNAL_ERROR', error: e}, pack.context);
-   }
-   }
-   */
+
   //--- sending the request
   try {
     xhr.send(pack.params);
