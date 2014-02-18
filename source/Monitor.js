@@ -66,8 +66,8 @@ Monitor.prototype.destroy = function () {
 };
 
 Monitor.prototype.getEvents = function () {
-  if (! this.events || ! this._events.active) {return []; }
-  return this._events.active;
+  if (! this._events || ! this._events.active) {return []; }
+  return _.toArray(this._events.active);
 };
 
 // ------------ private ----------//
