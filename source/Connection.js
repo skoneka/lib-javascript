@@ -232,7 +232,7 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
   }
   var headers =  { 'authorization': this.auth };
   var withoutCredentials = false;
-  var payload = null;
+  var payload = JSON.stringify({});
   if (jsonData && !isFile) {
     payload = JSON.stringify(jsonData);
     headers['Content-Type'] = 'application/json; charset=utf-8';

@@ -97,6 +97,11 @@ ConnectionStreams.prototype._getData = function (opts, callback) {
   this.connection.request('GET', url, callback, null);
 };
 
+ConnectionStreams.prototype.create = function (streamData, callback) {
+  streamData = _.pick(streamData, 'id', 'name', 'parentId', 'singleActivity',
+    'clientData', 'trashed');
+  this._createWithData(streamData, callback);
+};
 /**
  * Create a stream on the API with a jsonObject
  * @private
@@ -107,8 +112,10 @@ ConnectionStreams.prototype._getData = function (opts, callback) {
 ConnectionStreams.prototype._createWithData = function (streamData, callback) {
   var url = '/streams';
   this.connection.request('POST', url, function (err, resultData) {
-    streamData.id = resultData.id;
-    callback(err, resultData);
+    streamData.id = resultData.stream.id;
+    if (_.isFunction(callback)) {
+      callback(err, resultData);
+    }
   }, streamData);
 };
 
@@ -135,8 +142,9 @@ ConnectionStreams.prototype._getObjects = function (options, callback) {
   options.parentId = options.parentId || null;
   var streamsIndex = {};
   var resultTree = [];
-  this._getData(options, function (error, treeData) {
+  this._getData(options, function (error, result) {
     if (error) { return callback('Stream.get failed: ' + error); }
+    var treeData = result.streams || result.stream;
     ConnectionStreams.Utils.walkDataTree(treeData, function (streamData) {
       var stream = new Stream(this.connection, streamData);
       streamsIndex[streamData.id] = stream;

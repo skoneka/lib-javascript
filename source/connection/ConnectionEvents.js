@@ -41,7 +41,8 @@ function ConnectionEvents(connection) {
 ConnectionEvents.prototype.get = function (filter, doneCallback, partialResultCallback) {
   //TODO handle caching
   var result = [];
-  this._get(filter, function (error, eventList) {
+  this._get(filter, function (error, res) {
+    var eventList = res.events || res.event;
     _.each(eventList, function (eventData) {
       result.push(new Event(this.connection, eventData));
     }.bind(this));
@@ -100,7 +101,7 @@ ConnectionEvents.prototype.create = function (newEventlike, callback) {
   var url = '/events';
   this.connection.request('POST', url, function (err, result) {
     if (result) {
-      _.extend(event, result);
+      _.extend(event, result.event);
     }
     if (_.isFunction(callback)) {
       callback(err, event);
@@ -126,7 +127,7 @@ ConnectionEvents.prototype.createWithAttachment = function (newEventLike, file, 
   var url = '/events';
   this.connection.request('POST', url, function (err, result) {
     if (result) {
-      _.extend(event, result);
+      _.extend(event, result.event);
     }
     callback(err, event);
   }, file, true, progressCallback);

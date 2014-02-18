@@ -21,6 +21,8 @@ function Profile(connection) {
 Profile.prototype._get = function (path, key, callback) {
 
   function myCallBack(error, result) {
+    console.warn(result);
+    result = result.profile || null;
     if (key !== null && result) {
       result = result[key];
     }

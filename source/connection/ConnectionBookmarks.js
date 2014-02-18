@@ -1,4 +1,4 @@
-var apiPathBookmarks = '/bookmarks',
+var apiPathBookmarks = '/followed-slices',
   Connection = require('../Connection.js'),
   _ = require('underscore');
 
@@ -16,8 +16,9 @@ function Bookmarks(connection, Conn) {
  * @param {Connection~requestCallback} callback
  */
 Bookmarks.prototype.get = function (callback) {
-  this.connection.request('GET', apiPathBookmarks, function (error, bookmarks) {
-    var result = [];
+  this.connection.request('GET', apiPathBookmarks, function (error, res) {
+    var result = [],
+      bookmarks = res.followedSlices || res.followedSlice;
     _.each(bookmarks, function (bookmark) {
       var conn =  new Connection({
         auth: bookmark.accessToken,
@@ -42,7 +43,7 @@ Bookmarks.prototype.create = function (bookmark, callback) {
           auth: bookmark.accessToken,
           url: bookmark.url,
           name: bookmark.name,
-          bookmarkId: result.id
+          bookmarkId: result.followedSlice.id
         });
         bookmark = conn;
       }

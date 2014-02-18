@@ -23,7 +23,7 @@ var testEvents = function (preFetchStructure) {
       ssl: true,
       domain: 'test.io'
     };
-    var response = {message : 'ok'};
+    var response = {response : 'ok'};
 
     var connection = new Pryv.Connection(username, auth, settings);
 
@@ -68,7 +68,7 @@ var testEvents = function (preFetchStructure) {
       it('should get Event objects for request', function (done) {
         nock('https://' + username + '.' + settings.domain)
           .get('/events?' + utility.getQueryParametersString(defaultFilter.settings))
-          .reply(200, {events: responses.events});
+          .reply(200, responses.events);
         connection.events.get(defaultFilter, function (err, result) {
           should.not.exist(err);
           should.exist(result);
@@ -156,7 +156,7 @@ var testEvents = function (preFetchStructure) {
 
       var eventData = {streamId : 'diary', type : 'note/txt', content: 'hello'};
 
-      var response = {id : 'Tet5slAP9q'};
+      var response = {event: _.extend({id: 'Tet5slAP9q'}, eventData)};
 
       it('should create an event', function (done) {
         nock('https://' + username + '.' + settings.domain)
@@ -167,8 +167,8 @@ var testEvents = function (preFetchStructure) {
         event = connection.events.create(eventData, function (err, resultJson) {
           should.not.exist(err);
           should.exist(resultJson);
-          resultJson.id.should.eql(response.id);
-          event.id.should.eql(response.id);
+          resultJson.id.should.eql(response.event.id);
+          event.id.should.eql(response.event.id);
           done();
         });
 
@@ -218,9 +218,7 @@ var testEvents = function (preFetchStructure) {
         data = {
           content: 'test-content'
         },
-        response = {
-          message : 'ok'
-        };
+        response = {event: _.extend({id: eventId}, data)};
 
       it('should call the proper API method', function (done) {
         nock('https://' + username + '.' + settings.domain)

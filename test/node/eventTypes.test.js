@@ -34,7 +34,7 @@ describe('eventTypes', function () {
       eventTypes.loadExtras(function (error, result) {
         should.exists(result.sets);
         var info = eventTypes.extras('mass/kg');
-        info.symbol.should.equal('kg');
+        info.symbol.should.equal('Kg');
         done();
       });
     });

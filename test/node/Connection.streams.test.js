@@ -98,7 +98,7 @@ var testStreams = function (preFetchStructure) {
         state : 'default',
         other : null
       };
-      var response = { message : 'ok'};
+      var response = { response : 'ok'};
 
       it('should call proper the proper API method', function (done) {
 
@@ -170,7 +170,7 @@ var testStreams = function (preFetchStructure) {
       if (! preFetchStructure) {
         nock('https://' + username + '.' + settings.domain)
           .get('/streams?parentId=PVxE_JMMzM').times(1)  // 3 requests when no localStorage
-          .reply(200, responses.streams[0].children);
+          .reply(200, {streams: responses.streams.streams[0].children});
       }
 
       it('opts: parentId should return an subTree', function (done) {
@@ -220,8 +220,8 @@ var testStreams = function (preFetchStructure) {
 
 
     describe('_createWithData(streamData)' + localEnabledStr, function () {
-      var response = {id : 'test-id'},
-        streamData = {name : 'test-name'};
+      var streamData = {name : 'test-name'},
+        response = {stream: _.extend({id : 'test-id'}, streamData)};
 
       it('should call proper the proper API method', function (done) {
         nock('https://' + username + '.' + settings.domain)
@@ -229,7 +229,7 @@ var testStreams = function (preFetchStructure) {
           .reply(201, response);
         connection.streams._createWithData(streamData, function (err, result) {
           should.not.exist(err);
-          should.exist(result);
+          should.exist(result.stream);
           result.should.eql(response);
           done();
         });
@@ -241,7 +241,7 @@ var testStreams = function (preFetchStructure) {
           .reply(201, response);
         connection.streams._createWithData(streamData, function (err, result) {
           should.exist(streamData.id);
-          streamData.id.should.eql(result.id);
+          streamData.id.should.eql(result.stream.id);
           done();
         });
       });
@@ -253,7 +253,7 @@ var testStreams = function (preFetchStructure) {
         id : 'test-id',
         content : 'test-content'
       };
-      var response = {message : 'ok'};
+      var response = {stream : streamData};
 
       it('should call the proper API method', function (done) {
         nock('https://' + username + '.' + settings.domain)

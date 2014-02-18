@@ -1,4 +1,5 @@
 var apiPathAccesses = '/accesses';
+var _ = require('underscore');
 
 /**
  * @class Accesses
@@ -14,11 +15,27 @@ function Accesses(connection) {
  * @param {Connection~requestCallback} callback
  */
 Accesses.prototype.get = function (callback) {
-  this.connection.request('GET', apiPathAccesses, callback);
+  this.connection.request('GET', apiPathAccesses, function (err, res) {
+    var accesses = res.accesses || res.access;
+    if (typeof(callback) === 'function') {
+      callback(err, accesses);
+    }
+  });
 };
 
 Accesses.prototype.create = function (access, callback) {
   this.connection.request('POST', apiPathAccesses, callback, access);
+};
+Accesses.prototype.update = function (access, callback) {
+  if (access.id) {
+    this.connection.request('PUT', apiPathAccesses + '/' + access.id, callback,
+      _.pick(access, 'name', 'deviceName', 'permissions'));
+  } else {
+    if (callback && _.isFunction(callback)) {
+      return callback('No access id found');
+    }
+
+  }
 };
 
 Accesses.prototype.delete = function (sharingId, callback) {

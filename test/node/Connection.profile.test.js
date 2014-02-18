@@ -1,29 +1,31 @@
 /* global before, describe, it */
 
 var Pryv = require('../../source/main'),
-  should = require('should');
+  should = require('should'),
+  nock = require('nock'),
+  responses = require('../data/responses.js');
 
 // !! Monitor tests are made online
 
 var testProfile = function (preFetchStructure) {
 
   var localEnabledStr = preFetchStructure ? ' + LocalStorage' : '';
-
+  var username = 'test-user';
+  var auth = 'test-token';
+  var settings = {
+    port: 443,
+    ssl: true,
+    domain: 'test.io'
+  };
   describe('Profile' + localEnabledStr, function () {
     this.timeout(15000);
-    var username = 'perkikiki',
-      authPublic = 'TTZycvBTiq',
-      authPrivate = 'chqtixz79001xdawkob8zvgg2',
-      connectionPublic = new Pryv.Connection(username, authPublic, {staging: true}),
-      connectionPrivate = new Pryv.Connection(username, authPrivate, {staging: true});
-
+    var connection = new Pryv.Connection(username, auth, settings);
     if (preFetchStructure) {
+      nock('https://' + username + '.' + settings.domain)
+        .get('/streams?state=all')
+        .reply(200, responses.streams);
       before(function (done) {
-        connectionPublic.fetchStructure(function (error) {
-          should.not.exist(error);
-          done();
-        });
-        connectionPrivate.fetchStructure(function (error) {
+        connection.fetchStructure(function (error) {
           should.not.exist(error);
           done();
         });
@@ -31,51 +33,74 @@ var testProfile = function (preFetchStructure) {
     }
 
     it('conn.profile.setPublic()', function (done) {
-      connectionPublic.profile.setPublic({test1 : 'testA', test2: null}, function (error) {
+      var data = {test1 : 'testA', test2: null};
+      var response = {profile: data};
+      nock('https://' + username + '.' + settings.domain)
+        .put('/profile/app')
+        .reply(200, response);
+      connection.profile.setPublic(data, function (error, result) {
         should.not.exist(error);
+        should.exist(result);
+        result.should.eql(response);
         done();
       });
     });
 
     it('conn.profile.setPrivate()', function (done) {
-      connectionPrivate.profile.setPrivate({test1 : 'testA', test2: null}, function (error) {
+
+      var data = {test1 : 'testA', test2: null};
+      var response = {profile: data};
+      nock('https://' + username + '.' + settings.domain)
+        .put('/profile/private')
+        .reply(200, response);
+      connection.profile.setPrivate(data, function (error, result) {
         should.not.exist(error);
+        should.exist(result);
+        result.should.eql(response);
         done();
       });
     });
 
     it('conn.profile.getPublic(null)', function (done) {
-      connectionPublic.profile.getPublic(null, function (error, result) {
-        console.log(result);
+      nock('https://' + username + '.' + settings.domain)
+        .get('/profile/app')
+        .reply(200, responses.profile);
+      connection.profile.getPublic(null, function (error, result) {
         should.not.exist(error);
-        result.test1.should.equal('testA');
-        should.not.exist(result.test2);
+        result.should.eql(responses.profile.profile);
         done();
       });
     });
 
     it('conn.profile.getPrivate(null)', function (done) {
-      connectionPrivate.profile.getPrivate(null, function (error, result) {
-        console.log(result);
+      nock('https://' + username + '.' + settings.domain)
+        .get('/profile/private')
+        .reply(200, responses.profile);
+      connection.profile.getPrivate(null, function (error, result) {
         should.not.exist(error);
-        result.test1.should.equal('testA');
-        should.not.exist(result.test2);
+        result.should.eql(responses.profile.profile);
         done();
       });
     });
 
     it('conn.profile.getPublic(key)', function (done) {
-      connectionPublic.profile.getPublic('test1', function (error, result) {
+      nock('https://' + username + '.' + settings.domain)
+        .get('/profile/app')
+        .reply(200, responses.profile);
+      connection.profile.getPublic('setting1', function (error, result) {
         should.not.exist(error);
-        result.should.equal('testA');
+        result.should.eql(responses.profile.profile.setting1);
         done();
       });
     });
 
     it('conn.profile.getPrivate(key)', function (done) {
-      connectionPrivate.profile.getPrivate('test1', function (error, result) {
+      nock('https://' + username + '.' + settings.domain)
+        .get('/profile/private')
+        .reply(200, responses.profile);
+      connection.profile.getPrivate('setting1', function (error, result) {
         should.not.exist(error);
-        result.should.equal('testA');
+        result.should.eql(responses.profile.profile.setting1);
         done();
       });
     });
