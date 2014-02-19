@@ -54,6 +54,14 @@ Event.prototype.removeAttachment = function (fileName, callback) {
 Event.prototype.trash = function (callback) {
   this.connection.events.trash(this, callback);
 };
+Event.prototype.getPicturePreview = function (width, height) {
+  width = width ? '&w=' + width : '';
+  height = height ? '&h=' + height : '';
+  var url = this.connection.settings.ssl ? 'https://' : 'http://';
+  url += this.connection.username + '.' + this.connection.settings.domain + ':3443/events/' +
+    this.id + '?auth=' + this.connection.auth + width + height;
+  return url;
+};
 Object.defineProperty(Event.prototype, 'timeLT', {
   get: function () {
     return this.connection.getLocalTime(this.time);
@@ -86,15 +94,6 @@ Object.defineProperty(Event.prototype, 'url', {
   set: function () { throw new Error('Event.url property is read only'); }
 });
 
-Object.defineProperty(Event.prototype, 'attachmentsUrl', {
-  get: function () {
-    var url = this.connection.settings.ssl ? 'https://' : 'http://';
-    url += this.connection.username + '.' + this.connection.settings.domain + ':3443/events/' +
-      this.id + '.jpg?auth=' + this.connection.auth;
-    return url;
-  },
-  set: function () { throw new Error('Event.attachmentsUrl property is read only'); }
-});
 
 /**
  * An newly created Event (no id, not synched with API)
