@@ -24,7 +24,12 @@ Accesses.prototype.get = function (callback) {
 };
 
 Accesses.prototype.create = function (access, callback) {
-  this.connection.request('POST', apiPathAccesses, callback, access);
+  this.connection.request('POST', apiPathAccesses, function (err, res) {
+    var access = res.access;
+    if (typeof(callback) === 'function') {
+      callback(err, access);
+    }
+  }, access);
 };
 Accesses.prototype.update = function (access, callback) {
   if (access.id) {
