@@ -1,21 +1,22 @@
 module.exports = function (grunt) {
+
+  grunt.loadNpmTasks('grunt-browserify');
+  grunt.loadNpmTasks('grunt-contrib-jshint');
+  grunt.loadNpmTasks('grunt-contrib-watch');
+  grunt.loadNpmTasks('grunt-mocha-test');
+  grunt.loadNpmTasks('grunt-contrib-copy');
+  grunt.loadNpmTasks('grunt-jsdoc');
+
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
-    jsdoc : {
-      dist : {
-        src: ['Readme.md', 'source/**/*.*'],
 
-        options : {
-          destination : 'doc',
-          private: false,
-          plugins: [ 'plugins/markdown' ],
-          markdown: {
-            parser: 'evilstreak'
-          }
-
-        }
+    jshint: {
+      files: [ 'gruntfile.js', 'source/**/*.js', 'test/**/*.js' ],
+      options: {
+        jshintrc: '.jshintrc'
       }
     },
+
     browserify: {
       main: {
         src: ['./source/main.js'],
@@ -26,6 +27,7 @@ module.exports = function (grunt) {
         }
       }
     },
+
     copy: {
       media : {
         files: [
@@ -39,18 +41,7 @@ module.exports = function (grunt) {
         ]
       }
     },
-    watch: {
-      all: {
-        files: [ 'source/**/*.*', 'test/**/*.*' ],
-        tasks: ['default']
-      }
-    },
-    jshint: {
-      files: [ 'gruntfile.js', 'source/**/*.js', 'test/**/*.js' ],
-      options: {
-        jshintrc: '.jshintrc'
-      }
-    },
+
     mochaTest: {
       test: {
         src: ['test/**/*.test.js'],
@@ -67,15 +58,28 @@ module.exports = function (grunt) {
           captureFile: 'test/coverage.html'
         }
       }
+    },
+
+    jsdoc : {
+      dist : {
+        src: [ 'Readme.md', 'source/**/*.*' ],
+        options : {
+          destination : 'doc',
+          private: false,
+          plugins: ['plugins/markdown'],
+          markdown: {parser: 'evilstreak'}
+        }
+      }
+    },
+
+    watch: {
+      all: {
+        files: [ 'source/**/*.*', 'test/**/*.*' ],
+        tasks: ['test']
+      }
     }
   });
 
-  grunt.loadNpmTasks('grunt-browserify');
-  grunt.loadNpmTasks('grunt-contrib-jshint');
-  grunt.loadNpmTasks('grunt-contrib-watch');
-  grunt.loadNpmTasks('grunt-mocha-test');
-  grunt.loadNpmTasks('grunt-jsdoc');
-  grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.registerTask('default', [ 'jshint', 'browserify', 'copy', 'mochaTest', 'jsdoc' ]);
   grunt.registerTask('test', [ 'jshint', 'browserify', 'copy', 'mochaTest' ]);
 };

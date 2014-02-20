@@ -1,33 +1,59 @@
 {
-  "author": "Pryv SA <tech@pryv.com>",
   "name": "pryv",
-  "description": "Pryv Javascript library",
-  "version": "0.0.1",
-  "private": true,
-  "homepage": "http://w.pryv.com",
+  "version": "0.1.0",
+  "description": "Javascript library (browser & Node.js) to access and manipulate Pryv users data",
+  "keywords": [
+    "pryv",
+    "api",
+    "library"
+  ],
+  "homepage": "http://api.pryv.com",
+  "bugs": {
+    "url": "http://github.com/pryv/lib-javascript/issues"
+  },
+  "license": "BSD-3-Clause",
+  "contributors": [
+    {
+      "name": "Jordane Pagand",
+      "url": "http://github.com/jpagand"
+    },
+    {
+      "name": "Pierre-Mikael Legris",
+      "url": "http://github.com/perki"
+    },
+    {
+      "name": "Marzell Camenzind",
+      "url": "http://github.com/mcamenzind"
+    },
+    {
+      "name": "Simon Goumaz",
+      "url": "http://github.com/sgoumaz"
+    }
+  ],
+  "files": [
+    "source"
+  ],
+  "main": "source/main.js",
   "repository": {
     "type": "git",
-    "url": "ssh://git@github.com:pryv/lib-javascript.git"
+    "url": "http://github.com/lib-javascript.git"
   },
-  "engines": {},
-  "main": "source/main.js",
   "dependencies": {
-    "socket.io-client": "~0.9.16",
-    "underscore": "~1.5.2"
+    "socket.io-client": "0.9.x",
+    "underscore": "1.5.x"
   },
   "devDependencies": {
     "blanket": "latest",
-    "grunt": "~0.4.1",
-    "grunt-browserify": "~1.0.0",
-    "grunt-contrib-jshint": "~0.7.2",
-    "grunt-contrib-uglify": "~0.2.0",
-    "grunt-contrib-watch": "~0.4.0",
+    "grunt": "0.4.x",
+    "grunt-browserify": "latest",
+    "grunt-contrib-copy": "latest",
+    "grunt-contrib-jshint": "latest",
+    "grunt-contrib-uglify": "latest",
+    "grunt-contrib-watch": "latest",
+    "grunt-jsdoc": "latest",
     "grunt-mocha-test": "latest",
-    "grunt-shell": "~0.2.2",
-    "should": "latest",
+    "grunt-shell": "latest",
     "nock": "latest",
-    "grunt-jsdoc": "~0.4.1",
-    "grunt-contrib-copy": "~0.4.1"
-  },
-  "optionalDependencies": {}
+    "should": "latest"
+  }
 }

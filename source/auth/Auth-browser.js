@@ -50,7 +50,7 @@ Auth._init = function (i) {
   }
 
   utility.loadExternalFiles(
-    Auth.prototype.config.sdkFullPath + '/media/buttonSigninPryv.css', 'css');
+    Auth.prototype.config.sdkFullPath + '/assets/buttonSigninPryv.css', 'css');
 
   if (utility.testIfStagingFromUrl()) {
     console.log('staging mode');
@@ -79,7 +79,7 @@ Auth.prototype.uiButton = function (onClick, buttonText) {
   } else   {
     return '<a href="#" id ="pryv-access-btn" data-onclick-action="' + onClick +
       '" class="pryv-access-btn-signinImage" ' +
-      'src="' + this.config.sdkFullPath + '/media/btnSignIn.png" >' + buttonText + '</a>';
+      'src="' + this.config.sdkFullPath + '/assets/btnSignIn.png" >' + buttonText + '</a>';
   }
 };
 
