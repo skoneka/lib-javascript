@@ -10,7 +10,7 @@ Javascript library (browser & Node.js) to access and manipulate Pryv users data.
 ### Installation
 
 - Browser: `<script type="text/javascript" src="pryv/pryv.js"></script>` (files in `dist` folder)
-- Node.js: `npm install pryv
+- Node.js: `npm install pryv`
 
 ### Examples
 
