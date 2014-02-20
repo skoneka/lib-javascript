@@ -7,6 +7,7 @@ var Stream = module.exports = function Stream(connection, data) {
   this.serialId = this.connection.serialId + '>S' + this.connection._streamSerialCounter++;
   /** those are only used when no datastore **/
   this._parent = null;
+  this.parentId = null;
   this._children = [];
   _.extend(this, data);
 };
@@ -35,7 +36,6 @@ Object.defineProperty(Stream.prototype, 'parent', {
   },
   set: function () { throw new Error('Stream.children property is read only'); }
 });
-
 
 Object.defineProperty(Stream.prototype, 'children', {
   get: function () {
