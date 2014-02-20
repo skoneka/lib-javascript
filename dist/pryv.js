@@ -1,6 +1,6 @@
-require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+!function(e){if("object"==typeof exports)module.exports=e();else if("function"==typeof define&&define.amd)define(e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.Pryv=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 
-},{}],2:[function(require,module,exports){
+},{}],2:[function(_dereq_,module,exports){
 /*! Socket.IO.js build:0.9.16, development. Copyright(c) 2011 LearnBoost <dev@learnboost.com> MIT Licensed */
 
 var io = ('undefined' === typeof module ? {} : module.exports);
@@ -3874,7 +3874,7 @@ if (typeof define === "function" && define.amd) {
   define([], function () { return io; });
 }
 })();
-},{}],3:[function(require,module,exports){
+},{}],3:[function(_dereq_,module,exports){
 //     Underscore.js 1.5.2
 //     http://underscorejs.org
 //     (c) 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -5152,17 +5152,17 @@ if (typeof define === "function" && define.amd) {
 
 }).call(this);
 
-},{}],4:[function(require,module,exports){
-var _ = require('underscore'),
-  system = require('./system/system.js'),
-  utility = require('./utility/utility.js'),
-  ConnectionEvents = require('./connection/ConnectionEvents.js'),
-  ConnectionStreams = require('./connection/ConnectionStreams.js'),
-  ConnectionProfile = require('./connection/ConnectionProfile.js'),
-  ConnectionBookmarks = require('./connection/ConnectionBookmarks.js'),
-  ConnectionAccesses = require('./connection/ConnectionAccesses.js'),
-  ConnectionMonitors = require('./connection/ConnectionMonitors.js'),
-  Datastore = require('./Datastore.js');
+},{}],4:[function(_dereq_,module,exports){
+var _ = _dereq_('underscore'),
+  system = _dereq_('./system/system.js'),
+  utility = _dereq_('./utility/utility.js'),
+  ConnectionEvents = _dereq_('./connection/ConnectionEvents.js'),
+  ConnectionStreams = _dereq_('./connection/ConnectionStreams.js'),
+  ConnectionProfile = _dereq_('./connection/ConnectionProfile.js'),
+  ConnectionBookmarks = _dereq_('./connection/ConnectionBookmarks.js'),
+  ConnectionAccesses = _dereq_('./connection/ConnectionAccesses.js'),
+  ConnectionMonitors = _dereq_('./connection/ConnectionMonitors.js'),
+  Datastore = _dereq_('./Datastore.js');
 
 /**
  * @class Connection
@@ -5506,8 +5506,8 @@ Object.defineProperty(Connection.prototype, 'serialId', {
  * @param {Object} result - jSonEncoded result
  */
 
-},{"./Datastore.js":5,"./connection/ConnectionAccesses.js":13,"./connection/ConnectionBookmarks.js":14,"./connection/ConnectionEvents.js":15,"./connection/ConnectionMonitors.js":16,"./connection/ConnectionProfile.js":17,"./connection/ConnectionStreams.js":18,"./system/system.js":23,"./utility/utility.js":26,"underscore":3}],5:[function(require,module,exports){
-var _ = require('underscore');
+},{"./Datastore.js":5,"./connection/ConnectionAccesses.js":13,"./connection/ConnectionBookmarks.js":14,"./connection/ConnectionEvents.js":15,"./connection/ConnectionMonitors.js":16,"./connection/ConnectionProfile.js":17,"./connection/ConnectionStreams.js":18,"./system/system.js":23,"./utility/utility.js":26,"underscore":3}],5:[function(_dereq_,module,exports){
+var _ = _dereq_('underscore');
 
 function Datastore(connection) {
   this.connection = connection;
@@ -5571,9 +5571,9 @@ Datastore.prototype.getStreamById = function (streamId, test) {
 module.exports = Datastore;
 
 
-},{"underscore":3}],6:[function(require,module,exports){
+},{"underscore":3}],6:[function(_dereq_,module,exports){
 
-var _ = require('underscore');
+var _ = _dereq_('underscore');
 
 var RW_PROPERTIES =
   ['streamId', 'time', 'duration', 'type', 'content', 'tags', 'description',
@@ -5678,9 +5678,9 @@ Object.defineProperty(Event.prototype, 'url', {
  * @property {number} [time]
  */
 
-},{"underscore":3}],7:[function(require,module,exports){
-var _ = require('underscore'),
-    SignalEmitter = require('./utility/SignalEmitter.js');
+},{"underscore":3}],7:[function(_dereq_,module,exports){
+var _ = _dereq_('underscore'),
+    SignalEmitter = _dereq_('./utility/SignalEmitter.js');
 
 /**
  * @constructor
@@ -6004,10 +6004,10 @@ Filter.prototype.focusedOnSingleStream = function () {
  */
 
 
-},{"./utility/SignalEmitter.js":24,"underscore":3}],8:[function(require,module,exports){
-var _ = require('underscore'),
-    SignalEmitter = require('./utility/SignalEmitter.js'),
-    Filter = require('./Filter.js');
+},{"./utility/SignalEmitter.js":24,"underscore":3}],8:[function(_dereq_,module,exports){
+var _ = _dereq_('underscore'),
+    SignalEmitter = _dereq_('./utility/SignalEmitter.js'),
+    Filter = _dereq_('./Filter.js');
 
 
 var EXTRA_ALL_EVENTS = {state : 'all', modifiedSince : -100000000 };
@@ -6265,9 +6265,9 @@ module.exports = Monitor;
 
 
 
-},{"./Filter.js":7,"./utility/SignalEmitter.js":24,"underscore":3}],9:[function(require,module,exports){
+},{"./Filter.js":7,"./utility/SignalEmitter.js":24,"underscore":3}],9:[function(_dereq_,module,exports){
 
-var _ = require('underscore');
+var _ = _dereq_('underscore');
 
 var Stream = module.exports = function Stream(connection, data) {
   this.connection = connection;
@@ -6336,13 +6336,13 @@ Object.defineProperty(Stream.prototype, 'ancestors', {
 
 
 
-},{"underscore":3}],10:[function(require,module,exports){
+},{"underscore":3}],10:[function(_dereq_,module,exports){
 /* global confirm, document, navigator, location, window */
 
-var utility = require('../utility/utility.js');
-var system = require('../system/system.js');
-var Connection = require('../Connection.js');
-var _ = require('underscore');
+var utility = _dereq_('../utility/utility.js');
+var system = _dereq_('../system/system.js');
+var Connection = _dereq_('../Connection.js');
+var _ = _dereq_('underscore');
 
 
 //--------------------- access ----------//
@@ -6999,18 +6999,18 @@ Auth.prototype._cleanStatusFromURL = function () {
 
 module.exports = new Auth();
 
-},{"../Connection.js":4,"../system/system.js":23,"../utility/utility.js":26,"underscore":3}],11:[function(require,module,exports){
+},{"../Connection.js":4,"../system/system.js":23,"../utility/utility.js":26,"underscore":3}],11:[function(_dereq_,module,exports){
 
 module.exports = {};
-},{}],12:[function(require,module,exports){
-var utility = require('../utility/utility.js');
+},{}],12:[function(_dereq_,module,exports){
+var utility = _dereq_('../utility/utility.js');
 
 module.exports =  utility.isBrowser() ?
-    require('./Auth-browser.js') : require('./Auth-node.js');
+    _dereq_('./Auth-browser.js') : _dereq_('./Auth-node.js');
 
-},{"../utility/utility.js":26,"./Auth-browser.js":10,"./Auth-node.js":11}],13:[function(require,module,exports){
+},{"../utility/utility.js":26,"./Auth-browser.js":10,"./Auth-node.js":11}],13:[function(_dereq_,module,exports){
 var apiPathAccesses = '/accesses';
-var _ = require('underscore');
+var _ = _dereq_('underscore');
 
 /**
  * @class Accesses
@@ -7064,10 +7064,10 @@ Accesses.prototype.delete = function (sharingId, callback) {
   });
 };
 module.exports = Accesses;
-},{"underscore":3}],14:[function(require,module,exports){
+},{"underscore":3}],14:[function(_dereq_,module,exports){
 var apiPathBookmarks = '/followed-slices',
-  Connection = require('../Connection.js'),
-  _ = require('underscore');
+  Connection = _dereq_('../Connection.js'),
+  _ = _dereq_('underscore');
 
 /**
  * @class Bookmarks
@@ -7130,11 +7130,11 @@ Bookmarks.prototype.delete = function (bookmarkId, callback) {
 };
 
 module.exports = Bookmarks;
-},{"../Connection.js":4,"underscore":3}],15:[function(require,module,exports){
-var utility = require('../utility/utility.js'),
-  _ = require('underscore'),
-  Filter = require('../Filter'),
-  Event = require('../Event');
+},{"../Connection.js":4,"underscore":3}],15:[function(_dereq_,module,exports){
+var utility = _dereq_('../utility/utility.js'),
+  _ = _dereq_('underscore'),
+  Filter = _dereq_('../Filter'),
+  Event = _dereq_('../Event');
 
 /**
  * @class ConnectionEvents
@@ -7372,10 +7372,10 @@ module.exports = ConnectionEvents;
  * @param {Event[]} events
  */
 
-},{"../Event":6,"../Filter":7,"../utility/utility.js":26,"underscore":3}],16:[function(require,module,exports){
-var _ = require('underscore'),
-  system = require('../system/system.js'),
-  Monitor = require('../Monitor.js');
+},{"../Event":6,"../Filter":7,"../utility/utility.js":26,"underscore":3}],16:[function(_dereq_,module,exports){
+var _ = _dereq_('underscore'),
+  system = _dereq_('../system/system.js'),
+  Monitor = _dereq_('../Monitor.js');
 
 /**
  * @class ConnectionMonitors
@@ -7459,7 +7459,7 @@ module.exports = ConnectionMonitors;
 
 
 
-},{"../Monitor.js":8,"../system/system.js":23,"underscore":3}],17:[function(require,module,exports){
+},{"../Monitor.js":8,"../system/system.js":23,"underscore":3}],17:[function(_dereq_,module,exports){
 var apiPathPrivateProfile = '/profile/private';
 var apiPathPublicProfile = '/profile/app';
 
@@ -7520,10 +7520,10 @@ Profile.prototype.setPublic = function (key, callback) {
 
 
 module.exports = Profile;
-},{}],18:[function(require,module,exports){
-var _ = require('underscore'),
-    utility = require('../utility/utility.js'),
-    Stream = require('../Stream.js');
+},{}],18:[function(_dereq_,module,exports){
+var _ = _dereq_('underscore'),
+    utility = _dereq_('../utility/utility.js'),
+    Stream = _dereq_('../Stream.js');
 
 /**
  * @class ConnectionStreams
@@ -7818,9 +7818,9 @@ module.exports = ConnectionStreams;
  */
 
 
-},{"../Stream.js":9,"../utility/utility.js":26,"underscore":3}],19:[function(require,module,exports){
+},{"../Stream.js":9,"../utility/utility.js":26,"underscore":3}],19:[function(_dereq_,module,exports){
 
-var system = require('./system/system.js');
+var system = _dereq_('./system/system.js');
 var eventTypes = module.exports = { };
 
 // staging cloudfront https://d1kp76srklnnah.cloudfront.net/dist/data-types/event-extras.json
@@ -7906,23 +7906,23 @@ eventTypes.extras = function (eventType) {
  * @param {Object} result - jSonEncoded result
  */
 
-},{"./system/system.js":23}],"pryv":[function(require,module,exports){
-module.exports=require('yfS/Pm');
-},{}],"yfS/Pm":[function(require,module,exports){
+},{"./system/system.js":23}],"pryv":[function(_dereq_,module,exports){
+module.exports=_dereq_('yfS/Pm');
+},{}],"yfS/Pm":[function(_dereq_,module,exports){
 module.exports = {
   // TODO: fix singleton (see with me [sgoumaz] if needed)
-  Auth: require('./auth/Auth.js'),
-  Connection: require('./Connection.js'),
-  Event: require('./Event.js'),
-  Stream: require('./Stream.js'),
-  Filter: require('./Filter.js'),
-  system: require('./system/system.js'),
-  utility: require('./utility/utility.js'),
+  Auth: _dereq_('./auth/Auth.js'),
+  Connection: _dereq_('./Connection.js'),
+  Event: _dereq_('./Event.js'),
+  Stream: _dereq_('./Stream.js'),
+  Filter: _dereq_('./Filter.js'),
+  system: _dereq_('./system/system.js'),
+  utility: _dereq_('./utility/utility.js'),
 
-  eventTypes: require('./eventTypes.js')
+  eventTypes: _dereq_('./eventTypes.js')
 };
 
-},{"./Connection.js":4,"./Event.js":6,"./Filter.js":7,"./Stream.js":9,"./auth/Auth.js":12,"./eventTypes.js":19,"./system/system.js":23,"./utility/utility.js":26}],22:[function(require,module,exports){
+},{"./Connection.js":4,"./Event.js":6,"./Filter.js":7,"./Stream.js":9,"./auth/Auth.js":12,"./eventTypes.js":19,"./system/system.js":23,"./utility/utility.js":26}],22:[function(_dereq_,module,exports){
 //file: system browser
 
 
@@ -8092,18 +8092,18 @@ var _initXHR = function () {
 
 
 
-},{}],23:[function(require,module,exports){
+},{}],23:[function(_dereq_,module,exports){
 //TODO: consider merging system into utility
 
-var utility = require('../utility/utility.js');
+var utility = _dereq_('../utility/utility.js');
 
 
-var socketIO = require('socket.io-client');
+var socketIO = _dereq_('socket.io-client');
 
 
 var system =
   module.exports =  utility.isBrowser() ?
-    require('./system-browser.js') : require('./system-node.js');
+    _dereq_('./system-browser.js') : _dereq_('./system-node.js');
 
 system.ioConnect = function (settings) {
   var httpMode = settings.ssl ? 'https' : 'http';
@@ -8114,13 +8114,13 @@ system.ioConnect = function (settings) {
 };
 
 
-},{"../utility/utility.js":26,"./system-browser.js":22,"./system-node.js":1,"socket.io-client":2}],24:[function(require,module,exports){
+},{"../utility/utility.js":26,"./system-browser.js":22,"./system-node.js":1,"socket.io-client":2}],24:[function(_dereq_,module,exports){
 /**
  * (event)Emitter renamed to avoid confusion with prvy's events
  */
 
 
-var _ = require('underscore');
+var _ = _dereq_('underscore');
 
 var SignalEmitter = module.exports = function (messagesMap) {
   SignalEmitter.extend(this, messagesMap);
@@ -8244,7 +8244,7 @@ SignalEmitter.prototype.startBatch = function (batchName, orHookOnBatch) {
   return batch;
 };
 
-},{"underscore":3}],25:[function(require,module,exports){
+},{"underscore":3}],25:[function(_dereq_,module,exports){
 /* global document, navigator */
 /* jshint -W101*/
 
@@ -8635,8 +8635,8 @@ utility.domReady = function (ready) {
 
 
 
-},{}],26:[function(require,module,exports){
-var _ = require('underscore');
+},{}],26:[function(_dereq_,module,exports){
+var _ = _dereq_('underscore');
 
 var isBrowser = function () {
   return typeof(window) !== 'undefined';
@@ -8644,7 +8644,7 @@ var isBrowser = function () {
 
 
 var utility = module.exports = isBrowser() ?
-  require('./utility-browser.js') : require('./utility-node.js');
+  _dereq_('./utility-browser.js') : _dereq_('./utility-node.js');
 
 /**
  * return true if environment is a web browser
@@ -8653,7 +8653,7 @@ var utility = module.exports = isBrowser() ?
 utility.isBrowser = isBrowser;
 
 
-utility.SignalEmitter = require('./SignalEmitter.js');
+utility.SignalEmitter = _dereq_('./SignalEmitter.js');
 
 /**
  * Merge two object (key/value map) and remove "null" properties
@@ -8715,3 +8715,5 @@ utility.endsWith = function (str, suffix) {
 
 
 },{"./SignalEmitter.js":24,"./utility-browser.js":25,"./utility-node.js":1,"underscore":3}]},{},["yfS/Pm"])
+("yfS/Pm")
+});

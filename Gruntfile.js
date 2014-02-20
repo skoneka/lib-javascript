@@ -23,7 +23,8 @@ module.exports = function (grunt) {
         dest: './dist/pryv.js',
         options: {
           alias: ['./source/main.js:pryv'],
-          ignore: [ './source/system/*-node.js', './source/utility/*-node.js' ]
+          ignore: [ './source/system/*-node.js', './source/utility/*-node.js' ],
+          standalone: 'Pryv'
         }
       }
     },
