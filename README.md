@@ -9,7 +9,7 @@ Javascript library (browser & Node.js) to access and manipulate Pryv users data.
 
 ### Installation
 
-- Browser: `<script type="text/javascript" src="pryv/pryv.js"></script>` (files in `dist` folder)
+- Browser: `<script type="text/javascript" src="http://api.pryv.com/lib-javascript/latest/pryv.js"></script>`
 - Node.js: `npm install pryv`
 
 ### Examples
@@ -29,22 +29,22 @@ connection.events.create(eventData, function(err, event) { 
 
 ### Dev environment setup
 
-```
-npm install
-# if not installed already:
-npm install -g grunt-cli
-```
+Read, then run `./scripts/setup-environment-dev.sh`
 
-### Tests
+### Build and tests
 
 `grunt`:
 
 - applies code linting (with JSHint)
-- browserifies the lib into `dist/pryv.js` for browser distribution
+- browserifies the lib into `dist/{version}` as well as `dist/latest` for browser standalone distribution
 - runs the tests, outputting coverage info into `test/coverage.html`
 - builds documentation into `doc`
 
 Also: `grunt test` & `grunt watch` (runs tests on changes)
+
+### Publish
+
+After building, just commit and push changes from `dist` (working copy of `gh-pages` branch).
 
 
 ## License

@@ -1,3 +1,8 @@
+var package = require('./package.json'),
+    distRoot = './dist/',
+    currentDistPath = distRoot + package.version + '/',
+    latestDistPath = distRoot + 'latest/';
+
 module.exports = function (grunt) {
 
   grunt.loadNpmTasks('grunt-browserify');
@@ -8,7 +13,7 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-jsdoc');
 
   grunt.initConfig({
-    pkg: grunt.file.readJSON('package.json'),
+    pkg: package,
 
     jshint: {
       files: [ 'gruntfile.js', 'source/**/*.js', 'test/**/*.js' ],
@@ -18,9 +23,9 @@ module.exports = function (grunt) {
     },
 
     browserify: {
-      main: {
+      dist: {
         src: ['./source/main.js'],
-        dest: './dist/pryv.js',
+        dest: currentDistPath + 'pryv.js',
         options: {
           alias: ['./source/main.js:pryv'],
           ignore: [ './source/system/*-node.js', './source/utility/*-node.js' ],
@@ -30,14 +35,24 @@ module.exports = function (grunt) {
     },
 
     copy: {
-      media : {
+      assetsToDist: {
         files: [
           {
             expand: true,
             flatten: true,
             filter: 'isFile',
             src: 'source/assets/**',
-            dest: 'dist/assets/'
+            dest: currentDistPath + 'assets/'
+          }
+        ]
+      },
+      updateLatestDist: {
+        files: [
+          {
+            expand: true,
+            cwd: currentDistPath,
+            src: '**',
+            dest: latestDistPath
           }
         ]
       }
@@ -63,7 +78,7 @@ module.exports = function (grunt) {
 
     jsdoc : {
       dist : {
-        src: [ 'Readme.md', 'source/**/*.*' ],
+        src: [ 'README.md', 'source/**/*.*' ],
         options : {
           destination : 'doc',
           private: false,
