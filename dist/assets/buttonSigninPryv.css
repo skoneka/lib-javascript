@@ -109,7 +109,8 @@
 }
 
 .pryv-access-btn-signin > .pryv-access-btn:first-child span {
-  background-image: url(https://dlw0lofo79is5.cloudfront.net/lib-javascript/dist/media/btnSigninLogoOnly.png);
+  background-image: url(btnSigninLogoOnly.png);
+  /*background-image: url(https://dlw0lofo79is5.cloudfront.net/lib-javascript/dist/assets/btnSigninLogoOnly.png);*/
   background-position: 0px 4px;
   background-repeat: no-repeat;
   text-indent: -90000px;

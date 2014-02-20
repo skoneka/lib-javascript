@@ -35,8 +35,8 @@ module.exports = function (grunt) {
             expand: true,
             flatten: true,
             filter: 'isFile',
-            src: 'source/media/**',
-            dest: 'dist/media/'
+            src: 'source/assets/**',
+            dest: 'dist/assets/'
           }
         ]
       }
