@@ -229,8 +229,8 @@ var testStreams = function (preFetchStructure) {
           .reply(201, response);
         connection.streams._createWithData(streamData, function (err, result) {
           should.not.exist(err);
-          should.exist(result.stream);
-          result.should.eql(response);
+          should.exist(result);
+          result.should.eql(response.stream);
           done();
         });
       });
@@ -241,7 +241,7 @@ var testStreams = function (preFetchStructure) {
           .reply(201, response);
         connection.streams._createWithData(streamData, function (err, result) {
           should.exist(streamData.id);
-          streamData.id.should.eql(result.stream.id);
+          streamData.id.should.eql(result.id);
           done();
         });
       });

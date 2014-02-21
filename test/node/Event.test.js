@@ -58,6 +58,17 @@ var testEvent = function (preFetchStructure) {
       event.serialId.should.equal(eventSerial);
       done();
     });
+    it('should return correct preview url', function (done) {
+      var id = 'foo', w = 10, h = 20;
+      event.id = id;
+      var url = event.getPicturePreview();
+      url.should.equal('https://' + username + '.' + settings.domain +
+        ':3443/events/' + id + '?auth=' + connection.auth);
+      url = event.getPicturePreview(w, h);
+      url.should.equal('https://' + username + '.' + settings.domain +
+        ':3443/events/' + id + '?auth=' + connection.auth + '&w=' + w + '&h=' + h);
+      done();
+    });
 
   });
 

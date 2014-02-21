@@ -112,9 +112,11 @@ ConnectionStreams.prototype.create = function (streamData, callback) {
 ConnectionStreams.prototype._createWithData = function (streamData, callback) {
   var url = '/streams';
   this.connection.request('POST', url, function (err, resultData) {
-    streamData.id = resultData.stream.id;
+    if (resultData) {
+      streamData.id = resultData.stream.id;
+    }
     if (_.isFunction(callback)) {
-      callback(err, resultData);
+      return callback(err, resultData.stream);
     }
   }, streamData);
 };
