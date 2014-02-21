@@ -5,8 +5,7 @@ module.exports = {
   Event: require('./Event.js'),
   Stream: require('./Stream.js'),
   Filter: require('./Filter.js'),
-  system: require('./system/system.js'),
-  utility: require('./utility/utility.js'),
 
-  eventTypes: require('./eventTypes.js')
+  eventTypes: require('./eventTypes.js'),
+  utility: require('./utility/utility.js')
 };

@@ -1,24 +1,23 @@
-var _ = require('underscore');
+var socketIO = require('socket.io-client'),
+    _ = require('underscore');
 
-var isBrowser = function () {
+function isBrowser() {
   return typeof(window) !== 'undefined';
-};
-
+}
 
 var utility = module.exports = isBrowser() ?
   require('./utility-browser.js') : require('./utility-node.js');
 
 /**
- * return true if environment is a web browser
- * @returns {boolean}
+ * @returns {Boolean} `true` if we're in a web browser environment
  */
 utility.isBrowser = isBrowser;
-
 
 utility.SignalEmitter = require('./SignalEmitter.js');
 
 /**
- * Merge two object (key/value map) and remove "null" properties
+ * Merges two object (key/value map) and remove "null" properties
+ *
  * @param {Object} sourceA
  * @param {Object} sourceB
  * @returns {*|Block|Node|Tag}
@@ -35,7 +34,8 @@ utility.mergeAndClean = function (sourceA, sourceB) {
 };
 
 /**
- * Create a query string from an object (key/value map)
+ * Creates a query string from an object (key/value map)
+ *
  * @param {Object} data
  * @returns {String} key1=value1&key2=value2....
  */
@@ -56,22 +56,24 @@ utility.getQueryParametersString = function (data) {
   }, this).join('&');
 };
 
-/**
- * Common regexp
- * @type {{username: RegExp, email: RegExp}}
- */
-utility.regex = {
-  username :  /^([a-zA-Z0-9])(([a-zA-Z0-9\-]){3,21})([a-zA-Z0-9])$/,
-  email : /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/
-};
+utility.regex = require('./regex');
 
 /**
- * Cross platform string endsWith
- * @param {String} str
+ * Cross-platform string endsWith
+ *
+ * @param {String} string
  * @param {String} suffix
- * @returns {boolean}
+ * @returns {Boolean}
  */
-utility.endsWith = function (str, suffix) {
-  return str.indexOf(suffix, str.length - suffix.length) !== -1;
+utility.endsWith = function (string, suffix) {
+  return string.indexOf(suffix, string.length - suffix.length) !== -1;
+};
+
+utility.ioConnect = function (settings) {
+  var httpMode = settings.ssl ? 'https' : 'http';
+  var url = httpMode + '://' + settings.host + ':' + settings.port + '' +
+      settings.path + '?auth=' + settings.auth + '&resource=' + settings.namespace;
+
+  return socketIO.connect(url, {'force new connection': true});
 };
 

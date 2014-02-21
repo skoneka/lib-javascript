@@ -1,7 +1,6 @@
 /* global confirm, document, navigator, location, window */
 
 var utility = require('../utility/utility.js');
-var system = require('../system/system.js');
 var Connection = require('../Connection.js');
 var _ = require('underscore');
 
@@ -347,7 +346,7 @@ Auth.prototype.login = function (settings) {
     }.bind(this)
   };
 
-  system.request(_.extend(pack, this.config.registerURL));
+  utility.request(_.extend(pack, this.config.registerURL));
 };
 Auth.prototype.trustedLogout = function () {
   var path = '/auth/logout';
@@ -405,7 +404,7 @@ Auth.prototype.whoAmI = function (settings) {
     }.bind(this)
   };
 
-  system.request(_.extend(pack, this.config.registerURL));
+  utility.request(_.extend(pack, this.config.registerURL));
 
 };
 Auth.prototype.loginWithCookie = function (settings) {
@@ -533,7 +532,7 @@ Auth.prototype.setup = function (settings) {
       }.bind(this)
     };
 
-    system.request(_.extend(pack, this.config.registerURL));
+    utility.request(_.extend(pack, this.config.registerURL));
 
 
   }
@@ -562,7 +561,7 @@ Auth.prototype.poll = function poll() {
       }.bind(this)
     };
 
-    system.request(_.extend(pack, this.config.registerURL));
+    utility.request(_.extend(pack, this.config.registerURL));
 
 
     this.pollingID = setTimeout(this.poll.bind(this), this.state.poll_rate_ms);

@@ -1,5 +1,3 @@
-//file: system node
-
 //TODO align with XHR error
 
 //TODO: sort out the callback convention
@@ -21,7 +19,7 @@
  * @param {Number} [pack.expectedStatus] : http result code
  * @param {Boolean} [pack.ssl = true]
  */
-exports.request = function (pack)  {
+module.exports = function (pack)  {
   if (pack.payload) {
     pack.headers['Content-Length'] = pack.payload.length;
   }
@@ -43,7 +41,7 @@ exports.request = function (pack)  {
 
 
   var detail = 'Request: ' + httpOptions.method + ' ' +
-    httpMode + '://' + httpOptions.host + ':' + httpOptions.port + '' + httpOptions.path;
+      httpMode + '://' + httpOptions.host + ':' + httpOptions.port + '' + httpOptions.path;
 
 
 
@@ -66,8 +64,8 @@ exports.request = function (pack)  {
         try {
           result = JSON.parse(bodyarr.join(''));
         } catch (error) {
-          return onError('system-node.request failed to parse JSON in response' +
-            bodyarr.join('')
+          return onError('request failed to parse JSON in response' +
+              bodyarr.join('')
           );
         }
       }
@@ -75,8 +73,8 @@ exports.request = function (pack)  {
     });
 
   }).on('error', function (e) {
-      return onError('Error: ' + e.message);
-    });
+        return onError('Error: ' + e.message);
+      });
 
 
   req.on('socket', function (socket) {
