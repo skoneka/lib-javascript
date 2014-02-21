@@ -1,4 +1,4 @@
-!function(e){if("object"==typeof exports)module.exports=e();else if("function"==typeof define&&define.amd)define(e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.Pryv=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
+!function(e){if("object"==typeof exports)module.exports=e();else if("function"==typeof define&&define.amd)define(e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.pryv=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 
 },{}],2:[function(_dereq_,module,exports){
 /*! Socket.IO.js build:0.9.16, development. Copyright(c) 2011 LearnBoost <dev@learnboost.com> MIT Licensed */
@@ -5154,15 +5154,14 @@ if (typeof define === "function" && define.amd) {
 
 },{}],4:[function(_dereq_,module,exports){
 var _ = _dereq_('underscore'),
-  system = _dereq_('./system/system.js'),
-  utility = _dereq_('./utility/utility.js'),
-  ConnectionEvents = _dereq_('./connection/ConnectionEvents.js'),
-  ConnectionStreams = _dereq_('./connection/ConnectionStreams.js'),
-  ConnectionProfile = _dereq_('./connection/ConnectionProfile.js'),
-  ConnectionBookmarks = _dereq_('./connection/ConnectionBookmarks.js'),
-  ConnectionAccesses = _dereq_('./connection/ConnectionAccesses.js'),
-  ConnectionMonitors = _dereq_('./connection/ConnectionMonitors.js'),
-  Datastore = _dereq_('./Datastore.js');
+    utility = _dereq_('./utility/utility.js'),
+    ConnectionEvents = _dereq_('./connection/ConnectionEvents.js'),
+    ConnectionStreams = _dereq_('./connection/ConnectionStreams.js'),
+    ConnectionProfile = _dereq_('./connection/ConnectionProfile.js'),
+    ConnectionBookmarks = _dereq_('./connection/ConnectionBookmarks.js'),
+    ConnectionAccesses = _dereq_('./connection/ConnectionAccesses.js'),
+    ConnectionMonitors = _dereq_('./connection/ConnectionMonitors.js'),
+    Datastore = _dereq_('./Datastore.js');
 
 /**
  * @class Connection
@@ -5399,7 +5398,7 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
     withoutCredentials = true;
   }
 
-  var request = system.request({
+  var request = utility.request({
     method : method,
     host : this._getDomain(),
     port : this.settings.port,
@@ -5506,7 +5505,7 @@ Object.defineProperty(Connection.prototype, 'serialId', {
  * @param {Object} result - jSonEncoded result
  */
 
-},{"./Datastore.js":5,"./connection/ConnectionAccesses.js":13,"./connection/ConnectionBookmarks.js":14,"./connection/ConnectionEvents.js":15,"./connection/ConnectionMonitors.js":16,"./connection/ConnectionProfile.js":17,"./connection/ConnectionStreams.js":18,"./system/system.js":23,"./utility/utility.js":26,"underscore":3}],5:[function(_dereq_,module,exports){
+},{"./Datastore.js":5,"./connection/ConnectionAccesses.js":13,"./connection/ConnectionBookmarks.js":14,"./connection/ConnectionEvents.js":15,"./connection/ConnectionMonitors.js":16,"./connection/ConnectionProfile.js":17,"./connection/ConnectionStreams.js":18,"./utility/utility.js":28,"underscore":3}],5:[function(_dereq_,module,exports){
 var _ = _dereq_('underscore');
 
 function Datastore(connection) {
@@ -6004,7 +6003,7 @@ Filter.prototype.focusedOnSingleStream = function () {
  */
 
 
-},{"./utility/SignalEmitter.js":24,"underscore":3}],8:[function(_dereq_,module,exports){
+},{"./utility/SignalEmitter.js":22,"underscore":3}],8:[function(_dereq_,module,exports){
 var _ = _dereq_('underscore'),
     SignalEmitter = _dereq_('./utility/SignalEmitter.js'),
     Filter = _dereq_('./Filter.js');
@@ -6265,7 +6264,7 @@ module.exports = Monitor;
 
 
 
-},{"./Filter.js":7,"./utility/SignalEmitter.js":24,"underscore":3}],9:[function(_dereq_,module,exports){
+},{"./Filter.js":7,"./utility/SignalEmitter.js":22,"underscore":3}],9:[function(_dereq_,module,exports){
 
 var _ = _dereq_('underscore');
 
@@ -6340,7 +6339,6 @@ Object.defineProperty(Stream.prototype, 'ancestors', {
 /* global confirm, document, navigator, location, window */
 
 var utility = _dereq_('../utility/utility.js');
-var system = _dereq_('../system/system.js');
 var Connection = _dereq_('../Connection.js');
 var _ = _dereq_('underscore');
 
@@ -6359,7 +6357,7 @@ _.extend(Auth.prototype, {
     registerURL: {ssl: true, host: 'reg.pryv.io'},
     registerStagingURL: {ssl: true, host: 'reg.pryv.in'},
     localDevel : false,
-    sdkFullPath: 'https://dlw0lofo79is5.cloudfront.net/lib-javascript/dist'
+    sdkFullPath: 'https://dlw0lofo79is5.cloudfront.net/lib-javascript/latest'
   },
   state: null,  // actual state
   window: null,  // popup window reference (if any)
@@ -6686,7 +6684,7 @@ Auth.prototype.login = function (settings) {
     }.bind(this)
   };
 
-  system.request(_.extend(pack, this.config.registerURL));
+  utility.request(_.extend(pack, this.config.registerURL));
 };
 Auth.prototype.trustedLogout = function () {
   var path = '/auth/logout';
@@ -6744,7 +6742,7 @@ Auth.prototype.whoAmI = function (settings) {
     }.bind(this)
   };
 
-  system.request(_.extend(pack, this.config.registerURL));
+  utility.request(_.extend(pack, this.config.registerURL));
 
 };
 Auth.prototype.loginWithCookie = function (settings) {
@@ -6872,7 +6870,7 @@ Auth.prototype.setup = function (settings) {
       }.bind(this)
     };
 
-    system.request(_.extend(pack, this.config.registerURL));
+    utility.request(_.extend(pack, this.config.registerURL));
 
 
   }
@@ -6901,7 +6899,7 @@ Auth.prototype.poll = function poll() {
       }.bind(this)
     };
 
-    system.request(_.extend(pack, this.config.registerURL));
+    utility.request(_.extend(pack, this.config.registerURL));
 
 
     this.pollingID = setTimeout(this.poll.bind(this), this.state.poll_rate_ms);
@@ -6999,7 +6997,7 @@ Auth.prototype._cleanStatusFromURL = function () {
 
 module.exports = new Auth();
 
-},{"../Connection.js":4,"../system/system.js":23,"../utility/utility.js":26,"underscore":3}],11:[function(_dereq_,module,exports){
+},{"../Connection.js":4,"../utility/utility.js":28,"underscore":3}],11:[function(_dereq_,module,exports){
 
 module.exports = {};
 },{}],12:[function(_dereq_,module,exports){
@@ -7008,7 +7006,7 @@ var utility = _dereq_('../utility/utility.js');
 module.exports =  utility.isBrowser() ?
     _dereq_('./Auth-browser.js') : _dereq_('./Auth-node.js');
 
-},{"../utility/utility.js":26,"./Auth-browser.js":10,"./Auth-node.js":11}],13:[function(_dereq_,module,exports){
+},{"../utility/utility.js":28,"./Auth-browser.js":10,"./Auth-node.js":11}],13:[function(_dereq_,module,exports){
 var apiPathAccesses = '/accesses';
 var _ = _dereq_('underscore');
 
@@ -7372,10 +7370,10 @@ module.exports = ConnectionEvents;
  * @param {Event[]} events
  */
 
-},{"../Event":6,"../Filter":7,"../utility/utility.js":26,"underscore":3}],16:[function(_dereq_,module,exports){
+},{"../Event":6,"../Filter":7,"../utility/utility.js":28,"underscore":3}],16:[function(_dereq_,module,exports){
 var _ = _dereq_('underscore'),
-  system = _dereq_('../system/system.js'),
-  Monitor = _dereq_('../Monitor.js');
+    utility = _dereq_('../utility/utility'),
+    Monitor = _dereq_('../Monitor');
 
 /**
  * @class ConnectionMonitors
@@ -7438,7 +7436,7 @@ ConnectionMonitors.prototype._startMonitoring = function (callback) {
     auth : this.connection.auth
   };
 
-  this.ioSocket = system.ioConnect(settings);
+  this.ioSocket = utility.ioConnect(settings);
 
   this.ioSocket.on('connect', function () {
     _.each(this._monitors, function (monitor) { monitor._onIoConnect(); });
@@ -7459,7 +7457,7 @@ module.exports = ConnectionMonitors;
 
 
 
-},{"../Monitor.js":8,"../system/system.js":23,"underscore":3}],17:[function(_dereq_,module,exports){
+},{"../Monitor":8,"../utility/utility":28,"underscore":3}],17:[function(_dereq_,module,exports){
 var apiPathPrivateProfile = '/profile/private';
 var apiPathPublicProfile = '/profile/app';
 
@@ -7818,9 +7816,9 @@ module.exports = ConnectionStreams;
  */
 
 
-},{"../Stream.js":9,"../utility/utility.js":26,"underscore":3}],19:[function(_dereq_,module,exports){
+},{"../Stream.js":9,"../utility/utility.js":28,"underscore":3}],19:[function(_dereq_,module,exports){
 
-var system = _dereq_('./system/system.js');
+var utility = _dereq_('./utility/utility');
 var eventTypes = module.exports = { };
 
 // staging cloudfront https://d1kp76srklnnah.cloudfront.net/dist/data-types/event-extras.json
@@ -7836,7 +7834,7 @@ var PATH = '/dist/data-types/';
  * @param callback
  */
 function _getFile(fileName, callback) {
-  system.request({
+  utility.request({
     method : 'GET',
     host : HOSTNAME,
     path : PATH + fileName,
@@ -7906,7 +7904,7 @@ eventTypes.extras = function (eventType) {
  * @param {Object} result - jSonEncoded result
  */
 
-},{"./system/system.js":23}],"pryv":[function(_dereq_,module,exports){
+},{"./utility/utility":28}],"pryv":[function(_dereq_,module,exports){
 module.exports=_dereq_('yfS/Pm');
 },{}],"yfS/Pm":[function(_dereq_,module,exports){
 module.exports = {
@@ -7916,205 +7914,12 @@ module.exports = {
   Event: _dereq_('./Event.js'),
   Stream: _dereq_('./Stream.js'),
   Filter: _dereq_('./Filter.js'),
-  system: _dereq_('./system/system.js'),
-  utility: _dereq_('./utility/utility.js'),
 
-  eventTypes: _dereq_('./eventTypes.js')
+  eventTypes: _dereq_('./eventTypes.js'),
+  utility: _dereq_('./utility/utility.js')
 };
 
-},{"./Connection.js":4,"./Event.js":6,"./Filter.js":7,"./Stream.js":9,"./auth/Auth.js":12,"./eventTypes.js":19,"./system/system.js":23,"./utility/utility.js":26}],22:[function(_dereq_,module,exports){
-//file: system browser
-
-
-
-/**
- *
- * @param {Object} pack json with
- * @param {Object} [pack.type = 'POST'] : 'GET/DELETE/POST/PUT'
- * @param {String} pack.host : fully qualified host name
- * @param {Number} pack.port : port to use
- * @param {String} pack.path : the request PATH
- * @param {Object} [pack.headers] : key / value map of headers
- * @param {Object} [pack.params] : the payload -- only with POST/PUT
- * @param {String} [pack.parseResult = 'json'] : 'text' for no parsing
- * @param {Function} pack.success : function (result, requestInfos)
- * @param {Function} pack.error : function (error, requestInfos)
- * @param {String} [pack.info] : a text
- * @param {Boolean} [pack.async = true]
- * @param {Number} [pack.expectedStatus] : http result code
- * @param {Boolean} [pack.ssl = true]
- * @param {Boolean} [pack.withoutCredentials = false]
- */
-exports.request = function (pack)  {
-  pack.info = pack.info || '';
-  var parseResult = pack.parseResult || 'json';
-
-  if (!pack.hasOwnProperty('async')) {
-    pack.async = true;
-  }
-
-  // ------------ request TYPE
-  pack.method = pack.method || 'POST';
-  // method override test
-  if (false && pack.method === 'DELETE') {
-    pack.method = 'POST';
-    pack.params =  pack.params || {};
-    pack.params._method = 'DELETE';
-  }
-
-  // ------------- request HEADERS
-
-
-  pack.headers = pack.headers || {};
-
-  if (pack.method === 'POST' || pack.method === 'PUT') {// add json headers is POST or PUT
-
-    if (pack.headers['Content-Type'] === 'multipart/form-data') {
-      delete pack.headers['Content-Type'];
-    } else {
-      pack.headers['Content-Type'] =
-        pack.headers['Content-Type'] || 'application/json; charset=utf-8';
-    }
-
-    //if (pack.method === 'POST') {
-    if (pack.params) {
-      pack.params = JSON.stringify(pack.params);
-    } else {
-      pack.params = pack.payload || {};
-    }
-  }
-
-
-
-  // -------------- error
-  pack.error = pack.error || function (error) {
-    throw new Error(JSON.stringify(error, function (key, value) {
-      if (value === null) { return; }
-      if (value === '') { return; }
-      return value;
-    }, 2));
-  };
-
-  var detail = pack.info + ', req: ' + pack.method + ' ' + pack.url;
-
-  // --------------- request
-  var xhr = _initXHR(),
-    httpMode = pack.ssl ? 'https://' : 'http://',
-    url = httpMode + pack.host + pack.path;
-  xhr.open(pack.method, url, pack.async);
-  xhr.withCredentials = pack.withoutCredentials ? false : true;
-
-
-  xhr.onreadystatechange = function () {
-    detail += ' xhrstatus:' + xhr.statusText;
-    if (xhr.readyState === 0) {
-      pack.error({
-        message: 'pryvXHRCall unsent',
-        detail: detail,
-        id: 'INTERNAL_ERROR',
-        xhr: xhr
-      });
-    } else if (xhr.readyState === 4) {
-      var result = null;
-
-      if (parseResult === 'json') {
-        try { result = JSON.parse(xhr.responseText); } catch (e) {
-          return pack.error({
-            message: 'Data is not JSON',
-            detail: xhr.responseText + '\n' + detail,
-            id: 'RESULT_NOT_JSON',
-            xhr: xhr
-          });
-        }
-      }
-      var requestInfo = {
-        xhr : xhr,
-        code : xhr.status,
-        headers : xhr.getAllResponseHeaders()
-      };
-
-      pack.success(result, requestInfo);
-    }
-  };
-  if (pack.progressCallback && typeof(pack.progressCallback) === 'function') {
-    xhr.upload.addEventListener('progress', function (e) {
-      return pack.progressCallback(e);
-    }, false);
-  }
-  for (var key in pack.headers) {
-    if (pack.headers.hasOwnProperty(key)) {
-      xhr.setRequestHeader(key, pack.headers[key]);
-    }
-  }
-
-  //--- sending the request
-  try {
-    xhr.send(pack.params);
-  } catch (e) {
-    return pack.error({
-      message: 'pryvXHRCall unsent',
-      detail: detail,
-      id: 'INTERNAL_ERROR',
-      error: e,
-      xhr: xhr
-    });
-  }
-  return xhr;
-};
-
-/**
- * Method to initialize XMLHttpRequest.
- * @method _initXHR
- * @access private
- * @return object
- */
-/* jshint -W117 */
-var _initXHR = function () {
-  var XHR = null;
-
-  try { XHR = new XMLHttpRequest(); }
-  catch (e) {
-    try { XHR = new ActiveXObject('Msxml2.XMLHTTP'); }
-    catch (e2) {
-      try { XHR = new ActiveXObject('Microsoft.XMLHTTP'); }
-      catch (e3) {
-        console.log('XMLHttpRequest implementation not found.');
-      }
-      console.log('XMLHttpRequest implementation not found.');
-    }
-    console.log('XMLHttpRequest implementation not found.');
-  }
-  return XHR;
-};
-
-
-
-
-
-
-},{}],23:[function(_dereq_,module,exports){
-//TODO: consider merging system into utility
-
-var utility = _dereq_('../utility/utility.js');
-
-
-var socketIO = _dereq_('socket.io-client');
-
-
-var system =
-  module.exports =  utility.isBrowser() ?
-    _dereq_('./system-browser.js') : _dereq_('./system-node.js');
-
-system.ioConnect = function (settings) {
-  var httpMode = settings.ssl ? 'https' : 'http';
-  var url = httpMode + '://' + settings.host + ':' + settings.port + '' +
-    settings.path + '?auth=' + settings.auth + '&resource=' + settings.namespace;
-
-  return socketIO.connect(url, {'force new connection': true});
-};
-
-
-},{"../utility/utility.js":26,"./system-browser.js":22,"./system-node.js":1,"socket.io-client":2}],24:[function(_dereq_,module,exports){
+},{"./Connection.js":4,"./Event.js":6,"./Filter.js":7,"./Stream.js":9,"./auth/Auth.js":12,"./eventTypes.js":19,"./utility/utility.js":28}],22:[function(_dereq_,module,exports){
 /**
  * (event)Emitter renamed to avoid confusion with prvy's events
  */
@@ -8244,21 +8049,302 @@ SignalEmitter.prototype.startBatch = function (batchName, orHookOnBatch) {
   return batch;
 };
 
-},{"underscore":3}],25:[function(_dereq_,module,exports){
+},{"underscore":3}],23:[function(_dereq_,module,exports){
+/* jshint ignore:start */
+
+/*\
+ |*|
+ |*|  :: cookies.js ::
+ |*|
+ |*|  A complete cookies reader/writer framework with full unicode support.
+ |*|
+ |*|  https://developer.mozilla.org/en-US/docs/DOM/document.cookie
+ |*|
+ |*|  Syntaxes:
+ |*|
+ |*|  * docCookies.setItem(name, value[, end[, path[, domain[, secure]]]])
+ |*|  * docCookies.getItem(name)
+ |*|  * docCookies.removeItem(name[, path])
+ |*|  * docCookies.hasItem(name)
+ |*|  * docCookies.keys()
+ |*|
+ \*/
+module.exports = {
+  getItem: function (sKey) {
+    if (!sKey || !this.hasItem(sKey)) { return null; }
+    return unescape(document.cookie.replace(new RegExp("(?:^|.*;\\s*)" +
+        escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=\\s*((?:[^;](?!;))*[^;]?).*"), "$1"));
+  },
+  setItem: function (sKey, sValue, vEnd, sPath, sDomain, bSecure) {
+    if (!sKey || /^(?:expires|max\-age|path|domain|secure)$/i.test(sKey)) { return; }
+    var sExpires = "";
+    if (vEnd) {
+      switch (vEnd.constructor) {
+        case Number:
+          sExpires = vEnd === Infinity ?
+              "; expires=Tue, 19 Jan 2038 03:14:07 GMT" : "; max-age=" + vEnd;
+          break;
+        case String:
+          sExpires = "; expires=" + vEnd;
+          break;
+        case Date:
+          sExpires = "; expires=" + vEnd.toGMTString();
+          break;
+      }
+    }
+    document.cookie = escape(sKey) + "=" + escape(sValue) + sExpires + (sDomain ? "; domain=" + sDomain : "") + (sPath ? "; path=" + sPath : "") + (bSecure ? "; secure" : "");
+  },
+  removeItem: function (sKey, sPath) {
+    if (!sKey || !this.hasItem(sKey)) { return; }
+    document.cookie = escape(sKey) + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT" + (sPath ? "; path=" + sPath : "");
+  },
+  hasItem: function (sKey) {
+    return (new RegExp("(?:^|;\\s*)" + escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=")).test(document.cookie);
+  },
+  keys: /* optional method: you can safely remove it! */ function () {
+    var aKeys = document.cookie.replace(/((?:^|\s*;)[^\=]+)(?=;|$)|^\s*|\s*(?:\=[^;]*)?(?:\1|$)/g, "").split(/\s*(?:\=[^;]*)?;\s*/);
+    for (var nIdx = 0; nIdx < aKeys.length; nIdx++) { aKeys[nIdx] = unescape(aKeys[nIdx]); }
+    return aKeys;
+  }
+};
+
+},{}],24:[function(_dereq_,module,exports){
+/* jshint ignore:start */
+
+/*!
+ * domready (c) Dustin Diaz 2012 - License MIT
+ */
+module.exports = function (ready) {
+
+
+  var fns = [], fn, f = false,
+      doc = document,
+      testEl = doc.documentElement,
+      hack = testEl.doScroll,
+      domContentLoaded = 'DOMContentLoaded',
+      addEventListener = 'addEventListener',
+      onreadystatechange = 'onreadystatechange',
+      readyState = 'readyState',
+      loaded = /^loade|c/.test(doc[readyState]);
+
+  function flush(f) {
+    loaded = 1;
+    while (f = fns.shift()) {
+      f()
+    }
+  }
+
+  doc[addEventListener] && doc[addEventListener](domContentLoaded, fn = function () {
+    doc.removeEventListener(domContentLoaded, fn, f);
+    flush();
+  }, f);
+
+
+  hack && doc.attachEvent(onreadystatechange, fn = function () {
+    if (/^c/.test(doc[readyState])) {
+      doc.detachEvent(onreadystatechange, fn);
+      flush();
+    }
+  });
+
+  return (ready = hack ?
+      function (fn) {
+        self != top ?
+            loaded ? fn() : fns.push(fn) :
+            function () {
+              console.log("on dom ready 2");
+              try {
+                testEl.doScroll('left')
+              } catch (e) {
+                return setTimeout(function() { ready(fn) }, 50)
+              }
+              fn()
+            }()
+      } :
+      function (fn) {
+        loaded ? fn() : fns.push(fn)
+      })
+}();
+
+},{}],25:[function(_dereq_,module,exports){
+/**
+ * Common regexps
+ * TODO: fix naming to "commonRegexps", "Username" and "Email" (they are constants)
+ */
+module.exports = {
+  username :  /^([a-zA-Z0-9])(([a-zA-Z0-9\-]){3,21})([a-zA-Z0-9])$/,
+  email : /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/
+};
+
+},{}],26:[function(_dereq_,module,exports){
+/**
+ *
+ * @param {Object} pack json with
+ * @param {Object} [pack.type = 'POST'] : 'GET/DELETE/POST/PUT'
+ * @param {String} pack.host : fully qualified host name
+ * @param {Number} pack.port : port to use
+ * @param {String} pack.path : the request PATH
+ * @param {Object} [pack.headers] : key / value map of headers
+ * @param {Object} [pack.params] : the payload -- only with POST/PUT
+ * @param {String} [pack.parseResult = 'json'] : 'text' for no parsing
+ * @param {Function} pack.success : function (result, requestInfos)
+ * @param {Function} pack.error : function (error, requestInfos)
+ * @param {String} [pack.info] : a text
+ * @param {Boolean} [pack.async = true]
+ * @param {Number} [pack.expectedStatus] : http result code
+ * @param {Boolean} [pack.ssl = true]
+ * @param {Boolean} [pack.withoutCredentials = false]
+ */
+module.exports = function (pack)  {
+  pack.info = pack.info || '';
+  var parseResult = pack.parseResult || 'json';
+
+  if (!pack.hasOwnProperty('async')) {
+    pack.async = true;
+  }
+
+  // ------------ request TYPE
+  pack.method = pack.method || 'POST';
+  // method override test
+  if (false && pack.method === 'DELETE') {
+    pack.method = 'POST';
+    pack.params =  pack.params || {};
+    pack.params._method = 'DELETE';
+  }
+
+  // ------------- request HEADERS
+
+
+  pack.headers = pack.headers || {};
+
+  if (pack.method === 'POST' || pack.method === 'PUT') {// add json headers is POST or PUT
+
+    if (pack.headers['Content-Type'] === 'multipart/form-data') {
+      delete pack.headers['Content-Type'];
+    } else {
+      pack.headers['Content-Type'] =
+          pack.headers['Content-Type'] || 'application/json; charset=utf-8';
+    }
+
+    //if (pack.method === 'POST') {
+    if (pack.params) {
+      pack.params = JSON.stringify(pack.params);
+    } else {
+      pack.params = pack.payload || {};
+    }
+  }
+
+
+
+  // -------------- error
+  pack.error = pack.error || function (error) {
+    throw new Error(JSON.stringify(error, function (key, value) {
+      if (value === null) { return; }
+      if (value === '') { return; }
+      return value;
+    }, 2));
+  };
+
+  var detail = pack.info + ', req: ' + pack.method + ' ' + pack.url;
+
+  // --------------- request
+  var xhr = _initXHR(),
+      httpMode = pack.ssl ? 'https://' : 'http://',
+      url = httpMode + pack.host + pack.path;
+  xhr.open(pack.method, url, pack.async);
+  xhr.withCredentials = pack.withoutCredentials ? false : true;
+
+
+  xhr.onreadystatechange = function () {
+    detail += ' xhrstatus:' + xhr.statusText;
+    if (xhr.readyState === 0) {
+      pack.error({
+        message: 'pryvXHRCall unsent',
+        detail: detail,
+        id: 'INTERNAL_ERROR',
+        xhr: xhr
+      });
+    } else if (xhr.readyState === 4) {
+      var result = null;
+
+      if (parseResult === 'json') {
+        try { result = JSON.parse(xhr.responseText); } catch (e) {
+          return pack.error({
+            message: 'Data is not JSON',
+            detail: xhr.responseText + '\n' + detail,
+            id: 'RESULT_NOT_JSON',
+            xhr: xhr
+          });
+        }
+      }
+      var requestInfo = {
+        xhr : xhr,
+        code : xhr.status,
+        headers : xhr.getAllResponseHeaders()
+      };
+
+      pack.success(result, requestInfo);
+    }
+  };
+  if (pack.progressCallback && typeof(pack.progressCallback) === 'function') {
+    xhr.upload.addEventListener('progress', function (e) {
+      return pack.progressCallback(e);
+    }, false);
+  }
+  for (var key in pack.headers) {
+    if (pack.headers.hasOwnProperty(key)) {
+      xhr.setRequestHeader(key, pack.headers[key]);
+    }
+  }
+
+  //--- sending the request
+  try {
+    xhr.send(pack.params);
+  } catch (e) {
+    return pack.error({
+      message: 'pryvXHRCall unsent',
+      detail: detail,
+      id: 'INTERNAL_ERROR',
+      error: e,
+      xhr: xhr
+    });
+  }
+  return xhr;
+};
+
+/**
+ * Method to initialize XMLHttpRequest.
+ * @method _initXHR
+ * @access private
+ * @return object
+ */
+/* jshint -W117 */
+var _initXHR = function () {
+  var XHR = null;
+
+  try { XHR = new XMLHttpRequest(); }
+  catch (e) {
+    try { XHR = new ActiveXObject('Msxml2.XMLHTTP'); }
+    catch (e2) {
+      try { XHR = new ActiveXObject('Microsoft.XMLHTTP'); }
+      catch (e3) {
+        console.log('XMLHttpRequest implementation not found.');
+      }
+      console.log('XMLHttpRequest implementation not found.');
+    }
+    console.log('XMLHttpRequest implementation not found.');
+  }
+  return XHR;
+};
+
+},{}],27:[function(_dereq_,module,exports){
 /* global document, navigator */
 /* jshint -W101*/
 
-/*
- return error, was used only by getURLContent() and  loadURLContentInElementId() but never used outside the lib
- var system = require('../system/system.js');
- */
-
 /**
- * Browser only utils
+ * Browser-only utils
  */
 var utility = module.exports = {};
-
-/* Regular expressions. */
 
 
 /**
@@ -8378,6 +8464,7 @@ utility.isUrlSsl = function (url) {
   }
   return location.protocol === 'https:';
 };
+
 /**
  *  return true if browser is seen as a mobile or tablet
  *  list grabbed from https://github.com/codefuze/js-mobile-tablet-redirect/blob/master/mobile-redirect.js
@@ -8436,9 +8523,10 @@ utility.supportCSS3 = function ()  {
 /**
  * Method to load external files like javascript and stylesheet. this version
  * of method only support to file types - js|javascript and css|stylesheet.
+ *
  * @method loadExternalFiles
- * @param {String} string filename
- * @param {String} type -- 'js' or 'css'
+ * @param {String} filename
+ * @param {String} type 'js' or 'css'
  */
 utility.loadExternalFiles = function (filename, type)  {
   var tag = null;
@@ -8461,202 +8549,33 @@ utility.loadExternalFiles = function (filename, type)  {
   }
 };
 
-/**
- * Get the content on an URL as a String ,
- * Mainly designed to load HTML ressources
- * @param {String} url
- * @param {Function} callBack  function(error,content,xhr)
- * @return {Object} xhr request
- */
-/*  UNUSED function
-utility.getURLContent = function (url, callback) {
+utility.docCookies = _dereq_('./docCookies');
 
-  function onSuccess(result, xhr) {
-    callback(null, result, xhr);
-  }
+utility.domReady = _dereq_('./domReady');
 
-  function onError(error) {
-    callback(error, null, error.xhr);
-  }
+utility.request = _dereq_('./request-browser');
 
-  return system.request({
-    method : 'GET',
-    url : url,
-    parseResult : 'text',
-    success: onSuccess,
-    error: onError
-  });
-};
-*/
-/**
- * Load the content of a URL into a div
- * !! No error will go to the console.
- */
-/*  UNUSED function
-utility.loadURLContentInElementId = function (url, elementId, next) {
-  next = next || function () {};
-  var content = document.getElementById(elementId);
-  utility.getURLContent(url,
-    function (error, result) {
-      content.innerHTML = result;
-      next();
-      if (error) {
-        console.error(error);
-      }
-    }
-  );
-};
-*/
+},{"./docCookies":23,"./domReady":24,"./request-browser":26}],28:[function(_dereq_,module,exports){
+var socketIO = _dereq_('socket.io-client'),
+    _ = _dereq_('underscore');
 
-
-
-
-/* jshint ignore:start */
-/*\
- |*|
- |*|  :: cookies.js ::
- |*|
- |*|  A complete cookies reader/writer framework with full unicode support.
- |*|
- |*|  https://developer.mozilla.org/en-US/docs/DOM/document.cookie
- |*|
- |*|  Syntaxes:
- |*|
- |*|  * docCookies.setItem(name, value[, end[, path[, domain[, secure]]]])
- |*|  * docCookies.getItem(name)
- |*|  * docCookies.removeItem(name[, path])
- |*|  * docCookies.hasItem(name)
- |*|  * docCookies.keys()
- |*|
- \*/
-utility.docCookies = {
-  getItem: function (sKey) {
-    if (!sKey || !this.hasItem(sKey)) { return null; }
-    return unescape(document.cookie.replace(new RegExp("(?:^|.*;\\s*)" +
-      escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=\\s*((?:[^;](?!;))*[^;]?).*"), "$1"));
-  },
-  setItem: function (sKey, sValue, vEnd, sPath, sDomain, bSecure) {
-    if (!sKey || /^(?:expires|max\-age|path|domain|secure)$/i.test(sKey)) { return; }
-    var sExpires = "";
-    if (vEnd) {
-      switch (vEnd.constructor) {
-        case Number:
-          sExpires = vEnd === Infinity ?
-            "; expires=Tue, 19 Jan 2038 03:14:07 GMT" : "; max-age=" + vEnd;
-          break;
-        case String:
-          sExpires = "; expires=" + vEnd;
-          break;
-        case Date:
-          sExpires = "; expires=" + vEnd.toGMTString();
-          break;
-      }
-    }
-    document.cookie = escape(sKey) + "=" + escape(sValue) + sExpires + (sDomain ? "; domain=" + sDomain : "") + (sPath ? "; path=" + sPath : "") + (bSecure ? "; secure" : "");
-  },
-  removeItem: function (sKey, sPath) {
-    if (!sKey || !this.hasItem(sKey)) { return; }
-    document.cookie = escape(sKey) + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT" + (sPath ? "; path=" + sPath : "");
-  },
-  hasItem: function (sKey) {
-    return (new RegExp("(?:^|;\\s*)" + escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=")).test(document.cookie);
-  },
-  keys: /* optional method: you can safely remove it! */ function () {
-    var aKeys = document.cookie.replace(/((?:^|\s*;)[^\=]+)(?=;|$)|^\s*|\s*(?:\=[^;]*)?(?:\1|$)/g, "").split(/\s*(?:\=[^;]*)?;\s*/);
-    for (var nIdx = 0; nIdx < aKeys.length; nIdx++) { aKeys[nIdx] = unescape(aKeys[nIdx]); }
-    return aKeys;
-  }
-};
-
-/* jshint ignore:end */
-
-
-//----------- DomReady ----------//
-
-
-/*!
- * domready (c) Dustin Diaz 2012 - License MIT
- */
-
-/* jshint ignore:start */
-utility.domReady = function (ready) {
-
-
-  var fns = [], fn, f = false,
-    doc = document,
-    testEl = doc.documentElement,
-    hack = testEl.doScroll,
-    domContentLoaded = 'DOMContentLoaded',
-    addEventListener = 'addEventListener',
-    onreadystatechange = 'onreadystatechange',
-    readyState = 'readyState',
-    loaded = /^loade|c/.test(doc[readyState]);
-
-  function flush(f) {
-    loaded = 1;
-    while (f = fns.shift()) { 
-      f()
-    }
-  }
-
-  doc[addEventListener] && doc[addEventListener](domContentLoaded, fn = function () {
-    doc.removeEventListener(domContentLoaded, fn, f);
-    flush();
-  }, f);
-
-
-  hack && doc.attachEvent(onreadystatechange, fn = function () {
-    if (/^c/.test(doc[readyState])) {
-      doc.detachEvent(onreadystatechange, fn);
-      flush();
-    }
-  });
-
-  return (ready = hack ?
-    function (fn) {
-      self != top ?
-        loaded ? fn() : fns.push(fn) :
-        function () {
-          console.log("on dom ready 2");
-          try {
-            testEl.doScroll('left')
-          } catch (e) {
-            return setTimeout(function() { ready(fn) }, 50)
-          }
-          fn()
-        }()
-    } :
-    function (fn) {
-      loaded ? fn() : fns.push(fn)
-    })
-}();
-
-/* jshint ignore:end */
-
-
-
-},{}],26:[function(_dereq_,module,exports){
-var _ = _dereq_('underscore');
-
-var isBrowser = function () {
+function isBrowser() {
   return typeof(window) !== 'undefined';
-};
-
+}
 
 var utility = module.exports = isBrowser() ?
   _dereq_('./utility-browser.js') : _dereq_('./utility-node.js');
 
 /**
- * return true if environment is a web browser
- * @returns {boolean}
+ * @returns {Boolean} `true` if we're in a web browser environment
  */
 utility.isBrowser = isBrowser;
-
 
 utility.SignalEmitter = _dereq_('./SignalEmitter.js');
 
 /**
- * Merge two object (key/value map) and remove "null" properties
+ * Merges two object (key/value map) and remove "null" properties
+ *
  * @param {Object} sourceA
  * @param {Object} sourceB
  * @returns {*|Block|Node|Tag}
@@ -8673,7 +8592,8 @@ utility.mergeAndClean = function (sourceA, sourceB) {
 };
 
 /**
- * Create a query string from an object (key/value map)
+ * Creates a query string from an object (key/value map)
+ *
  * @param {Object} data
  * @returns {String} key1=value1&key2=value2....
  */
@@ -8694,26 +8614,28 @@ utility.getQueryParametersString = function (data) {
   }, this).join('&');
 };
 
-/**
- * Common regexp
- * @type {{username: RegExp, email: RegExp}}
- */
-utility.regex = {
-  username :  /^([a-zA-Z0-9])(([a-zA-Z0-9\-]){3,21})([a-zA-Z0-9])$/,
-  email : /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/
-};
+utility.regex = _dereq_('./regex');
 
 /**
- * Cross platform string endsWith
- * @param {String} str
+ * Cross-platform string endsWith
+ *
+ * @param {String} string
  * @param {String} suffix
- * @returns {boolean}
+ * @returns {Boolean}
  */
-utility.endsWith = function (str, suffix) {
-  return str.indexOf(suffix, str.length - suffix.length) !== -1;
+utility.endsWith = function (string, suffix) {
+  return string.indexOf(suffix, string.length - suffix.length) !== -1;
+};
+
+utility.ioConnect = function (settings) {
+  var httpMode = settings.ssl ? 'https' : 'http';
+  var url = httpMode + '://' + settings.host + ':' + settings.port + '' +
+      settings.path + '?auth=' + settings.auth + '&resource=' + settings.namespace;
+
+  return socketIO.connect(url, {'force new connection': true});
 };
 
 
-},{"./SignalEmitter.js":24,"./utility-browser.js":25,"./utility-node.js":1,"underscore":3}]},{},["yfS/Pm"])
+},{"./SignalEmitter.js":22,"./regex":25,"./utility-browser.js":27,"./utility-node.js":1,"socket.io-client":2,"underscore":3}]},{},["yfS/Pm"])
 ("yfS/Pm")
 });
