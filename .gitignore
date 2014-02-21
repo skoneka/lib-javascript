@@ -3,3 +3,4 @@ test/coverage.html
 lib-javascript.iml
 doc/
 *.DS_Store
+dist

@@ -1,5 +1,5 @@
 
-var system = require('./system/system.js');
+var utility = require('./utility/utility');
 var eventTypes = module.exports = { };
 
 // staging cloudfront https://d1kp76srklnnah.cloudfront.net/dist/data-types/event-extras.json
@@ -15,7 +15,7 @@ var PATH = '/dist/data-types/';
  * @param callback
  */
 function _getFile(fileName, callback) {
-  system.request({
+  utility.request({
     method : 'GET',
     host : HOSTNAME,
     path : PATH + fileName,

@@ -1,7 +1,3 @@
-//file: system browser
-
-
-
 /**
  *
  * @param {Object} pack json with
@@ -20,7 +16,7 @@
  * @param {Boolean} [pack.ssl = true]
  * @param {Boolean} [pack.withoutCredentials = false]
  */
-exports.request = function (pack)  {
+module.exports = function (pack)  {
   pack.info = pack.info || '';
   var parseResult = pack.parseResult || 'json';
 
@@ -48,7 +44,7 @@ exports.request = function (pack)  {
       delete pack.headers['Content-Type'];
     } else {
       pack.headers['Content-Type'] =
-        pack.headers['Content-Type'] || 'application/json; charset=utf-8';
+          pack.headers['Content-Type'] || 'application/json; charset=utf-8';
     }
 
     //if (pack.method === 'POST') {
@@ -74,8 +70,8 @@ exports.request = function (pack)  {
 
   // --------------- request
   var xhr = _initXHR(),
-    httpMode = pack.ssl ? 'https://' : 'http://',
-    url = httpMode + pack.host + pack.path;
+      httpMode = pack.ssl ? 'https://' : 'http://',
+      url = httpMode + pack.host + pack.path;
   xhr.open(pack.method, url, pack.async);
   xhr.withCredentials = pack.withoutCredentials ? false : true;
 
@@ -161,8 +157,3 @@ var _initXHR = function () {
   }
   return XHR;
 };
-
-
-
-
-

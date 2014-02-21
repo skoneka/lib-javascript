@@ -5,7 +5,7 @@
 <title>Pryv Javascript Lib | Signin</title>
 
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
-<script src="../dist/pryv.js"></script>
+<script src="../../dist/latest/pryv.js"></script>
 
 
 <style>
@@ -47,9 +47,7 @@
 </head>
 <body>
   <script>
-    var Pryv = require('pryv');
-
-    Pryv.Access.config.sdkFullPath = '../dist';
+    pryv.Auth.config.sdkFullPath = '../../dist/latest';
 
     /**
      * process the form and request access
@@ -57,14 +55,14 @@
     function requestAccess() {
       // ----------------------- //
       // -- Config only used for debugging
-      Pryv.Access.config.registerURL = JSON.parse($('#registerURL option:selected').val());
-      Pryv.Access.config.registerStagingURL = Pryv.Access.config.registerURL;
+      pryv.Auth.config.registerURL = JSON.parse($('#registerURL option:selected').val());
+      pryv.Auth.config.registerStagingURL = pryv.Auth.config.registerURL;
       if ($('#localDevel option:selected').val() == "false") {
-        Pryv.Access.config.localDevel = false;
+        pryv.Auth.config.localDevel = false;
       } else {
-        Pryv.Access.config.localDevel = $('#localDevel option:selected').val();
+        pryv.Auth.config.localDevel = $('#localDevel option:selected').val();
       }
-      Pryv.Access._init(); //because we change the config
+      pryv.Auth._init(); //because we change the config
 
       // ----------------------- //
       var settings = {
@@ -104,7 +102,7 @@
         mylog("State: ERROR! " + code + " " + message);
       };
 
-      Pryv.Access.setup(settings);
+      pryv.Auth.setup(settings);
     };
 
     var buf = "";
@@ -146,7 +144,7 @@
           <option value='{ "host": "reg.pryv.io", "ssl": true}'>https://reg.pryv.io</option> </select></td>
       </tr>
       <tr>
-        
+
         <td><label for='localDevel'>Local Dev Version</label>
         </td>
         <td><select name='localDevel' id='localDevel' />

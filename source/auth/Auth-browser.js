@@ -1,7 +1,6 @@
 /* global confirm, document, navigator, location, window */
 
 var utility = require('../utility/utility.js');
-var system = require('../system/system.js');
 var Connection = require('../Connection.js');
 var _ = require('underscore');
 
@@ -20,7 +19,7 @@ _.extend(Auth.prototype, {
     registerURL: {ssl: true, host: 'reg.pryv.io'},
     registerStagingURL: {ssl: true, host: 'reg.pryv.in'},
     localDevel : false,
-    sdkFullPath: 'https://dlw0lofo79is5.cloudfront.net/lib-javascript/dist'
+    sdkFullPath: 'https://dlw0lofo79is5.cloudfront.net/lib-javascript/latest'
   },
   state: null,  // actual state
   window: null,  // popup window reference (if any)
@@ -50,7 +49,7 @@ Auth._init = function (i) {
   }
 
   utility.loadExternalFiles(
-    Auth.prototype.config.sdkFullPath + '/media/buttonSigninPryv.css', 'css');
+    Auth.prototype.config.sdkFullPath + '/assets/buttonSigninPryv.css', 'css');
 
   if (utility.testIfStagingFromUrl()) {
     console.log('staging mode');
@@ -79,7 +78,7 @@ Auth.prototype.uiButton = function (onClick, buttonText) {
   } else   {
     return '<a href="#" id ="pryv-access-btn" data-onclick-action="' + onClick +
       '" class="pryv-access-btn-signinImage" ' +
-      'src="' + this.config.sdkFullPath + '/media/btnSignIn.png" >' + buttonText + '</a>';
+      'src="' + this.config.sdkFullPath + '/assets/btnSignIn.png" >' + buttonText + '</a>';
   }
 };
 
@@ -347,7 +346,7 @@ Auth.prototype.login = function (settings) {
     }.bind(this)
   };
 
-  system.request(_.extend(pack, this.config.registerURL));
+  utility.request(_.extend(pack, this.config.registerURL));
 };
 Auth.prototype.trustedLogout = function () {
   var path = '/auth/logout';
@@ -405,7 +404,7 @@ Auth.prototype.whoAmI = function (settings) {
     }.bind(this)
   };
 
-  system.request(_.extend(pack, this.config.registerURL));
+  utility.request(_.extend(pack, this.config.registerURL));
 
 };
 Auth.prototype.loginWithCookie = function (settings) {
@@ -533,7 +532,7 @@ Auth.prototype.setup = function (settings) {
       }.bind(this)
     };
 
-    system.request(_.extend(pack, this.config.registerURL));
+    utility.request(_.extend(pack, this.config.registerURL));
 
 
   }
@@ -562,7 +561,7 @@ Auth.prototype.poll = function poll() {
       }.bind(this)
     };
 
-    system.request(_.extend(pack, this.config.registerURL));
+    utility.request(_.extend(pack, this.config.registerURL));
 
 
     this.pollingID = setTimeout(this.poll.bind(this), this.state.poll_rate_ms);

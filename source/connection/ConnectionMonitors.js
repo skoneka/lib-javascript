@@ -1,6 +1,6 @@
 var _ = require('underscore'),
-  system = require('../system/system.js'),
-  Monitor = require('../Monitor.js');
+    utility = require('../utility/utility'),
+    Monitor = require('../Monitor');
 
 /**
  * @class ConnectionMonitors
@@ -63,7 +63,7 @@ ConnectionMonitors.prototype._startMonitoring = function (callback) {
     auth : this.connection.auth
   };
 
-  this.ioSocket = system.ioConnect(settings);
+  this.ioSocket = utility.ioConnect(settings);
 
   this.ioSocket.on('connect', function () {
     _.each(this._monitors, function (monitor) { monitor._onIoConnect(); });
