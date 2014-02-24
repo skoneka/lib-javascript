@@ -1,6 +1,6 @@
 /* global before, describe, it */
 
-var Pryv = require('../../source/main'),
+var pryv = require('../../source/main'),
   nock = require('nock'),
   should = require('should'),
   responses = require('../data/responses.js');
@@ -17,7 +17,7 @@ var testStream = function (preFetchStructure) {
       ssl: true,
       domain: 'test.io'
     },
-    connection = new Pryv.Connection(username, auth, settings);
+    connection = new pryv.Connection(username, auth, settings);
 
 
   if (preFetchStructure) {
@@ -41,7 +41,7 @@ var testStream = function (preFetchStructure) {
 
   describe('Stream ' + localEnabledStr, function () {
 
-    var stream = new Pryv.Stream(connection, {name: 'test', id: 'test'});
+    var stream = new pryv.Stream(connection, {name: 'test', id: 'test'});
     var streamSerial = connection.serialId + '>S' + (connection._streamSerialCounter - 1);
     it('serialId', function (done) {
 

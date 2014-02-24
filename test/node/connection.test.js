@@ -1,5 +1,5 @@
 /* global describe, it */
-var Pryv = require('../../source/main'),
+var pryv = require('../../source/main'),
     should = require('should'),
     nock = require('nock'),
   responses = require('../data/responses.js');
@@ -18,8 +18,8 @@ describe('Connection', function () {
 
   var generatedShortId = 'test-user:pryv-explorer';
 
-  var connection = new Pryv.Connection(username, auth, settings);
-  var serialId = 'C' +  (Pryv.Connection._serialCounter - 1);
+  var connection = new pryv.Connection(username, auth, settings);
+  var serialId = 'C' +  (pryv.Connection._serialCounter - 1);
 
 
   describe('connection id generation', function () {

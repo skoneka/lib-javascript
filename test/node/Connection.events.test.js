@@ -1,5 +1,5 @@
 /* global before, describe, it */
-var Pryv = require('../../source/main'),
+var pryv = require('../../source/main'),
   utility = require('../../source/utility/utility'),
   nock = require('nock'),
   should = require('should'),
@@ -13,7 +13,7 @@ var testEvents = function (preFetchStructure) {
 
   var username = 'test-user',
     auth = 'test-token',
-    defaultFilter = new Pryv.Filter();
+    defaultFilter = new pryv.Filter();
 
   describe('Connection.events' + localEnabledStr, function () {
 
@@ -25,7 +25,7 @@ var testEvents = function (preFetchStructure) {
     };
     var response = {response : 'ok'};
 
-    var connection = new Pryv.Connection(username, auth, settings);
+    var connection = new pryv.Connection(username, auth, settings);
 
     if (preFetchStructure) {
       before(function (done) {
@@ -78,14 +78,14 @@ var testEvents = function (preFetchStructure) {
 
           result.length.should.equal(200);
           _.each(result, function (event) {
-            event.should.be.instanceOf(Pryv.Event);
+            event.should.be.instanceOf(pryv.Event);
             should.exist(event.connection);
 
             var error = null;
             var stream = null;
             if (preFetchStructure) {
               stream = event.stream;
-              stream.should.be.instanceOf(Pryv.Stream);
+              stream.should.be.instanceOf(pryv.Stream);
             } else { // stream property is not accessible
               try {
                 stream = event.stream;
@@ -110,7 +110,7 @@ var testEvents = function (preFetchStructure) {
     // TODO: all get() tests should be together
     describe('get( with a DEAD end filter) ' + localEnabledStr, function () {
       it('should get an empty list with no request', function (done) {
-        var deadEndFilter = new Pryv.Filter();
+        var deadEndFilter = new pryv.Filter();
         deadEndFilter.streamsIds = [];
 
         connection.events.get(deadEndFilter, function (err, result) {
@@ -127,7 +127,7 @@ var testEvents = function (preFetchStructure) {
     describe('create( event )' + localEnabledStr, function () {
 
       var eventData = {streamId : 'diary', type : 'note/txt', content: 'hello'},
-          event = new Pryv.Event(connection, eventData);
+          event = new pryv.Event(connection, eventData);
 
       var response = {event: _.extend({id : 'Tet5slAP9q'}, eventData)};
 

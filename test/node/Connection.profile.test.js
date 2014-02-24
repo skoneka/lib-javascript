@@ -1,6 +1,6 @@
 /* global before, describe, it */
 
-var Pryv = require('../../source/main'),
+var pryv = require('../../source/main'),
   should = require('should'),
   nock = require('nock'),
   responses = require('../data/responses.js');
@@ -19,7 +19,7 @@ var testProfile = function (preFetchStructure) {
   };
   describe('Profile' + localEnabledStr, function () {
     this.timeout(15000);
-    var connection = new Pryv.Connection(username, auth, settings);
+    var connection = new pryv.Connection(username, auth, settings);
     if (preFetchStructure) {
       nock('https://' + username + '.' + settings.domain)
         .get('/streams?state=all')

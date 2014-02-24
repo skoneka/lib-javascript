@@ -1,6 +1,6 @@
 /* global before, describe, it */
 
-var Pryv = require('../../source/main'),
+var pryv = require('../../source/main'),
   should = require('should'),
   nock = require('nock'),
   _ = require('underscore'),
@@ -22,7 +22,7 @@ var testStreams = function (preFetchStructure) {
     var countTest = 0;
     _.each(arrayOfStreams, function (stream) {
       countTest++;
-      stream.should.be.instanceOf(Pryv.Stream);   // test object type
+      stream.should.be.instanceOf(pryv.Stream);   // test object type
       if (parent) {
         stream.parent.should.be.equal(parent); // test parent
       }
@@ -67,7 +67,7 @@ var testStreams = function (preFetchStructure) {
         ssl: true,
         domain: 'test.io'
       },
-      connection = new Pryv.Connection(username, auth, settings);
+      connection = new pryv.Connection(username, auth, settings);
 
 
     if (preFetchStructure) {
@@ -206,7 +206,7 @@ var testStreams = function (preFetchStructure) {
 
           result.should.be.instanceOf(Array);
           _.each(result, function (stream) {
-            stream.should.be.instanceOf(Pryv.Stream);   // test object type
+            stream.should.be.instanceOf(pryv.Stream);   // test object type
           });
 
           result.length.should.equal(37);
