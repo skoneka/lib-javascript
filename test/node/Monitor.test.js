@@ -1,6 +1,6 @@
 /* global before, describe, it */
 
-var Pryv = require('../../source/main'),
+var pryv = require('../../source/main'),
   should = require('should');
 
 // !! Monitor tests are made online
@@ -12,7 +12,7 @@ var testMonitor = function (preFetchStructure) {
   describe('Monitor' + localEnabledStr, function () {
     var username = 'perkikiki',
       auth = 'TTZycvBTiq',
-      connection = new Pryv.Connection(username, auth, {staging: true});
+      connection = new pryv.Connection(username, auth, {staging: true});
 
 
     if (preFetchStructure) {
@@ -24,7 +24,7 @@ var testMonitor = function (preFetchStructure) {
       });
     }
 
-    var filter = new Pryv.Filter({limit : 20 });
+    var filter = new pryv.Filter({limit : 20 });
     var monitor = connection.monitor(filter);
 
     function onStarted(events) {

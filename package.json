@@ -1,6 +1,6 @@
 {
   "name": "pryv",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Javascript library (browser & Node.js) to access and manipulate Pryv users data",
   "keywords": [
     "pryv",
@@ -44,7 +44,7 @@
   },
   "devDependencies": {
     "blanket": "latest",
-    "grunt": "0.4.x",
+    "grunt": "latest",
     "grunt-browserify": "latest",
     "grunt-contrib-copy": "latest",
     "grunt-contrib-jshint": "latest",

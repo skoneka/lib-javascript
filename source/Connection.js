@@ -16,7 +16,7 @@ var _ = require('underscore'),
  *
  * @example
  * // create a connection for the user 'perkikiki' with the token 'TTZycvBTiq'
- * var conn = new Pryv.Connection('perkikiki', 'TTZycvBTiq');
+ * var conn = new pryv.Connection('perkikiki', 'TTZycvBTiq');
  *
  * @constructor
  * @this {Connection}
@@ -325,8 +325,8 @@ Object.defineProperty(Connection.prototype, 'displayId', {
 });
 
 /**
- * @property {string} Connection.serialId a unique id for this instance of {Pryv}. This can be
- * also see as a **clientSideId**
+ * @property {String} Connection.serialId A locally-unique id for the connection; can also be
+ *                                        used as a client-side id
  */
 Object.defineProperty(Connection.prototype, 'serialId', {
   get: function () { return 'C' + this._serialId; }

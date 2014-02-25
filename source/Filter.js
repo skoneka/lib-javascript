@@ -144,7 +144,7 @@ Filter.prototype.compareToFilterData = function (filterDataTest) {
 /**
  * Create a clone of this filter and changes some properties
  * @param properties
- * @returns Pryv.Filter
+ * @returns pryv.Filter
  */
 Filter.prototype.cloneWithDelta = function (properties) {
   var newProps = _.clone(this._settings);

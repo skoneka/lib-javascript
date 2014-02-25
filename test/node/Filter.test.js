@@ -1,6 +1,6 @@
 /* global describe, it */
 
-var Pryv = require('../../source/main'),
+var pryv = require('../../source/main'),
   _ = require('underscore'),
   should = require('should');
 
@@ -13,7 +13,7 @@ var testFilter = function (preFetchStructure) {
 
     it('Create a new filter with settings', function (done) {
       var settings =  {streams : ['test'], state: 'all', modifiedSince: 1};
-      var filter = new Pryv.Filter(settings);
+      var filter = new pryv.Filter(settings);
 
       should.exists(filter);
       filter.streamsIds[0].should.equal(settings.streams[0]);
@@ -27,11 +27,11 @@ var testFilter = function (preFetchStructure) {
     });
 
     it('Compare two filters', function (done) {
-      var filter1 = new Pryv.Filter();
+      var filter1 = new pryv.Filter();
       filter1.timeFrameST = [0, 1];
       filter1.streamsIds = ['a', 'b', 'c'];
 
-      var filter2 = new Pryv.Filter();
+      var filter2 = new pryv.Filter();
       filter2.timeFrameST = [0, 1];
       filter2.streamsIds = ['a', 'b', 'c'];
 
@@ -100,24 +100,24 @@ var testFilter = function (preFetchStructure) {
         ssl: true,
         domain: 'test.io'
       },
-      connection = new Pryv.Connection(username, auth, settings);
+      connection = new pryv.Connection(username, auth, settings);
 
 
 
-    var filter1 = new Pryv.Filter();
+    var filter1 = new pryv.Filter();
     filter1.timeFrameST = [0, 2];
     filter1.streamsIds = ['a', 'b', 'c'];
 
-    var filter2 = new Pryv.Filter();
+    var filter2 = new pryv.Filter();
     filter2.timeFrameST = [null, null];
     filter2.streamsIds = null;
 
     it('Event in filter timeframe', function (done) {
-      var event1 = new Pryv.Event(connection, {streamId : 'a', time : 1});
+      var event1 = new pryv.Event(connection, {streamId : 'a', time : 1});
       filter1.matchEvent(event1).should.equal(1);
       filter2.matchEvent(event1).should.equal(1);
 
-      var event2 = new Pryv.Event(connection, {streamId : 'a', time : 3});
+      var event2 = new pryv.Event(connection, {streamId : 'a', time : 3});
       filter1.matchEvent(event2).should.equal(0);
 
       done();
@@ -125,11 +125,11 @@ var testFilter = function (preFetchStructure) {
 
 
     it('Event in filter timeframe', function (done) {
-      var event1 = new Pryv.Event(connection, {streamId : 'a', time : 1});
+      var event1 = new pryv.Event(connection, {streamId : 'a', time : 1});
       filter1.matchEvent(event1).should.equal(1);
       filter2.matchEvent(event1).should.equal(1);
 
-      var event2 = new Pryv.Event(connection, {streamId : 'e', time : 1});
+      var event2 = new pryv.Event(connection, {streamId : 'e', time : 1});
       if (preFetchStructure) {
         filter1.matchEvent(event2).should.equal(0);
       }

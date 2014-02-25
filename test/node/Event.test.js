@@ -1,6 +1,6 @@
 /* global before, describe, it */
 
-var Pryv = require('../../source/main'),
+var pryv = require('../../source/main'),
   nock = require('nock'),
   should = require('should'),
   responses = require('../data/responses.js');
@@ -17,7 +17,7 @@ var testEvent = function (preFetchStructure) {
       ssl: true,
       domain: 'test.io'
     },
-    connection = new Pryv.Connection(username, auth, settings);
+    connection = new pryv.Connection(username, auth, settings);
 
 
   if (preFetchStructure) {
@@ -45,7 +45,7 @@ var testEvent = function (preFetchStructure) {
     var eventData =  {streamId: 'ArtMaceoThassilo',
       type: 'note/txt',
       content: 'test-content-1'};
-    var event = new Pryv.Event(connection,  eventData);
+    var event = new pryv.Event(connection,  eventData);
     var eventSerial = connection.serialId + '>E' + (connection._eventSerialCounter - 1);
 
     it('generate correct data()', function (done) {
