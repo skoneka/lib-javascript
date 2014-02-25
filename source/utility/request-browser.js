@@ -89,7 +89,9 @@ module.exports = function (pack)  {
       var result = null;
 
       if (parseResult === 'json') {
-        try { result = JSON.parse(xhr.responseText); } catch (e) {
+        var response = xhr.responseText;
+        response = response.trim() === '' ? '{}' : response;
+        try { result = JSON.parse(response); } catch (e) {
           return pack.error({
             message: 'Data is not JSON',
             detail: xhr.responseText + '\n' + detail,
