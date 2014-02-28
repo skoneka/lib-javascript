@@ -23,7 +23,6 @@ var testEvents = function (preFetchStructure) {
       ssl: true,
       domain: 'test.io'
     };
-    var response = {response : 'ok'};
 
     var connection = new pryv.Connection(username, auth, settings);
 
@@ -46,23 +45,6 @@ var testEvents = function (preFetchStructure) {
         });
       });
     }
-
-    // TODO: see about removing this
-    describe('_get() ' + localEnabledStr, function () {
-
-      it('should call the proper API method', function (done) {
-        nock('https://' + username + '.' + settings.domain)
-          .get('/events?' + utility.getQueryParametersString(defaultFilter.settings))
-          .reply(200, response);
-        connection.events._get(defaultFilter, function (err, result) {
-          should.not.exist(err);
-          should.exist(result);
-          result.should.eql(response);
-          done();
-        });
-      });
-    });
-
 
     describe('get() ' + localEnabledStr, function () {
       it('should get Event objects for request', function (done) {
@@ -144,6 +126,23 @@ var testEvents = function (preFetchStructure) {
           //test
           resultEvent.id.should.eql(response.event.id);
           event.id.should.eql(response.event.id);
+          done();
+        });
+
+      });
+
+      it('should handle server errors', function (done) {
+        nock('https://' + username + '.' + settings.domain)
+            .post('/events')
+            .reply(400, {error: {id: 'invalid-parameters-format', message: 'Test message'}});
+
+        connection.events.create({streamId : 'diary', type : 'note/txt', content: 'hello'},
+            function (err, resultEvent) {
+          should.exist(err);
+          should.not.exist(resultEvent);
+
+          // TODO: check error is as expected
+
           done();
         });
 
