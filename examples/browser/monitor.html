@@ -1,37 +1,31 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Pryv Javascript Lib | Monitor</title>
-  <script src="../../dist/pryv.js"></script>
-
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>Pryv monitor example</title>
+  <script src="../../dist/latest/pryv.js"></script>
 </head>
 <body>
+<h1>Pryv monitor example</h1>
 
-
-<input type='button' value='create note event with text:' onClick='addEventClicked()'>
-<input type='text' id='addContent' value='someText'> <br>
-<input type='button' value='put event in trash.' onClick='removeEventClicked()'>
+<input type='button' value='Create note event' onClick='addEventClicked()'>
+<input type='text' id='addContent' value='Some text'> <br>
+<input type='button' value='Put event in the trash' onClick='removeEventClicked()'>
 <input type='text' id='removeId' value='' placeholder='id of event'> <br>
-<input type='button' value='change content of id:' onClick='changeEventClicked()'>
+<input type='button' value='Edit content of event' onClick='changeEventClicked()'>
 <input type='text' id='changeId' value='' placeholder='id of event'>
-<input type='text' id='changeContent' value='someotherText'> <br>
+<input type='text' id='changeContent' value='Some new text'> <br>
 
-<h1>Events Live</h1>
+<h2>Live events</h2>
 <textarea id='events' rows=20 cols=100></textarea>
 
-
 <script type='text/javascript'>
-  // load Pryv
-  var Pryv = require('pryv');
-  // .useStaging() only when debug / dev
-  var api = (new Pryv.Connection('perkikiki', 'TTZycvBTiq')).useStaging();
+  var connection = new pryv.Connection({username: 'perkikiki', auth: 'TTZycvBTiq', staging: true});
 
+  var filter = new pryv.Filter();
+  var monitor = connection.monitor(filter);
 
-  var filter = new Pryv.Filter();
-  var monitor = api.monitor(filter);
-
-
-  // ------ register an onStarted event that will be called once to initialize the data ----//
+  // get notified when monitoring starts
   function onStarted(events) {
     console.log('monitor loaded');
     for (var i = 0; i < events.length; i++) {
@@ -40,8 +34,7 @@
   }
   monitor.addEventListener('started', onStarted);
 
-  // ------ register an onEventsChanged that will be called each time
-  //                                   events changed on the server ----//
+  // get notified when events are modified on the server
   function onEventsChanged(changes) {
     var states = {modified: '~', trashed: '-', created: '+'};
     for (var key in states) {
@@ -54,9 +47,7 @@
   }
   monitor.addEventListener('eventsChanged', onEventsChanged);
 
-
-  // ------ register an onFilterChanged that will be called each time
-  //                                   events changed due to the filter ----//
+  // get notified when events change due to a filter change
   function onFilterChanged(changes, signal) {
     console.log(changes);
     var states = {enter: ' +', leave: ' -'};
@@ -70,8 +61,7 @@
   }
   monitor.addEventListener('filterChanged', onFilterChanged);
 
-  // ------ once all event listeners have been registered start the monitor
-  //
+  // start monitoring
   monitor.start(function (error){
     console.log('monitor started ' + error);
   });
@@ -88,7 +78,7 @@
   var $changeId = document.getElementById('changeId');
   var $changeContent = document.getElementById('changeContent');
 
-  //-- utility to log events changes on the console
+  // utility to log events changes on the console
   function logEventChange(action, event) {
     var line = action +  '\t' + event.id +'\t'+
       event.time + '\t' + event.type + '\t' + JSON.stringify(event.content).substring(0,80);
@@ -96,45 +86,41 @@
     $events.scrollTop = $events.scrollHeight;
   }
 
-  //-- commands
+  // commands
 
   function createNoteEvent(content) {
     var eventData = {streamId : 'test', type: 'note/txt', content: content};
-    api.events.create(eventData, function () {
+    connection.events.create(eventData, function () {
       console.log('event created');
     });
   }
 
   function removeEvent(eventId) {
-    api.events.trashWithId(eventId, function () {
+    connection.events.trashWithId(eventId, function () {
       console.log('event deleted');
     });
   }
 
-
   function changeEvent(eventId, content) {
-    api.events._updateWithIdAndData(eventId, {content: content}, function () {
+    connection.events._updateWithIdAndData(eventId, {content: content}, function () {
       console.log('event changed');
     });
   }
 
 
-  //-- UI events handlers
+  // UI events handlers
 
   function addEventClicked() { // from the web page
     createNoteEvent($addContent.value);
   }
 
-
   function removeEventClicked() { // from the web page
     removeEvent($removeId.value);
   }
 
-
   function changeEventClicked() { // from the web page
     changeEvent($changeId.value, $changeContent.value);
   }
-
 
 </script>
 </body>

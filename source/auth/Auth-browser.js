@@ -454,7 +454,7 @@ Auth.prototype.setup = function (settings) {
     utility.getPreferredLanguage(this.uiSupportedLanguages, settings.languageCode);
 
   //-- returnURL
-  settings.returnURL = settings.returnURL || 'auto#';
+  settings.returnURL = settings.returnURL || 'auto#';
   if (settings.returnURL) {
     // check the trailer
     var trailer = settings.returnURL.charAt(settings.returnURL.length - 1);

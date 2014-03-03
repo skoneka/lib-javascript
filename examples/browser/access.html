@@ -1,67 +1,63 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<!DOCTYPE html>
 <html>
 <head>
   <meta http-equiv="content-type" content="text/html;charset=utf-8">
-  <title>PRYV signin demo</title>
-  <script type="text/javascript" src="../../dist/pryv.js"></script>
+  <title>Pryv sign-in example</title>
+  <script type="text/javascript" src="../../dist/latest/pryv.js"></script>
 </head>
 <body>
-<script>
+  <h1>Pryv sign-in example</h1>
+  <p>
+    Test credentials:
+  </p>
+  <ul>
+    <li>Username: <strong>perkikiki</strong> or <strong>tech@pryv.com</strong></li>
+    <li>Password: <strong>poilonez</strong></li>
+  </ul>
+  <p><span id="pryvButton"></span></p>
 
-  var Pryv = require('pryv');
+  <script>
+    // force usage of staging
+    pryv.Auth.config.registerURL = { host: 'reg.pryv.in', 'ssl': true };
 
-  // force usage of staging
-  Pryv.Access.config.registerURL = { host: 'reg.pryv.in', 'ssl': true};
-
-  /**
-   * process the form and request access
-   */
-  var requestedPermissions = [
-    {
-      "streamId" : "diary",
-      "defaultName" : "Journal",
-      "level" : "read"
-    },
-    {
-      "streamId" : "position",
-      "defaultName" : "Position",
-      "level" : "read"
-    }
-  ];
-
-  // ----------------------- //
-  var settings = {
-    requestingAppId : 'test-demo-access',
-    requestedPermissions : requestedPermissions,
-    returnURL : 'auto#', // set this if you don't want a popup
-    spanButtonID : 'pryvButton', // (optional)
-    callbacks : {
-      initialization : function() { },
-      needSignin : function(popupUrl, pollUrl, pollRateMs) { },
-      needValidation : function(popupUrl, pollUrl, pollRateMs) {},
-      accepted : function(username, appToken, languageCode) {
-        console.log("** SUCCESS! username:" + username +
-          " appToken:" + appToken +
-          " lang:" + languageCode);
+    // process the form and request access
+    var requestedPermissions = [
+      {
+        "streamId" : "diary",
+        "defaultName" : "Journal",
+        "level" : "read"
       },
-      refused: function(reason) {
-        console.log("** REFUSED! " + reason);
-      },
-      error: function(code, message) {
-        console.log("** ERROR! " + code + " " + message);
+      {
+        "streamId" : "position",
+        "defaultName" : "Position",
+        "level" : "read"
       }
-    }
-  };
+    ];
 
+    var settings = {
+      requestingAppId : 'test-demo-access',
+      requestedPermissions : requestedPermissions,
+      returnURL : false, // set this if you don't want a popup
+      spanButtonID : 'pryvButton', // (optional)
+      callbacks : {
+        initialization : function() { },
+        needSignin : function(popupUrl, pollUrl, pollRateMs) { },
+        needValidation : function(popupUrl, pollUrl, pollRateMs) {},
+        accepted : function(username, appToken, languageCode) {
+          console.log("** SUCCESS! username:" + username +
+              " appToken:" + appToken +
+              " lang:" + languageCode);
+        },
+        refused: function(reason) {
+          console.log("** REFUSED! " + reason);
+        },
+        error: function(code, message) {
+          console.log("** ERROR! " + code + " " + message);
+        }
+      }
+    };
 
-  Pryv.Access.setup(settings);
-</script>
-<div id="body">
-  <h1>ACCESS DEMO PAGE</h1>
-</div>
-<BR>
-You can test with username: <b>perkikiki</b> or <b>tech@pryv.com</b> Password: <b>poilonez</b><br>
-<br>
-<center><span id="pryvButton"></span></center>
+    pryv.Auth.setup(settings);
+  </script>
 </body>
 </html>
