@@ -26,14 +26,17 @@ Datastore.prototype._rebuildStreamIndex = function (streamArray) {
 
 Datastore.prototype._indexStreamArray = function (streamArray) {
   _.each(streamArray, function (stream) {
-    this.streamsIndex[stream.id] = stream;
-    if (! stream._parent) { this.rootStreams.push(stream); }
-    this._indexStreamArray(stream._children);
-    delete stream._children; // cleanup when in datastore mode
-    delete stream._parent;
+    this.indexStream(stream);
   }.bind(this));
 };
 
+Datastore.prototype.indexStream = function (stream) {
+  this.streamsIndex[stream.id] = stream;
+  if (! stream.parentId) { this.rootStreams.push(stream); }
+  this._indexStreamArray(stream._children);
+  delete stream._children; // cleanup when in datastore mode
+  delete stream._parent;
+};
 
 /**
  *

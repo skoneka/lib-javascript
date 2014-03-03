@@ -43,7 +43,11 @@ ConnectionStreams.prototype.get = function (options, callback) {
     } else {
       resultTree = this.connection.datastore.getStreams();
     }
-    callback(null, resultTree);
+    if (resultTree.length > 0) {
+      callback(null, resultTree);
+    } else {
+      this._getObjects(options, callback);
+    }
   } else {
     this._getObjects(options, callback);
   }
@@ -114,11 +118,15 @@ ConnectionStreams.prototype._createWithData = function (streamData, callback) {
   this.connection.request('POST', url, function (err, resultData) {
     if (resultData) {
       streamData.id = resultData.stream.id;
+      var stream = new Stream(this.connection, resultData.stream);
+      if (this.connection.datastore) {
+        this.connection.datastore.indexStream(stream);
+      }
     }
     if (_.isFunction(callback)) {
       return callback(err, resultData.stream);
     }
-  }, streamData);
+  }.bind(this), streamData);
 };
 
 /**
