@@ -143,10 +143,7 @@ Connection.prototype.accessInfo = function (callback) {
   if (this._accessInfo) { return this._accessInfo; }
   var url = '/access-info';
   this.request('GET', url, function (error, result) {
-    if (result && result.id) {
-      error = result;
-    }
-    if (! error && !result.message) {
+    if (! error) {
       this._accessInfo = result;
     }
     if (typeof(callback) === 'function') {
@@ -281,6 +278,7 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
   }
 
   function onError(error /*, requestInfo*/) {
+    console.log('ONERROR', arguments);
     callback(error, null);
   }
   return request;

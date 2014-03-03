@@ -38,9 +38,7 @@ Bookmarks.prototype.create = function (bookmark, callback) {
   if (bookmark.name && bookmark.url && bookmark.accessToken) {
     this.connection.request('POST', apiPathBookmarks, function (err, result) {
       var error = err;
-      if (result && result.message) {
-        error = result;
-      } else if (result) {
+      if (!error) {
         var conn =  new Connection({
           auth: bookmark.accessToken,
           url: bookmark.url,
