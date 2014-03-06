@@ -116,7 +116,7 @@ ConnectionStreams.prototype.create = function (streamData, callback) {
 ConnectionStreams.prototype._createWithData = function (streamData, callback) {
   var url = '/streams';
   this.connection.request('POST', url, function (err, resultData) {
-    if (resultData) {
+    if (!err && resultData) {
       streamData.id = resultData.stream.id;
       var stream = new Stream(this.connection, resultData.stream);
       if (this.connection.datastore) {
