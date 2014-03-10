@@ -235,23 +235,8 @@ Monitor.prototype._connectionEventsGetAllAndCompare = function (signal, extracon
 /**
  * return informations on events
  */
-Monitor.prototype.stats = function () {
-
-  var result = {
-    timeFrameST : [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY],
-    timeFrameLT : [null, null]
-  };
-  _.each(this._events.active, function (event) {
-    if (event.time < result.timeFrameST[0]) {
-      result.timeFrameST[0] = event.time;
-      result.timeFrameLT[0] = event.timeLT;
-    }
-    if (event.time > result.timeFrameST[1]) {
-      result.timeFrameST[1] = event.time;
-      result.timeFrameLT[1] = event.timeLT;
-    }
-  });
-  return result;
+Monitor.prototype.stats = function (force, callback) {
+  this.connection.profile.getTimeLimits(force, callback);
 };
 
 module.exports = Monitor;
