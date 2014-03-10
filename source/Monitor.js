@@ -17,7 +17,7 @@ function Monitor(connection, filter) {
 
   this.filter = filter;
 
-  this._lastUsedFilterData = filter;
+  this._lastUsedFilterData = filter.getData();
 
   if (this.filter.state) {
     throw new Error('Monitors only work for default state, not trashed or all');
