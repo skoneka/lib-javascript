@@ -36,14 +36,14 @@ utility.getUsernameFromUrl = function (url) {
     recIndex = hostname.indexOf('rec'),
     pryvIndex = hostname.indexOf('pryv');
   if (recIndex <= 0 && pryvIndex <= 0) {
-    console.log('getUsernameFromUrl:', 'unknown hostname:', hostname);
+    console.warn('getUsernameFromUrl:', 'unknown hostname:', hostname);
     return null;
   }
   var usernameIndex = pryvIndex > 0 ? pryvIndex - 1: recIndex - 1;
   if (hostname[usernameIndex].match(utility.regex.username)) {
     return hostname[usernameIndex];
   } else {
-    console.log('getUsernameFromUrl:', 'invalid username:', hostname[usernameIndex]);
+    console.warn('getUsernameFromUrl:', 'invalid username:', hostname[usernameIndex]);
     return null;
   }
 };
@@ -68,7 +68,23 @@ utility.getSharingsFromUrl = function (url) {
     return [];
   }
 };
+utility.isSignInFromUrl = function (url) {
+  var username = utility.getUsernameFromUrl(url);
+  if (!username) {
+    return false;
+  }
+  var location;
+  if (url) {
+    location = document.createElement('a');
+    location.href = url;
+  } else {
+    location = document.location;
+  }
+  var path = location.hash.toLowerCase().split('/'),
+    signinIndex = path.indexOf('signin');
+  return signinIndex !== -1;
 
+};
 utility.getParamsFromUrl = function (url) {
   var location;
   if (url) {
