@@ -32,11 +32,12 @@
       logEventChange('load +', events[i]);
     }
   }
-  monitor.addEventListener('started', onStarted);
+  monitor.addEventListener(pryv.MESSAGES.MONITOR.ON_LOAD, onStarted);
 
   // get notified when events are modified on the server
   function onEventsChanged(changes) {
     var states = {modified: '~', trashed: '-', created: '+'};
+   console.log(changes);
     for (var key in states) {
       if( states.hasOwnProperty( key ) ) {
         for (var i = 0; i < changes[key].length; i++) {
@@ -45,7 +46,7 @@
       }
     }
   }
-  monitor.addEventListener('eventsChanged', onEventsChanged);
+  monitor.addEventListener(pryv.MESSAGES.MONITOR.ON_EVENT_CHANGE, onEventsChanged);
 
   // get notified when events change due to a filter change
   function onFilterChanged(changes, signal) {
@@ -59,7 +60,7 @@
       }
     }
   }
-  monitor.addEventListener('filterChanged', onFilterChanged);
+  monitor.addEventListener(pryv.MESSAGES.MONITOR.ON_FILTER_CHANGE, onFilterChanged);
 
   // start monitoring
   monitor.start(function (error){
