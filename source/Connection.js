@@ -220,9 +220,15 @@ Connection.prototype.monitor = function (filter) {
  * @param {string} path - to resource, starting with '/' like '/events'
  * @param {Connection~requestCallback} callback
  * @param {Object} jsonData - data to POST or PUT
+ * @param {Object} checks - checks to apply during the request
+ * @param {integer} checks.responseCode - default (null) will throw an error if responseCode
+ * is different than ecpected
  */
 Connection.prototype.request = function (method, path, callback, jsonData, isFile,
-                                         progressCallback) {
+                                         progressCallback, checks) {
+
+  checks = checks || {};
+
   if (! callback || ! _.isFunction(callback)) {
     throw new Error('request\'s callback must be a function');
   }
@@ -265,6 +271,9 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
     } else
     if (result.error) { // API 0.7
       error = result.error;
+    } else if (checks.resultCode && requestInfos.code !== checks.resultCode) {
+      error = new Error('Result code ' + checks.resultCode + ' does not match ' +
+        requestInfos.code);
     } else {
       this.serverInfos.lastSeenLT = (new Date()).getTime();
       this.serverInfos.apiVersion = requestInfos.headers['api-version'] ||

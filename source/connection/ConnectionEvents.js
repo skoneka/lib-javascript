@@ -100,13 +100,22 @@ ConnectionEvents.prototype.create = function (newEventlike, callback) {
 
   var url = '/events';
   this.connection.request('POST', url, function (err, result) {
-    if (result) {
+    if (result && ! err) {
       _.extend(event, result.event);
     }
-    if (_.isFunction(callback)) {
-      callback(err, event);
-    }
-  }, event.getData());
+    /**
+     * Change will happend with offline caching...
+     *
+     * An error may hapend 400.. or other if app is behind an non-opened gateway. Thus making
+     * difficult to detect if the error is a real bad request.
+     * The first step would be to consider only bad request if the response can be identified
+     * as coming from a valid api-server. If not, we should cache the event for later synch
+     * then remove the error and send the cached version of the event.
+     *
+     */
+
+    callback(err, err ? null : event);
+  }, event.getData(), null, null, {resultCode : 201});
   return event;
 };
 ConnectionEvents.prototype.createWithAttachment = function (newEventLike, file, callback,
