@@ -1,6 +1,6 @@
 var _ = require('underscore'),
-    SignalEmitter = require('./utility/SignalEmitter.js'),
-    Filter = require('./Filter.js');
+  SignalEmitter = require('./utility/SignalEmitter.js'),
+  Filter = require('./Filter.js');
 
 
 var EXTRA_ALL_EVENTS = {state : 'all', modifiedSince : -100000000 };
@@ -33,13 +33,13 @@ Monitor.serial = 0;
 var Messages = Monitor.Messages = {
   /** content: events **/
   ON_LOAD : 'started',
-/** content: error **/
+  /** content: error **/
   ON_ERROR : 'error',
-/** content: { enter: [], leave: [], change } **/
+  /** content: { enter: [], leave: [], change } **/
   ON_EVENT_CHANGE : 'eventsChanged',
-/** content: streams **/
+  /** content: streams **/
   ON_STRUCTURE_CHANGE : 'streamsChanged',
-/** content: ? **/
+  /** content: ? **/
   ON_FILTER_CHANGE : 'filterChanged'
 };
 
@@ -82,7 +82,9 @@ Monitor.prototype._onIoError = function (error) {
 Monitor.prototype._onIoEventsChanged = function () {
   this._connectionEventsGetChanges(Messages.ON_EVENT_CHANGE);
 };
-Monitor.prototype._onIoStreamsChanged = function () { };
+Monitor.prototype._onIoStreamsChanged = function () {
+  this._connectionStreamsGetChanges(Messages.ON_STRUCTURE_CHANGE);
+};
 
 
 
@@ -200,7 +202,56 @@ Monitor.prototype._connectionEventsGetChanges = function (signal) {
     }.bind(this));
 };
 
+Monitor.prototype._connectionStreamsGetChanges = function (signal) {
+  var streams = {};
+  var created = [], modified = [], trashed = [];
+  var streamCompare = function (streamA, streamB) {
+    var sA = _.pick(streamA, ['id', 'name', 'parentId', 'singleActivity', 'clientData', 'trashed']);
+    var sB = _.pick(streamB, ['id', 'name', 'parentId', 'singleActivity', 'clientData', 'trashed']);
+    return _.isEqual(sA, sB);
+  };
+  var getFlatTree = function (stream) {
+    streams[stream.id] = stream;
+    _.each(stream.children, function (child) {
+      getFlatTree(child);
+    });
+  };
+  var checkChangedStatus = function (stream) {
 
+    if (!streams[stream.id]) {
+      created.push(stream);
+    } else if (!streamCompare(streams[stream.id], stream)) {
+      if (streams[stream.id].trashed !== stream.trashed) {
+        if (!stream.trashed) {
+          created.push(stream);
+        } else {
+          trashed.push(stream);
+        }
+      } else {
+        modified.push(stream);
+      }
+    }
+    if (stream.id === 'PVH-rfMJx5') {
+      console.log('MONITOR', streams['PVH-rfMJx5'].clientData, stream.clientData,
+        streamCompare(streams[stream.id], stream), streams['PVH-rfMJx5'].trashed, stream.trashed,
+        streams['PVH-rfMJx5'].trashed !== stream.trashed, modified);
+    }
+    _.each(stream.children, function (child) {
+      checkChangedStatus(child);
+    });
+  };
+  _.each(this.connection.datastore.getStreams(), function (rootStream) {
+    getFlatTree(rootStream);
+  });
+  console.log('MONITOR', streams['PVH-rfMJx5'].clientData);
+  this.connection.fetchStructure(function (error, result) {
+    _.each(result, function (rootStream) {
+      checkChangedStatus(rootStream);
+    });
+    console.log('MONITOR', modified);
+    this._fireEvent(signal, { created : created, trashed : trashed, modified: modified});
+  }.bind(this));
+};
 Monitor.prototype._connectionEventsGetAllAndCompare = function (signal, extracontent, batch) {
   this.lastSynchedST = this.connection.getServerTime();
 
