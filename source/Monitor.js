@@ -83,6 +83,7 @@ Monitor.prototype._onIoEventsChanged = function () {
   this._connectionEventsGetChanges(Messages.ON_EVENT_CHANGE);
 };
 Monitor.prototype._onIoStreamsChanged = function () {
+  console.log('SOCKETIO', '_onIoStreamsChanged');
   this._connectionStreamsGetChanges(Messages.ON_STRUCTURE_CHANGE);
 };
 
@@ -231,11 +232,6 @@ Monitor.prototype._connectionStreamsGetChanges = function (signal) {
         modified.push(stream);
       }
     }
-    if (stream.id === 'PVH-rfMJx5') {
-      console.log('MONITOR', streams['PVH-rfMJx5'].clientData, stream.clientData,
-        streamCompare(streams[stream.id], stream), streams['PVH-rfMJx5'].trashed, stream.trashed,
-        streams['PVH-rfMJx5'].trashed !== stream.trashed, modified);
-    }
     _.each(stream.children, function (child) {
       checkChangedStatus(child);
     });
@@ -243,12 +239,10 @@ Monitor.prototype._connectionStreamsGetChanges = function (signal) {
   _.each(this.connection.datastore.getStreams(), function (rootStream) {
     getFlatTree(rootStream);
   });
-  console.log('MONITOR', streams['PVH-rfMJx5'].clientData);
   this.connection.fetchStructure(function (error, result) {
     _.each(result, function (rootStream) {
       checkChangedStatus(rootStream);
     });
-    console.log('MONITOR', modified);
     this._fireEvent(signal, { created : created, trashed : trashed, modified: modified});
   }.bind(this));
 };
