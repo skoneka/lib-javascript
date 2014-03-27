@@ -80,24 +80,45 @@ describe('Connection', function () {
   });
 
 
-  describe('connection.request responseInfo', function () {
+  describe('connection.request responseInfo contains headers and code', function () {
     this.timeout(15000);
 
     var headers = {toto : 'titi'};
-    _.extend(headers.toto,  responses.headersAccessInfo.copy);
+    _.extend(headers,  responses.headersAccessInfo);
 
-    it('responseInfo contains headers and code', function (done) {
+
+    function testResultInfo(resultInfo, code) {
+      should.exists(resultInfo.code);
+      resultInfo.code.should.equal(code);
+      should.exists(resultInfo.headers);
+      should.exists(resultInfo.headers.toto);
+      resultInfo.headers.toto.should.equal('titi');
+    }
+
+    it('on invalid request', function (done) {
+      var endPoint = 'https://' + username + '.' + settings.domain;
+      nock(endPoint)
+        .get('/whatever')
+        .reply(400, {error: {id: 'invalid-parameters-format', message: 'Test message'}}, headers);
+
+      connection.request('GET', '/whatever', function (error, result, resultInfo) {
+        should.exists(result);
+        should.exists(error);
+        testResultInfo(resultInfo, 400);
+        done();
+      });
+    });
+
+    it('on valid request', function (done) {
       var endPoint = 'https://' + username + '.' + settings.domain;
       nock(endPoint)
         .get('/whatever')
         .reply(200, responses.accessInfo, headers);
 
       connection.request('GET', '/whatever', function (error, result, resultInfo) {
-        should.exists(resultInfo.code);
-        resultInfo.code.should.equal(200);
-        should.exists(resultInfo.headers);
-        should.exists(resultInfo.headers.toto);
-        resultInfo.headers.toto.should.equal('titi');
+        should.exists(result);
+        should.not.exists(error);
+        testResultInfo(resultInfo, 200);
         done();
       });
     });
