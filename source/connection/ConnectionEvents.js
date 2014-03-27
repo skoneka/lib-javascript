@@ -104,7 +104,8 @@ ConnectionEvents.prototype.create = function (newEventlike, callback) {
       _.extend(event, result.event);
     }
     if (_.isFunction(callback)) {
-      callback(err, event);
+      // TODO if err === API_UNREACHABLE then save event in cache
+      callback(err, err ? null : event);
     }
   }, event.getData());
   return event;
