@@ -5,12 +5,18 @@ var RW_PROPERTIES =
   ['streamId', 'time', 'duration', 'type', 'content', 'tags', 'description',
     'clientData', 'state', 'modified'];
 
+
+
 /**
  *
  * @type {Function}
  * @constructor
  */
 var Event = module.exports = function Event(connection, data) {
+  if (! connection) {
+    throw new Error('Cannot create connection less events');
+  }
+
   var result = null;
   if (connection.datastore && data.id) {
     result = connection.datastore.getEventById(data.id);

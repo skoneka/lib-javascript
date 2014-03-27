@@ -85,10 +85,12 @@ Datastore.prototype.getEventBySerialId = function (serialId) {
  * @returns Event or null if not found
  */
 Datastore.prototype.getEventById = function (eventId) {
+  var result = null;
   _.each(this.eventIndex, function (event /*,eventId*/) {
-    if (event.id === eventId) { return event; }
+    if (event.id === eventId) { result = event; }
+    // TODO optimize and break
   }.bind(this));
-  return null;
+  return result;
 };
 
 /**
