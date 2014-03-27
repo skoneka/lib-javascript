@@ -1,7 +1,8 @@
 var utility = require('../utility/utility.js'),
   _ = require('underscore'),
   Filter = require('../Filter'),
-  Event = require('../Event');
+  Event = require('../Event'),
+  CC = require('./ConnectionConstants.js');
 
 /**
  * @class ConnectionEvents
@@ -99,7 +100,10 @@ ConnectionEvents.prototype.create = function (newEventlike, callback) {
   }
 
   var url = '/events';
-  this.connection.request('POST', url, function (err, result) {
+  this.connection.request('POST', url, function (err, result, resultInfo) {
+    if (! err && resultInfo.code !== 201) {
+      err = {id : CC.Errors.INVALID_RESULT_CODE};
+    }
     /**
      * Change will happend with offline caching...
      *
@@ -118,7 +122,7 @@ ConnectionEvents.prototype.create = function (newEventlike, callback) {
 
       callback(err, err ? null : event);
     }
-  }, event.getData(), null, null, {resultCode : 201});
+  }, event.getData());
   return event;
 };
 ConnectionEvents.prototype.createWithAttachment = function (newEventLike, file, callback,

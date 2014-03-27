@@ -1,13 +1,16 @@
 /* global describe, it */
 var pryv = require('../../source/main'),
-    should = require('should'),
-    nock = require('nock'),
-  responses = require('../data/responses.js');
+  should = require('should'),
+  nock = require('nock'),
+  responses = require('../data/responses.js'),
+  _ = require('underscore');
+
+
 
 describe('Connection', function () {
 
   var username = 'test-user',
-      auth = 'test-token';
+    auth = 'test-token';
   var settings = {
     port: 443,
     ssl: true,
@@ -58,6 +61,50 @@ describe('Connection', function () {
 
   });
 
+  describe('reachability test on api-headers', function () {
+    this.timeout(15000);
+
+    it('should return API_UNREACHABLE Error', function (done) {
+      var endPoint = 'https://' + username + '.' + settings.domain;
+      nock(endPoint)
+        .get('/whatever')
+        .reply(200, responses.accessInfo, ['invalid headers']);
+
+      connection.request('GET', '/whatever', function (error, result) {
+        should.exist(error);
+        error.id.should.eql('API_UNREACHEABLE');
+        should.exist(result);
+        done();
+      });
+    });
+  });
+
+
+  describe('connection.request responseInfo', function () {
+    this.timeout(15000);
+
+    var headers = {toto : 'titi'};
+    _.extend(headers.toto,  responses.headersAccessInfo.copy);
+
+    it('responseInfo contains headers and code', function (done) {
+      var endPoint = 'https://' + username + '.' + settings.domain;
+      nock(endPoint)
+        .get('/whatever')
+        .reply(200, responses.accessInfo, headers);
+
+      connection.request('GET', '/whatever', function (error, result, resultInfo) {
+        should.exists(resultInfo.code);
+        resultInfo.code.should.equal(200);
+        should.exists(resultInfo.headers);
+        should.exists(resultInfo.headers.toto);
+        resultInfo.headers.toto.should.equal('titi');
+        done();
+      });
+    });
+
+  });
+
+
   describe('accessInfo()', function () {
     this.timeout(15000);
 
@@ -79,7 +126,6 @@ describe('Connection', function () {
         done();
       });
     });
-
   });
 
   describe('displayId with connection initialized', function () {
@@ -101,7 +147,7 @@ describe('Connection', function () {
 
   describe('time management', function () {
     it('should retrieve server time from server response');
-    it('getLocalTime getServerTime', function (done) { 
+    it('getLocalTime getServerTime', function (done) {
 
       var serverTime = 0;
       var localTime = connection.getLocalTime(serverTime);
