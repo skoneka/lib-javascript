@@ -13,13 +13,15 @@ var testProfile = function (preFetchStructure) {
   var username = 'test-user';
   var auth = 'test-token';
   var settings = {
+    username: username,
+    auth: auth,
     port: 443,
     ssl: true,
     domain: 'test.io'
   };
   describe('Profile' + localEnabledStr, function () {
     this.timeout(15000);
-    var connection = new pryv.Connection(username, auth, settings);
+    var connection = new pryv.Connection(settings);
     if (preFetchStructure) {
       nock('https://' + username + '.' + settings.domain)
         .get('/streams?state=all')

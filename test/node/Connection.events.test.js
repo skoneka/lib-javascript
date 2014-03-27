@@ -19,12 +19,14 @@ var testEvents = function (preFetchStructure) {
 
 
     var settings = {
+      username: username,
+      auth: auth,
       port: 443,
       ssl: true,
       domain: 'test.io'
     };
 
-    var connection = new pryv.Connection(username, auth, settings);
+    var connection = new pryv.Connection(settings);
 
     if (preFetchStructure) {
       before(function (done) {

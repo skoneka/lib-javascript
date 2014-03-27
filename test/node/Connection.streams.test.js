@@ -63,11 +63,13 @@ var testStreams = function (preFetchStructure) {
     var username = 'test-user',
       auth = 'test-token',
       settings = {
+        username: username,
+        auth: auth,
         port: 443,
         ssl: true,
         domain: 'test.io'
       },
-      connection = new pryv.Connection(username, auth, settings);
+      connection = new pryv.Connection(settings);
 
 
     if (preFetchStructure) {
