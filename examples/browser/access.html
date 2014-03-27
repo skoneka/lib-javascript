@@ -17,7 +17,7 @@
   <p><span id="pryvButton"></span></p>
 
   <script>
-    // force usage of staging
+    // force usage of staging servers
     pryv.Auth.config.registerURL = { host: 'reg.pryv.in', 'ssl': true };
 
     // process the form and request access
@@ -40,9 +40,9 @@
       returnURL : false, // set this if you don't want a popup
       spanButtonID : 'pryvButton', // (optional)
       callbacks : {
-        initialization : function() { },
-        needSignin : function(popupUrl, pollUrl, pollRateMs) { },
-        needValidation : function(popupUrl, pollUrl, pollRateMs) {},
+        initialization : null,
+        needSignin : null,
+        needValidation : null,
         accepted : function(username, appToken, languageCode) {
           console.log("** SUCCESS! username:" + username +
               " appToken:" + appToken +

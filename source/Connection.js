@@ -220,9 +220,15 @@ Connection.prototype.monitor = function (filter) {
  * @param {string} path - to resource, starting with '/' like '/events'
  * @param {Connection~requestCallback} callback
  * @param {Object} jsonData - data to POST or PUT
+ * @param {Object} checks - checks to apply during the request
+ * @param {integer} checks.responseCode - default (null) will throw an error if responseCode
+ * is different than ecpected
  */
 Connection.prototype.request = function (method, path, callback, jsonData, isFile,
-                                         progressCallback) {
+                                         progressCallback, checks) {
+
+  checks = checks || {};
+
   if (! callback || ! _.isFunction(callback)) {
     throw new Error('request\'s callback must be a function');
   }
@@ -242,7 +248,7 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
 
   var request = utility.request({
     method : method,
-    host : this._getDomain(),
+    host : domainOfConnection(this),
     port : this.settings.port,
     ssl : this.settings.ssl,
     path : this.settings.extraPath + path,
@@ -265,6 +271,9 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
     } else
     if (result.error) { // API 0.7
       error = result.error;
+    } else if (checks.resultCode && requestInfos.code !== checks.resultCode) {
+      error = new Error('Result code ' + checks.resultCode + ' does not match ' +
+        requestInfos.code);
     } else {
       this.serverInfos.lastSeenLT = (new Date()).getTime();
       this.serverInfos.apiVersion = requestInfos.headers['api-version'] ||
@@ -284,14 +293,7 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
   return request;
 };
 
-Connection.prototype._getDomain = function () {
-  if (this.settings.url) {
-    return utility.getHostFromUrl(this.settings.url);
-  } else {
-    var host = this.settings.domain;
-    return this.username ? this.username + '.' + host : host;
-  }
-};
+
 
 /**
  * @property {string} Connection.id an unique id that contains all needed information to access
@@ -300,7 +302,7 @@ Connection.prototype._getDomain = function () {
 Object.defineProperty(Connection.prototype, 'id', {
   get: function () {
     var id = this.settings.ssl ? 'https://' : 'http://';
-    id += this._getDomain() + ':' +
+    id += domainOfConnection(this) + ':' +
       this.settings.port + this.settings.extraPath + '/?auth=' + this.auth;
     return id;
   },
@@ -347,3 +349,15 @@ Object.defineProperty(Connection.prototype, 'serialId', {
  * @param {Object} error - eventual error
  * @param {Object} result - jSonEncoded result
  */
+
+
+// --------- private utils
+
+function domainOfConnection(connection) {
+  if (connection.settings.url) {
+    return utility.getHostFromUrl(connection.settings.url);
+  } else {
+    var host = connection.settings.domain;
+    return connection.username ? connection.username + '.' + host : host;
+  }
+}

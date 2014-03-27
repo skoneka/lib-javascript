@@ -7,5 +7,8 @@ module.exports = {
   Filter: require('./Filter.js'),
 
   eventTypes: require('./eventTypes.js'),
-  utility: require('./utility/utility.js')
+  utility: require('./utility/utility.js'),
+  MESSAGES: {
+    MONITOR: require('./Monitor.js').Messages
+  }
 };

@@ -60,6 +60,16 @@ Event.prototype.removeAttachment = function (fileName, callback) {
   this.connection.events.removeAttachment(this.id, fileName, callback);
 };
 /**
+ * TODO create an attachment Class that contains such logic
+ * @param {attachment} attachment
+ */
+Event.prototype.attachmentUrl = function (attachment) {
+  var url =  this.connection.settings.ssl ? 'https://' : 'http://';
+  url += this.connection.username + '.' + this.connection.settings.domain + '/events/' +
+    this.id + '/' + attachment.id + '?readToken=' + attachment.readToken;
+  return url;
+};
+/**
  *
  * @param {Connection~requestCallback} callback
  */
