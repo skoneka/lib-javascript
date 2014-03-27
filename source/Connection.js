@@ -248,7 +248,7 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
 
   var request = utility.request({
     method : method,
-    host : this._getDomain(),
+    host : domainOfConnection(this),
     port : this.settings.port,
     ssl : this.settings.ssl,
     path : this.settings.extraPath + path,
@@ -293,14 +293,7 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
   return request;
 };
 
-Connection.prototype._getDomain = function () {
-  if (this.settings.url) {
-    return utility.getHostFromUrl(this.settings.url);
-  } else {
-    var host = this.settings.domain;
-    return this.username ? this.username + '.' + host : host;
-  }
-};
+
 
 /**
  * @property {string} Connection.id an unique id that contains all needed information to access
@@ -309,7 +302,7 @@ Connection.prototype._getDomain = function () {
 Object.defineProperty(Connection.prototype, 'id', {
   get: function () {
     var id = this.settings.ssl ? 'https://' : 'http://';
-    id += this._getDomain() + ':' +
+    id += domainOfConnection(this) + ':' +
       this.settings.port + this.settings.extraPath + '/?auth=' + this.auth;
     return id;
   },
@@ -356,3 +349,15 @@ Object.defineProperty(Connection.prototype, 'serialId', {
  * @param {Object} error - eventual error
  * @param {Object} result - jSonEncoded result
  */
+
+
+// --------- private utils
+
+function domainOfConnection(connection) {
+  if (connection.settings.url) {
+    return utility.getHostFromUrl(connection.settings.url);
+  } else {
+    var host = connection.settings.domain;
+    return connection.username ? connection.username + '.' + host : host;
+  }
+}

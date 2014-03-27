@@ -1,3 +1,8 @@
+/**
+ * DataStore handles in memory caching of objects.
+ * @private
+ */
+
 var _ = require('underscore');
 
 function Datastore(connection) {
