@@ -23,7 +23,7 @@ var testProfile = function (preFetchStructure) {
     if (preFetchStructure) {
       nock('https://' + username + '.' + settings.domain)
         .get('/streams?state=all')
-        .reply(200, responses.streams);
+        .reply(200, responses.streams, responses.headersAccessInfo);
       before(function (done) {
         connection.fetchStructure(function (error) {
           should.not.exist(error);
@@ -37,7 +37,7 @@ var testProfile = function (preFetchStructure) {
       var response = {profile: data};
       nock('https://' + username + '.' + settings.domain)
         .put('/profile/app')
-        .reply(200, response);
+        .reply(200, response, responses.headersAccessInfo);
       connection.profile.setPublic(data, function (error, result) {
         should.not.exist(error);
         should.exist(result);
@@ -52,7 +52,7 @@ var testProfile = function (preFetchStructure) {
       var response = {profile: data};
       nock('https://' + username + '.' + settings.domain)
         .put('/profile/private')
-        .reply(200, response);
+        .reply(200, response, responses.headersAccessInfo);
       connection.profile.setPrivate(data, function (error, result) {
         should.not.exist(error);
         should.exist(result);
@@ -64,7 +64,7 @@ var testProfile = function (preFetchStructure) {
     it('conn.profile.getPublic(null)', function (done) {
       nock('https://' + username + '.' + settings.domain)
         .get('/profile/app')
-        .reply(200, responses.profile);
+        .reply(200, responses.profile, responses.headersAccessInfo);
       connection.profile.getPublic(null, function (error, result) {
         should.not.exist(error);
         result.should.eql(responses.profile.profile);
@@ -75,7 +75,7 @@ var testProfile = function (preFetchStructure) {
     it('conn.profile.getPrivate(null)', function (done) {
       nock('https://' + username + '.' + settings.domain)
         .get('/profile/private')
-        .reply(200, responses.profile);
+        .reply(200, responses.profile, responses.headersAccessInfo);
       connection.profile.getPrivate(null, function (error, result) {
         should.not.exist(error);
         result.should.eql(responses.profile.profile);
@@ -86,7 +86,7 @@ var testProfile = function (preFetchStructure) {
     it('conn.profile.getPublic(key)', function (done) {
       nock('https://' + username + '.' + settings.domain)
         .get('/profile/app')
-        .reply(200, responses.profile);
+        .reply(200, responses.profile, responses.headersAccessInfo);
       connection.profile.getPublic('setting1', function (error, result) {
         should.not.exist(error);
         result.should.eql(responses.profile.profile.setting1);
@@ -97,7 +97,7 @@ var testProfile = function (preFetchStructure) {
     it('conn.profile.getPrivate(key)', function (done) {
       nock('https://' + username + '.' + settings.domain)
         .get('/profile/private')
-        .reply(200, responses.profile);
+        .reply(200, responses.profile, responses.headersAccessInfo);
       connection.profile.getPrivate('setting1', function (error, result) {
         should.not.exist(error);
         result.should.eql(responses.profile.profile.setting1);

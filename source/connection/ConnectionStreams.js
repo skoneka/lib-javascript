@@ -153,7 +153,7 @@ ConnectionStreams.prototype._getObjects = function (options, callback) {
   var streamsIndex = {};
   var resultTree = [];
   this._getData(options, function (error, result) {
-    if (error) { return callback('Stream.get failed: ' + error); }
+    if (error) { return callback('Stream.get failed: ' + JSON.stringify(error)); }
     var treeData = result.streams || result.stream;
     ConnectionStreams.Utils.walkDataTree(treeData, function (streamData) {
       var stream = new Stream(this.connection, streamData);

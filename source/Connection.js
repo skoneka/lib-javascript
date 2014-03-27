@@ -6,6 +6,7 @@ var _ = require('underscore'),
     ConnectionBookmarks = require('./connection/ConnectionBookmarks.js'),
     ConnectionAccesses = require('./connection/ConnectionAccesses.js'),
     ConnectionMonitors = require('./connection/ConnectionMonitors.js'),
+    CC = require('./connection/ConnectionConstants.js'),
     Datastore = require('./Datastore.js');
 
 /**
@@ -266,7 +267,17 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
    */
   function onSuccess(result, requestInfos) {
     var error = null;
-    if (result.message) {  // API < 0.6
+
+    // test if API is reached or if we headed into something else
+    if (! requestInfos.headers[CC.Api.Headers.ApiVersion] ||
+      ! requestInfos.headers[CC.Api.Headers.ServerTime]) {
+      error = {
+        id : CC.Errors.API_UNREACHEABLE,
+        message: 'Cannot find api-version or server-time headers',
+        details: 'Response code: ' + requestInfos.code +
+          ' Headers: ' + JSON.stringify(requestInfos.headers)
+      };
+    } else if (result.message) {  // API < 0.6
       error = result.message;
     } else
     if (result.error) { // API 0.7
@@ -276,19 +287,23 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
         requestInfos.code);
     } else {
       this.serverInfos.lastSeenLT = (new Date()).getTime();
-      this.serverInfos.apiVersion = requestInfos.headers['api-version'] ||
+      this.serverInfos.apiVersion = requestInfos.headers[CC.Api.Headers.ApiVersion] ||
         this.serverInfos.apiVersion;
-      if (_.has(requestInfos.headers, 'server-time')) {
+      if (_.has(requestInfos.headers, CC.Api.Headers.ServerTime)) {
         this.serverInfos.deltaTime = (this.serverInfos.lastSeenLT / 1000) -
-          requestInfos.headers['server-time'];
+          requestInfos.headers[CC.Api.Headers.ServerTime];
       }
     }
     callback(error, result);
   }
 
   function onError(error /*, requestInfo*/) {
-    console.log('ONERROR', arguments);
-    callback(error, null);
+    var errorTemp = {
+      id : CC.Errors.API_UNREACHEABLE,
+      message: 'Error on request ',
+      details: 'ERROR: ' + error
+    };
+    callback(errorTemp, null);
   }
   return request;
 };

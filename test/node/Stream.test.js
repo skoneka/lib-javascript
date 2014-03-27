@@ -29,7 +29,7 @@ var testStream = function (preFetchStructure) {
 
       nock('https://' + username + '.' + settings.domain)
         .get('/streams?state=all')
-        .reply(200, responses.streams);
+        .reply(200, responses.streams, responses.headersAccessInfo);
 
       connection.fetchStructure(function (error) {
         should.not.exist(error);

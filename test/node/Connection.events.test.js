@@ -32,12 +32,13 @@ var testEvents = function (preFetchStructure) {
           .get('/access-info')
           .reply(200, { type: 'app',
             name: 'diary-read-only',
-            permissions: [ { streamId: 'diary', level: 'read' } ] });
+            permissions: [ { streamId: 'diary', level: 'read' } ] },
+            responses.headersAccessInfo);
 
 
         nock('https://' + username + '.' + settings.domain)
           .get('/streams?state=all')
-          .reply(200, responses.streams);
+          .reply(200, responses.streams, responses.headersAccessInfo);
 
         connection.fetchStructure(function (error) {
           should.not.exist(error);
@@ -50,7 +51,7 @@ var testEvents = function (preFetchStructure) {
       it('should get Event objects for request', function (done) {
         nock('https://' + username + '.' + settings.domain)
           .get('/events?' + utility.getQueryParametersString(defaultFilter.settings))
-          .reply(200, responses.events);
+          .reply(200, responses.events, responses.headersAccessInfo);
         connection.events.get(defaultFilter, function (err, result) {
           should.not.exist(err);
           should.exist(result);
@@ -116,7 +117,7 @@ var testEvents = function (preFetchStructure) {
       it('should create an event', function (done) {
         nock('https://' + username + '.' + settings.domain)
           .post('/events')
-          .reply(201, response);
+          .reply(201, response, responses.headersAccessInfo);
 
         connection.events.create(event, function (err, resultEvent) {
           should.not.exist(err);
@@ -134,7 +135,8 @@ var testEvents = function (preFetchStructure) {
       it('should handle server errors', function (done) {
         nock('https://' + username + '.' + settings.domain)
             .post('/events')
-            .reply(400, {error: {id: 'invalid-parameters-format', message: 'Test message'}});
+            .reply(400, {error: {id: 'invalid-parameters-format', message: 'Test message'}},
+             responses.headersAccessInfo);
 
         connection.events.create({streamId : 'diary', type : 'note/txt', content: 'hello'},
             function (err, resultEvent) {
@@ -160,7 +162,7 @@ var testEvents = function (preFetchStructure) {
       it('should create an event', function (done) {
         nock('https://' + username + '.' + settings.domain)
           .post('/events')
-          .reply(201, response);
+          .reply(201, response, responses.headersAccessInfo);
 
         var event = null;
         event = connection.events.create(eventData, function (err, resultJson) {
@@ -206,7 +208,7 @@ var testEvents = function (preFetchStructure) {
 
           nock('https://' + username + '.' + settings.domain)
             .post('/events/batch')
-            .reply(201, response);
+            .reply(201, response, responses.headersAccessInfo);
         });
       });
 
@@ -222,7 +224,7 @@ var testEvents = function (preFetchStructure) {
       it('should call the proper API method', function (done) {
         nock('https://' + username + '.' + settings.domain)
           .put('/events/' + eventId)
-          .reply(200, response);
+          .reply(200, response, responses.headersAccessInfo);
         connection.events._updateWithIdAndData(eventId, data, function (err, result) {
           should.not.exist(err);
           should.exist(result);
