@@ -178,8 +178,8 @@ var testEvents = function (preFetchStructure) {
 
     describe('batchWithData() ' + localEnabledStr, function () {
       var eventsData = [
-        { content: 'test-content-1' },
-        { content: 'test-content-2' }
+        { content: 'test-content-1'},
+        { content: 'test-content-2'}
       ];
 
 
@@ -194,19 +194,24 @@ var testEvents = function (preFetchStructure) {
           result[0].id.should.equal('test_id0');
           done();
         }, function (events) {
-          // as we can't known the tempRefIf (serialID) before
+          // as we can't know the tempRefIf (serialID) before
           // we create the response from the events created
 
-          var response = {};
+          var response = {results: []};
           var i = 0;
+
           _.each(events, function (event) {
-            response[event.serialId] = { 'id' : 'test_id' + (i++) };
+            response.results.push({
+              event: {
+                content: event.content,
+                id : 'test_id' + (i++)
+              }
+            });
           });
 
-
           nock('https://' + username + '.' + settings.domain)
-            .post('/events/batch')
-            .reply(201, response);
+            .post('/')
+            .reply(200, response);
         });
       });
 

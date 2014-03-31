@@ -164,25 +164,33 @@ ConnectionEvents.prototype.batchWithData =
   var createdEvents = [];
   var eventMap = {};
 
-  var url = '/events/batch';
+  var url = '/';
   // use the serialId as a temporary Id for the batch
-  _.each(eventsData, function (eventData) {
+  _.each(eventsData, function (eventData, i) {
     var event =  new Event(this.connection, eventData);
     createdEvents.push(event);
-    eventMap[event.serialId] = event;
-    eventData.tempRefId = event.serialId;
+    eventMap[i] = event;
   }.bind(this));
 
   if (callBackWithEventsBeforeRequest) {
     callBackWithEventsBeforeRequest(createdEvents);
   }
 
+  var mapBeforePush = function (evs) {
+    return _.map(evs, function (e) {
+      return {
+        method: 'events.create',
+        params: e
+      };
+    });
+  };
+
   this.connection.request('POST', url, function (err, result) {
-    _.each(result, function (eventData, tempRefId) {
-      _.extend(eventMap[tempRefId], eventData); // add the data to the event
+    _.each(result.results, function (eventData, i) {
+      _.extend(eventMap[i], eventData.event); // add the data to the event
     });
     callback(err, createdEvents);
-  }, eventsData);
+  }, mapBeforePush(eventsData));
 
   return createdEvents;
 };
