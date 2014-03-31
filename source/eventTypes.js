@@ -46,12 +46,27 @@ eventTypes.hierarchical = function () {
   return this._hierarchical;
 };
 
+
+
 /**
  * @link http://api.pryv.com/event-typez.html#about-json-file
  * @param {eventTypes~contentCallback} callback
  */
+
 eventTypes.loadFlat = function (callback) {
-  _getFile('flat.json', callback);
+  var myCallback = function (error, result) {
+    this._flat = result;
+    callback(error, result);
+  };
+  _getFile('flat.json', myCallback.bind(this));
+};
+
+
+eventTypes.flat = function (eventType) {
+  if (!this._flat) {
+    throw new Error('Call eventTypes.loadFlat, before accessing flat');
+  }
+  return this._flat.types[eventType];
 };
 
 /**
