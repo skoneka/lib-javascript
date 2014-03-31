@@ -254,13 +254,22 @@ Monitor.prototype._connectionEventsGetAllAndCompare = function (signal, extracon
 
   // look into in-memory events for matching events..
 
+  var result1 = { enter : [] };
+  _.extend(result1, extracontent);
 
   var cachedEvents = this.connection.datastore.getEventsMatchingFilter(this.filter);
   _.each(cachedEvents, function (event) {
+    if (! this._events.active[event.id]) {  // we don't care for already known event
+      this._events.active[event.id] = event; // store it
+      result1.enter.push(event);
+    }
+  }.bind(this));
+  if (result1.enter.length > 0) {
+    console.log('yo');
+    this._fireEvent(signal, result1, batch);
+  }
 
-  };
-
-    // look online
+  // look online
 
   var result = { enter : [] };
   _.extend(result, extracontent); // pass extracontent to receivers
