@@ -264,12 +264,14 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
   function onSuccess(result, resultInfo) {
     var error = null;
 
+    var apiVersion = resultInfo.headers['API-Version'] || 
+      resultInfo.headers[CC.Api.Headers.ApiVersion];
+
     // test if API is reached or if we headed into something else
-    if (! resultInfo.headers[CC.Api.Headers.ApiVersion] ||
-      ! resultInfo.headers[CC.Api.Headers.ServerTime]) {
+    if (! apiVersion) {
       error = {
         id : CC.Errors.API_UNREACHEABLE,
-        message: 'Cannot find api-version or server-time headers',
+        message: 'Cannot find API-Version',
         details: 'Response code: ' + resultInfo.code +
           ' Headers: ' + JSON.stringify(resultInfo.headers)
       };
@@ -280,8 +282,7 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
       error = result.error;
     } else {
       this.serverInfos.lastSeenLT = (new Date()).getTime();
-      this.serverInfos.apiVersion = resultInfo.headers[CC.Api.Headers.ApiVersion] ||
-        this.serverInfos.apiVersion;
+      this.serverInfos.apiVersion = apiVersion || this.serverInfos.apiVersion;
       if (_.has(resultInfo.headers, CC.Api.Headers.ServerTime)) {
         this.serverInfos.deltaTime = (this.serverInfos.lastSeenLT / 1000) -
           resultInfo.headers[CC.Api.Headers.ServerTime];

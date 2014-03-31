@@ -86,7 +86,7 @@ describe('Connection', function () {
     this.timeout(15000);
 
     var headers = {toto : 'titi'};
-    _.extend(headers,  responses.headersAccessInfo);
+    _.extend(headers,  responses.headersStandard);
 
 
     function testResultInfo(resultInfo, code) {
@@ -134,7 +134,7 @@ describe('Connection', function () {
     it('should call the proper API method', function (done) {
       nock('https://' + username + '.' + settings.domain)
         .get('/access-info')
-        .reply(200, responses.accessInfo, responses.headersAccessInfo);
+        .reply(200, responses.accessInfo, responses.headersStandard);
       var requestTime = (new Date()).getTime();
       connection.accessInfo(function (err, result) {
         var responseTime =  (new Date()).getTime();

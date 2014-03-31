@@ -12,7 +12,7 @@ module.exports.accessInfo = JSON.parse(
   '{"type":"personal","name":"pryv-explorer"}'
 );
 
-module.exports.headersAccessInfo = {
+module.exports.headersStandard = {
   'api-version' : 'nock nock',
   'server-time' : ((new Date()).getTime() / 1000) - 1 // simulate 1 second offset
 };

@@ -29,12 +29,12 @@ var testEvent = function (preFetchStructure) {
       before(function (done) {
         nock('https://' + username + '.' + settings.domain)
           .get('/access-info')
-          .reply(200, responses.accessInfo, responses.headersAccessInfo);
+          .reply(200, responses.accessInfo, responses.headersStandard);
 
 
         nock('https://' + username + '.' + settings.domain)
           .get('/streams?state=all')
-          .reply(200, responses.streams, responses.headersAccessInfo);
+          .reply(200, responses.streams, responses.headersStandard);
 
         connection.fetchStructure(function (error) {
           console.log('*32');
