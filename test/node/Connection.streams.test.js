@@ -63,23 +63,25 @@ var testStreams = function (preFetchStructure) {
     var username = 'test-user',
       auth = 'test-token',
       settings = {
+        username: username,
+        auth: auth,
         port: 443,
         ssl: true,
         domain: 'test.io'
       },
-      connection = new pryv.Connection(username, auth, settings);
+      connection = new pryv.Connection(settings);
 
 
     if (preFetchStructure) {
       before(function (done) {
         nock('https://' + username + '.' + settings.domain)
           .get('/access-info')
-          .reply(200, responses.accessInfo, responses.headersAccessInfo);
+          .reply(200, responses.accessInfo, responses.headersStandard);
 
 
         nock('https://' + username + '.' + settings.domain)
           .get('/streams?state=all')
-          .reply(200, responses.streams);
+          .reply(200, responses.streams, responses.headersStandard);
 
         connection.fetchStructure(function (error) {
           should.not.exist(error);
@@ -104,7 +106,7 @@ var testStreams = function (preFetchStructure) {
 
         nock('https://' + username + '.' + settings.domain)
           .get('/streams?parentId=test-id&state=default')
-          .reply(200, response);
+          .reply(200, response, responses.headersStandard);
         connection.streams._getData(opts, function (err, result) {
           should.not.exist(err);
           should.exist(result);
@@ -123,7 +125,7 @@ var testStreams = function (preFetchStructure) {
       if (! preFetchStructure) {
         nock('https://' + username + '.' + settings.domain)
           .get('/streams?').times(2)  // 3 requests when no localStorage
-          .reply(200, responses.streams);
+          .reply(200, responses.streams, responses.headersStandard);
       }
 
       it('get(): should return an root stream Tree', function (done) {
@@ -170,7 +172,8 @@ var testStreams = function (preFetchStructure) {
       if (! preFetchStructure) {
         nock('https://' + username + '.' + settings.domain)
           .get('/streams?parentId=PVxE_JMMzM').times(1)  // 3 requests when no localStorage
-          .reply(200, {streams: responses.streams.streams[0].children});
+          .reply(200, {streams: responses.streams.streams[0].children},
+          responses.headersStandard);
       }
 
       it('opts: parentId should return an subTree', function (done) {
@@ -195,7 +198,7 @@ var testStreams = function (preFetchStructure) {
       if (! preFetchStructure) {
         nock('https://' + username + '.' + settings.domain)
           .get('/streams?').times(1)  // 3 requests when no localStorage
-          .reply(200, responses.streams);
+          .reply(200, responses.streams, responses.headersStandard);
       }
 
       it('getFlatenTree(): should return a flat Tree', function (done) {
@@ -226,7 +229,7 @@ var testStreams = function (preFetchStructure) {
       it('should call proper the proper API method', function (done) {
         nock('https://' + username + '.' + settings.domain)
           .post('/streams')
-          .reply(201, response);
+          .reply(201, response, responses.headersStandard);
         connection.streams._createWithData(streamData, function (err, result) {
           should.not.exist(err);
           should.exist(result);
@@ -238,7 +241,7 @@ var testStreams = function (preFetchStructure) {
       it('should add received id to the stream', function (done) {
         nock('https://' + username + '.' + settings.domain)
           .post('/streams')
-          .reply(201, response);
+          .reply(201, response, responses.headersStandard);
         connection.streams._createWithData(streamData, function (err, result) {
           should.exist(streamData.id);
           streamData.id.should.eql(result.id);
@@ -258,7 +261,7 @@ var testStreams = function (preFetchStructure) {
       it('should call the proper API method', function (done) {
         nock('https://' + username + '.' + settings.domain)
           .put('/streams/' + streamData.id)
-          .reply(200, response);
+          .reply(200, response, responses.headersStandard);
         connection.streams._updateWithData(streamData, function (err, result) {
           should.not.exist(err);
           should.exist(result);

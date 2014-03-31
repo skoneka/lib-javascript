@@ -1,10 +1,18 @@
+/**
+ * DataStore handles in memory caching of objects.
+ * @private
+ */
+
 var _ = require('underscore');
 
 function Datastore(connection) {
   this.connection = connection;
   this.streamsIndex = {}; // streams are linked to their object representation
+  this.eventIndex = {}; // events are store by their id
   this.rootStreams = [];
 }
+
+module.exports = Datastore;
 
 Datastore.prototype.init = function (callback) {
   this.connection.streams._getObjects({state: 'all'}, function (error, result) {
@@ -62,5 +70,42 @@ Datastore.prototype.getStreamById = function (streamId, test) {
   return result;
 };
 
-module.exports = Datastore;
+//-------------------------
+
+/**
+ * @param serialId
+ * @returns Event or null if not found
+ */
+Datastore.prototype.getEventBySerialId = function (serialId) {
+  return this.eventIndex[serialId];
+};
+
+/**
+ * @param eventID
+ * @returns Event or null if not found
+ */
+Datastore.prototype.getEventById = function (eventId) {
+  var result = null;
+  _.each(this.eventIndex, function (event /*,eventId*/) {
+    if (event.id === eventId) { result = event; }
+    // TODO optimize and break
+  }.bind(this));
+  return result;
+};
+
+/**
+ * @returns allEvents
+ */
+Datastore.prototype.getAllEvents = function () {
+  return _.value(this.eventIndex);
+};
+
+/**
+ * @param event
+ */
+Datastore.prototype.addEvent = function (event) {
+  this.eventIndex[event.serialId] = event;
+};
+
+
 

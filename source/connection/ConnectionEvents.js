@@ -1,7 +1,8 @@
 var utility = require('../utility/utility.js'),
   _ = require('underscore'),
   Filter = require('../Filter'),
-  Event = require('../Event');
+  Event = require('../Event'),
+  CC = require('./ConnectionConstants.js');
 
 /**
  * @class ConnectionEvents
@@ -99,9 +100,9 @@ ConnectionEvents.prototype.create = function (newEventlike, callback) {
   }
 
   var url = '/events';
-  this.connection.request('POST', url, function (err, result) {
-    if (result && ! err) {
-      _.extend(event, result.event);
+  this.connection.request('POST', url, function (err, result, resultInfo) {
+    if (! err && resultInfo.code !== 201) {
+      err = {id : CC.Errors.INVALID_RESULT_CODE};
     }
     /**
      * Change will happend with offline caching...
@@ -113,9 +114,15 @@ ConnectionEvents.prototype.create = function (newEventlike, callback) {
      * then remove the error and send the cached version of the event.
      *
      */
+    // TODO if err === API_UNREACHABLE then save event in cache
+    if (result && ! err) {
+      _.extend(event, result.event);
+    }
+    if (_.isFunction(callback)) {
 
-    callback(err, err ? null : event);
-  }, event.getData(), null, null, {resultCode : 201});
+      callback(err, err ? null : event);
+    }
+  }, event.getData());
   return event;
 };
 ConnectionEvents.prototype.createWithAttachment = function (newEventLike, file, callback,

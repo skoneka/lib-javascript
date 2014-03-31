@@ -6,6 +6,7 @@ var _ = require('underscore'),
     ConnectionBookmarks = require('./connection/ConnectionBookmarks.js'),
     ConnectionAccesses = require('./connection/ConnectionAccesses.js'),
     ConnectionMonitors = require('./connection/ConnectionMonitors.js'),
+    CC = require('./connection/ConnectionConstants.js'),
     Datastore = require('./Datastore.js');
 
 /**
@@ -220,14 +221,10 @@ Connection.prototype.monitor = function (filter) {
  * @param {string} path - to resource, starting with '/' like '/events'
  * @param {Connection~requestCallback} callback
  * @param {Object} jsonData - data to POST or PUT
- * @param {Object} checks - checks to apply during the request
- * @param {integer} checks.responseCode - default (null) will throw an error if responseCode
- * is different than ecpected
  */
 Connection.prototype.request = function (method, path, callback, jsonData, isFile,
-                                         progressCallback, checks) {
+                                         progressCallback) {
 
-  checks = checks || {};
 
   if (! callback || ! _.isFunction(callback)) {
     throw new Error('request\'s callback must be a function');
@@ -248,7 +245,7 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
 
   var request = utility.request({
     method : method,
-    host : this._getDomain(),
+    host : domainOfConnection(this),
     port : this.settings.port,
     ssl : this.settings.ssl,
     path : this.settings.extraPath + path,
@@ -264,43 +261,48 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
   /**
    * @this {Connection}
    */
-  function onSuccess(result, requestInfos) {
+  function onSuccess(result, resultInfo) {
     var error = null;
-    if (result.message) {  // API < 0.6
+
+    var apiVersion = resultInfo.headers['API-Version'] || 
+      resultInfo.headers[CC.Api.Headers.ApiVersion];
+
+    // test if API is reached or if we headed into something else
+    if (! apiVersion) {
+      error = {
+        id : CC.Errors.API_UNREACHEABLE,
+        message: 'Cannot find API-Version',
+        details: 'Response code: ' + resultInfo.code +
+          ' Headers: ' + JSON.stringify(resultInfo.headers)
+      };
+    } else if (result.message) {  // API < 0.6
       error = result.message;
     } else
     if (result.error) { // API 0.7
       error = result.error;
-    } else if (checks.resultCode && requestInfos.code !== checks.resultCode) {
-      error = new Error('Result code ' + checks.resultCode + ' does not match ' +
-        requestInfos.code);
     } else {
       this.serverInfos.lastSeenLT = (new Date()).getTime();
-      this.serverInfos.apiVersion = requestInfos.headers['api-version'] ||
-        this.serverInfos.apiVersion;
-      if (_.has(requestInfos.headers, 'server-time')) {
+      this.serverInfos.apiVersion = apiVersion || this.serverInfos.apiVersion;
+      if (_.has(resultInfo.headers, CC.Api.Headers.ServerTime)) {
         this.serverInfos.deltaTime = (this.serverInfos.lastSeenLT / 1000) -
-          requestInfos.headers['server-time'];
+          resultInfo.headers[CC.Api.Headers.ServerTime];
       }
     }
-    callback(error, result);
+    callback(error, result, resultInfo);
   }
 
-  function onError(error /*, requestInfo*/) {
-    console.log('ONERROR', arguments);
-    callback(error, null);
+  function onError(error, resultInfo) {
+    var errorTemp = {
+      id : CC.Errors.API_UNREACHEABLE,
+      message: 'Error on request ',
+      details: 'ERROR: ' + error
+    };
+    callback(errorTemp, null, resultInfo);
   }
   return request;
 };
 
-Connection.prototype._getDomain = function () {
-  if (this.settings.url) {
-    return utility.getHostFromUrl(this.settings.url);
-  } else {
-    var host = this.settings.domain;
-    return this.username ? this.username + '.' + host : host;
-  }
-};
+
 
 /**
  * @property {string} Connection.id an unique id that contains all needed information to access
@@ -309,7 +311,7 @@ Connection.prototype._getDomain = function () {
 Object.defineProperty(Connection.prototype, 'id', {
   get: function () {
     var id = this.settings.ssl ? 'https://' : 'http://';
-    id += this._getDomain() + ':' +
+    id += domainOfConnection(this) + ':' +
       this.settings.port + this.settings.extraPath + '/?auth=' + this.auth;
     return id;
   },
@@ -355,4 +357,19 @@ Object.defineProperty(Connection.prototype, 'serialId', {
  * @callback Connection~requestCallback
  * @param {Object} error - eventual error
  * @param {Object} result - jSonEncoded result
+ * @param {Object} resultInfo
+ * @param {Number} resultInfo.code - HTTP result code
+ * @param {Object} resultInfo.headers - HTTP result headers by key
  */
+
+
+// --------- private utils
+
+function domainOfConnection(connection) {
+  if (connection.settings.url) {
+    return utility.getHostFromUrl(connection.settings.url);
+  } else {
+    var host = connection.settings.domain;
+    return connection.username ? connection.username + '.' + host : host;
+  }
+}

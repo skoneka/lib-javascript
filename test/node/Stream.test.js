@@ -13,23 +13,25 @@ var testStream = function (preFetchStructure) {
   var username = 'test-user',
     auth = 'test-token',
     settings = {
+      username: username,
+      auth: auth,
       port: 443,
       ssl: true,
       domain: 'test.io'
     },
-    connection = new pryv.Connection(username, auth, settings);
+    connection = new pryv.Connection(settings);
 
 
   if (preFetchStructure) {
     before(function (done) {
       nock('https://' + username + '.' + settings.domain)
         .get('/access-info')
-        .reply(200, responses.accessInfo, responses.headersAccessInfo);
+        .reply(200, responses.accessInfo, responses.headersStandard);
 
 
       nock('https://' + username + '.' + settings.domain)
         .get('/streams?state=all')
-        .reply(200, responses.streams);
+        .reply(200, responses.streams, responses.headersStandard);
 
       connection.fetchStructure(function (error) {
         should.not.exist(error);
