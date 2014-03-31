@@ -12,8 +12,8 @@
  * @param {Object} [pack.headers] : key / value map of headers
  * @param {Object} [pack.params] : the payload -- only with POST/PUT
  * @param {String} [pack.parseResult = 'json'] : 'text' for no parsing
- * @param {Function} pack.success : function (result, requestInfos)
- * @param {Function} pack.error : function (error, requestInfos)
+ * @param {Function} pack.success : function (result, resultInfo)
+ * @param {Function} pack.error : function (error, resultInfo)
  * @param {String} [pack.info] : a text
  * @param {Boolean} [pack.async = true]
  * @param {Number} [pack.expectedStatus] : http result code
@@ -55,7 +55,7 @@ module.exports = function (pack)  {
     var bodyarr = [];
     res.on('data', function (chunk) {  bodyarr.push(chunk); });
     res.on('end', function () {
-      var requestInfo = {
+      var resultInfo = {
         code : res.statusCode,
         headers : res.headers
       };
@@ -69,7 +69,7 @@ module.exports = function (pack)  {
           );
         }
       }
-      return pack.success(result, requestInfo);
+      return pack.success(result, resultInfo);
     });
 
   }).on('error', function (e) {

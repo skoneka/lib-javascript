@@ -6,6 +6,7 @@ var _ = require('underscore'),
     ConnectionBookmarks = require('./connection/ConnectionBookmarks.js'),
     ConnectionAccesses = require('./connection/ConnectionAccesses.js'),
     ConnectionMonitors = require('./connection/ConnectionMonitors.js'),
+    CC = require('./connection/ConnectionConstants.js'),
     Datastore = require('./Datastore.js');
 
 /**
@@ -220,14 +221,10 @@ Connection.prototype.monitor = function (filter) {
  * @param {string} path - to resource, starting with '/' like '/events'
  * @param {Connection~requestCallback} callback
  * @param {Object} jsonData - data to POST or PUT
- * @param {Object} checks - checks to apply during the request
- * @param {integer} checks.responseCode - default (null) will throw an error if responseCode
- * is different than ecpected
  */
 Connection.prototype.request = function (method, path, callback, jsonData, isFile,
-                                         progressCallback, checks) {
+                                         progressCallback) {
 
-  checks = checks || {};
 
   if (! callback || ! _.isFunction(callback)) {
     throw new Error('request\'s callback must be a function');
@@ -264,31 +261,42 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
   /**
    * @this {Connection}
    */
-  function onSuccess(result, requestInfos) {
+  function onSuccess(result, resultInfo) {
     var error = null;
-    if (result.message) {  // API < 0.6
+
+    // test if API is reached or if we headed into something else
+    if (! resultInfo.headers[CC.Api.Headers.ApiVersion] ||
+      ! resultInfo.headers[CC.Api.Headers.ServerTime]) {
+      error = {
+        id : CC.Errors.API_UNREACHEABLE,
+        message: 'Cannot find api-version or server-time headers',
+        details: 'Response code: ' + resultInfo.code +
+          ' Headers: ' + JSON.stringify(resultInfo.headers)
+      };
+    } else if (result.message) {  // API < 0.6
       error = result.message;
     } else
     if (result.error) { // API 0.7
       error = result.error;
-    } else if (checks.resultCode && requestInfos.code !== checks.resultCode) {
-      error = new Error('Result code ' + checks.resultCode + ' does not match ' +
-        requestInfos.code);
     } else {
       this.serverInfos.lastSeenLT = (new Date()).getTime();
-      this.serverInfos.apiVersion = requestInfos.headers['api-version'] ||
+      this.serverInfos.apiVersion = resultInfo.headers[CC.Api.Headers.ApiVersion] ||
         this.serverInfos.apiVersion;
-      if (_.has(requestInfos.headers, 'server-time')) {
+      if (_.has(resultInfo.headers, CC.Api.Headers.ServerTime)) {
         this.serverInfos.deltaTime = (this.serverInfos.lastSeenLT / 1000) -
-          requestInfos.headers['server-time'];
+          resultInfo.headers[CC.Api.Headers.ServerTime];
       }
     }
-    callback(error, result);
+    callback(error, result, resultInfo);
   }
 
-  function onError(error /*, requestInfo*/) {
-    console.log('ONERROR', arguments);
-    callback(error, null);
+  function onError(error, resultInfo) {
+    var errorTemp = {
+      id : CC.Errors.API_UNREACHEABLE,
+      message: 'Error on request ',
+      details: 'ERROR: ' + error
+    };
+    callback(errorTemp, null, resultInfo);
   }
   return request;
 };
@@ -348,6 +356,9 @@ Object.defineProperty(Connection.prototype, 'serialId', {
  * @callback Connection~requestCallback
  * @param {Object} error - eventual error
  * @param {Object} result - jSonEncoded result
+ * @param {Object} resultInfo
+ * @param {Number} resultInfo.code - HTTP result code
+ * @param {Object} resultInfo.headers - HTTP result headers by key
  */
 
 

@@ -1,14 +1,19 @@
 /* global describe, it */
 var pryv = require('../../source/main'),
-    should = require('should'),
-    nock = require('nock'),
-  responses = require('../data/responses.js');
+  should = require('should'),
+  nock = require('nock'),
+  responses = require('../data/responses.js'),
+  _ = require('underscore');
+
+
 
 describe('Connection', function () {
 
   var username = 'test-user',
-      auth = 'test-token';
+    auth = 'test-token';
   var settings = {
+    username: username,
+    auth: auth,
     port: 443,
     ssl: true,
     domain: 'test.io'
@@ -18,7 +23,7 @@ describe('Connection', function () {
 
   var generatedShortId = 'test-user:pryv-explorer';
 
-  var connection = new pryv.Connection(username, auth, settings);
+  var connection = new pryv.Connection(settings);
   var serialId = 'C' +  (pryv.Connection._serialCounter - 1);
 
 
@@ -58,6 +63,71 @@ describe('Connection', function () {
 
   });
 
+  describe('reachability test on api-headers', function () {
+    this.timeout(15000);
+
+    it('should return API_UNREACHABLE Error', function (done) {
+      var endPoint = 'https://' + username + '.' + settings.domain;
+      nock(endPoint)
+        .get('/whatever')
+        .reply(200, responses.accessInfo, ['invalid headers']);
+
+      connection.request('GET', '/whatever', function (error, result) {
+        should.exist(error);
+        error.id.should.eql('API_UNREACHEABLE');
+        should.exist(result);
+        done();
+      });
+    });
+  });
+
+
+  describe('connection.request responseInfo contains headers and code', function () {
+    this.timeout(15000);
+
+    var headers = {toto : 'titi'};
+    _.extend(headers,  responses.headersAccessInfo);
+
+
+    function testResultInfo(resultInfo, code) {
+      should.exists(resultInfo.code);
+      resultInfo.code.should.equal(code);
+      should.exists(resultInfo.headers);
+      should.exists(resultInfo.headers.toto);
+      resultInfo.headers.toto.should.equal('titi');
+    }
+
+    it('on invalid request', function (done) {
+      var endPoint = 'https://' + username + '.' + settings.domain;
+      nock(endPoint)
+        .get('/whatever')
+        .reply(400, {error: {id: 'invalid-parameters-format', message: 'Test message'}}, headers);
+
+      connection.request('GET', '/whatever', function (error, result, resultInfo) {
+        should.exists(result);
+        should.exists(error);
+        testResultInfo(resultInfo, 400);
+        done();
+      });
+    });
+
+    it('on valid request', function (done) {
+      var endPoint = 'https://' + username + '.' + settings.domain;
+      nock(endPoint)
+        .get('/whatever')
+        .reply(200, responses.accessInfo, headers);
+
+      connection.request('GET', '/whatever', function (error, result, resultInfo) {
+        should.exists(result);
+        should.not.exists(error);
+        testResultInfo(resultInfo, 200);
+        done();
+      });
+    });
+
+  });
+
+
   describe('accessInfo()', function () {
     this.timeout(15000);
 
@@ -79,7 +149,6 @@ describe('Connection', function () {
         done();
       });
     });
-
   });
 
   describe('displayId with connection initialized', function () {
@@ -101,7 +170,7 @@ describe('Connection', function () {
 
   describe('time management', function () {
     it('should retrieve server time from server response');
-    it('getLocalTime getServerTime', function (done) { 
+    it('getLocalTime getServerTime', function (done) {
 
       var serverTime = 0;
       var localTime = connection.getLocalTime(serverTime);

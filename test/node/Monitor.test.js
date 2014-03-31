@@ -27,7 +27,7 @@ var testMonitor = function (preFetchStructure) {
 
         nock('https://' + username + '.pryv.in')
           .get('/streams?state=all')
-          .reply(200, responses.streams);
+          .reply(200, responses.streams, responses.headersAccessInfo);
 
         connection.fetchStructure(function (error) {
           should.not.exist(error);
@@ -50,7 +50,7 @@ var testMonitor = function (preFetchStructure) {
 
         nock('https://' + username + '.pryv.in')
           .get('/streams?state=all')
-          .reply(200, responses.streams);
+          .reply(200, responses.streams, responses.headersAccessInfo);
 
         connection.fetchStructure(function (error) {
           should.not.exist(error);
@@ -69,7 +69,7 @@ var testMonitor = function (preFetchStructure) {
 
         nock('https://' + username + '.pryv.in')
           .get('/streams?state=all')
-          .reply(200, newStructure);
+          .reply(200, newStructure, responses.headersAccessInfo);
         console.log('MONITOR', connection.datastore.getStreams()[0].children[0].clientData);
         responses.streams.streams.length.should.equal(connection.datastore.getStreams().length);
         monitor.addEventListener('streamsChanged', function (result) {
