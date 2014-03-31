@@ -15,6 +15,7 @@ var Filter = module.exports = function Filter(settings) {
     toTime: null,  // serverTime
     limit: null,
     skip: null,
+    types: null,
     modifiedSince: null,
     state: null
   }, settings);
