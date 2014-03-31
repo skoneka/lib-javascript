@@ -246,10 +246,21 @@ Monitor.prototype._connectionStreamsGetChanges = function (signal) {
     this._fireEvent(signal, { created : created, trashed : trashed, modified: modified});
   }.bind(this));
 };
+
+
 Monitor.prototype._connectionEventsGetAllAndCompare = function (signal, extracontent, batch) {
   this.lastSynchedST = this.connection.getServerTime();
 
 
+  // look into in-memory events for matching events..
+
+
+  var cachedEvents = this.connection.datastore.getEventsMatchingFilter(this.filter);
+  _.each(cachedEvents, function (event) {
+
+  };
+
+    // look online
 
   var result = { enter : [] };
   _.extend(result, extracontent); // pass extracontent to receivers

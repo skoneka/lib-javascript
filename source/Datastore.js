@@ -96,6 +96,18 @@ Datastore.prototype.getEventById = function (eventId) {
 /**
  * @returns allEvents
  */
+Datastore.prototype.getEventsMatchingFilter = function (filter) {
+  var result = [];
+  _.each(this.eventIndex, function (event /*,eventId*/) {
+    if (filter.matchEvent(event)) { result.push(event); }
+  }.bind(this));
+  return result;
+};
+
+
+/**
+ * @returns allEvents
+ */
 Datastore.prototype.getAllEvents = function () {
   return _.value(this.eventIndex);
 };
