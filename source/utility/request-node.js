@@ -2,6 +2,9 @@
 
 //TODO: sort out the callback convention
 
+var FormData = require('form-data');
+var _ = require('underscore');
+
 /**
  *
  * @param {Object} pack json with
@@ -20,9 +23,6 @@
  * @param {Boolean} [pack.ssl = true]
  */
 module.exports = function (pack)  {
-  if (pack.payload) {
-    pack.headers['Content-Length'] = pack.payload.length;
-  }
 
 
   var httpOptions = {
@@ -34,22 +34,19 @@ module.exports = function (pack)  {
     headers : pack.headers
   };
 
+
   var parseResult = pack.parseResult || 'json';
   var httpMode = pack.ssl ? 'https' : 'http';
   var http = require(httpMode);
 
-
-
-  var detail = 'Request: ' + httpOptions.method + ' ' +
-      httpMode + '://' + httpOptions.host + ':' + httpOptions.port + '' + httpOptions.path;
-
-
-
-
-  var onError = function (reason) {
-    return pack.error(reason + '\n' + detail, null);
-  };
-
+  if (pack.payload instanceof FormData) {
+    httpOptions.method = 'post';
+    _.extend(httpOptions.headers, pack.payload.getHeaders());
+  } else {
+    if (pack.payload) {
+      pack.headers['Content-Length'] = pack.payload.length;
+    }
+  }
 
   var req = http.request(httpOptions, function (res) {
     var bodyarr = [];
@@ -65,16 +62,28 @@ module.exports = function (pack)  {
           result = JSON.parse(bodyarr.join(''));
         } catch (error) {
           return onError('request failed to parse JSON in response' +
-              bodyarr.join('')
+            bodyarr.join('')
           );
         }
       }
       return pack.success(result, resultInfo);
     });
 
-  }).on('error', function (e) {
-        return onError('Error: ' + e.message);
-      });
+  });
+
+
+  var detail = 'Request: ' + httpOptions.method + ' ' +
+    httpMode + '://' + httpOptions.host + ':' + httpOptions.port + '' + httpOptions.path;
+
+
+
+  var onError = function (reason) {
+    return pack.error(reason + '\n' + detail, null);
+  };
+
+  req.on('error', function (e) {
+    return onError('Error: ' + e.message);
+  });
 
 
   req.on('socket', function (socket) {
@@ -85,7 +94,12 @@ module.exports = function (pack)  {
     });
   });
 
-  if (pack.payload) { req.write(pack.payload); }
+
+  if (pack.payload instanceof FormData) {
+    pack.payload.pipe(req);
+  } else {
+    if (pack.payload) { req.write(pack.payload); }
+  }
   req.end();
 
   return req;
