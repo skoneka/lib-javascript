@@ -39,12 +39,24 @@ describe('eventTypes', function () {
       });
     });
 
+
     it('flat', function (done) {
+      var catchedErr = null;
+      try {
+        eventTypes.flat('activity/pryv');
+      } catch (e) {
+        catchedErr = e;
+      }
+      should.exist(catchedErr);
       eventTypes.loadFlat(function (error, result) {
-        should.exists(result.types['activity/pryv']);
+        should.exists(result);
+        var info = eventTypes.flat('mass/kg');
+        info.type.should.equal('number');
         done();
       });
     });
+
+
 
   });
 

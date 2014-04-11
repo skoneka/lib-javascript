@@ -125,8 +125,16 @@ ConnectionEvents.prototype.create = function (newEventlike, callback) {
   }, event.getData());
   return event;
 };
-ConnectionEvents.prototype.createWithAttachment = function (newEventLike, file, callback,
-                                                            progressCallback) {
+/**
+ * @param {NewEventLike} event -- minimum {streamId, type } -- if typeof Event, must belong to
+ * the same connection and not exists on the API.
+ * @param {ConnectionEvents~eventCreatedOnTheAPI} callback
+ * @param {FormData} the formData to post for fileUpload. On node.js
+ * refers to pryv.utility.forgeFormData
+ * @return {Event} event
+ */
+ConnectionEvents.prototype.createWithAttachment =
+  function (newEventLike, formData, callback, progressCallback) {
   var event = null;
   if (newEventLike instanceof Event) {
     if (newEventLike.connection !== this.connection) {
@@ -139,14 +147,14 @@ ConnectionEvents.prototype.createWithAttachment = function (newEventLike, file, 
   } else {
     event = new Event(this.connection, newEventLike);
   }
-  file.append('event', JSON.stringify(event.getData()));
+  formData.append('event', JSON.stringify(event.getData()));
   var url = '/events';
   this.connection.request('POST', url, function (err, result) {
     if (result) {
       _.extend(event, result.event);
     }
     callback(err, event);
-  }, file, true, progressCallback);
+  }, formData, true, progressCallback);
 };
 ConnectionEvents.prototype.addAttachment = function (eventId, file, callback, progressCallback) {
   var url = '/events/' + eventId;
