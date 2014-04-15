@@ -82,6 +82,12 @@ Event.prototype.attachmentUrl = function (attachment) {
 Event.prototype.trash = function (callback) {
   this.connection.events.trash(this, callback);
 };
+/**
+ * TODO document and rename to getPicturePreviewUrl
+ * @param width
+ * @param height
+ * @returns {string}
+ */
 Event.prototype.getPicturePreview = function (width, height) {
   width = width ? '&w=' + width : '';
   height = height ? '&h=' + height : '';
@@ -90,6 +96,10 @@ Event.prototype.getPicturePreview = function (width, height) {
     this.id + '?auth=' + this.connection.auth + width + height;
   return url;
 };
+
+/**
+ * TODO document
+ */
 Object.defineProperty(Event.prototype, 'timeLT', {
   get: function () {
     return this.connection.getLocalTime(this.time);
@@ -101,18 +111,23 @@ Object.defineProperty(Event.prototype, 'timeLT', {
 
 
 
-
+/**
+ * TODO document
+ */
 Object.defineProperty(Event.prototype, 'stream', {
   get: function () {
     if (! this.connection.datastore) {
       throw new Error('call connection.fetchStructure before to get automatic stream mapping.' +
         ' Or use StreamId');
     }
-    return this.connection.streams.getById(this.streamId);
+    return this.connection.datastore.getStreamById(this.streamId);
   },
   set: function () { throw new Error('Event.stream property is read only'); }
 });
 
+/**
+ * TODO document
+ */
 Object.defineProperty(Event.prototype, 'url', {
   get: function () {
     var url = this.connection.settings.ssl ? 'https://' : 'http://';

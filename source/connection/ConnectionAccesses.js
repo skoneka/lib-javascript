@@ -23,6 +23,11 @@ Accesses.prototype.get = function (callback) {
   });
 };
 
+/**
+ * TODO complete documentation
+ * @param access
+ * @param callback
+ */
 Accesses.prototype.create = function (access, callback) {
   this.connection.request('POST', apiPathAccesses, function (err, res) {
     var access = res.access;
@@ -31,6 +36,12 @@ Accesses.prototype.create = function (access, callback) {
     }
   }, access);
 };
+
+/**
+ * TODO complete documentation
+ * @param access
+ * @param callback
+ */
 Accesses.prototype.update = function (access, callback) {
   if (access.id) {
     this.connection.request('PUT', apiPathAccesses + '/' + access.id, callback,
@@ -43,6 +54,11 @@ Accesses.prototype.update = function (access, callback) {
   }
 };
 
+/**
+ * TODO complete documentation
+ * @param access
+ * @param callback
+ */
 Accesses.prototype.delete = function (sharingId, callback) {
   this.connection.request('DELETE', apiPathAccesses + '/' + sharingId, function (err, result) {
     var error = err;

@@ -165,7 +165,11 @@ ConnectionEvents.prototype.removeAttachment = function (eventId, fileName, callb
   this.connection.request('DELETE', url, callback);
 };
 /**
+ * //TODO rename to batch
  * //TODO make it NewEventLike compatible
+ * //TODO once it support an array of mixed values Event and EventLike, the, no need for
+ *  callBackWithEventsBeforeRequest at it will. A dev who want Event object just have to create
+ *  them before
  * This is the prefered method to create events in batch
  * @param {Object[]} eventsData -- minimum {streamId, type }
  * @param {ConnectionEvents~eventBatchCreatedOnTheAPI}
@@ -213,6 +217,7 @@ ConnectionEvents.prototype.batchWithData =
 // --- raw access to the API
 
 /**
+ * TODO anonymise by renaming to function _get(..
  * @param {FilterLike} filter
  * @param {Connection~requestCallback} callback
  * @private
@@ -229,6 +234,7 @@ ConnectionEvents.prototype._get = function (filter, callback) {
 
 
 /**
+ * TODO anonymise by renaming to function _xx(..
  * @param {String} eventId
  * @param {Object} data
  * @param  {Connection~requestCallback} callback

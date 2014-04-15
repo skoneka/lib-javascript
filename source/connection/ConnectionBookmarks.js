@@ -34,6 +34,12 @@ Bookmarks.prototype.get = function (callback) {
   });
 };
 
+/**
+ * TODO complete documentation
+ * @param bookmark
+ * @param callback
+ * @returns {*}
+ */
 Bookmarks.prototype.create = function (bookmark, callback) {
   if (bookmark.name && bookmark.url && bookmark.accessToken) {
     this.connection.request('POST', apiPathBookmarks, function (err, result) {
@@ -52,6 +58,12 @@ Bookmarks.prototype.create = function (bookmark, callback) {
     return bookmark;
   }
 };
+
+/**
+ * TODO complete documentation
+ * @param bookmarkId
+ * @param callback
+ */
 Bookmarks.prototype.delete = function (bookmarkId, callback) {
   this.connection.request('DELETE', apiPathBookmarks + '/' + bookmarkId, function (err, result) {
     var error = err;

@@ -17,13 +17,13 @@ var _ = require('underscore'),
  *
  * @example
  * // create a connection for the user 'perkikiki' with the token 'TTZycvBTiq'
- * var conn = new pryv.Connection('perkikiki', 'TTZycvBTiq');
+ * var conn = new pryv.Connection({username: 'perkikiki', auth: 'TTZycvBTiq'});
  *
  * @constructor
  * @this {Connection}
- * @param {string} username
- * @param {string} auth - the authorization token for this username
  * @param {Object} [settings]
+ * @param {string} settings.username
+ * @param {string} settings.auth - the authorization token for this username
  * @param {boolean} [settings.staging = false] use Pryv's staging servers
  * @param {number} [settings.port = 443]
  * @param {string} [settings.domain = 'pryv.io'] change the domain. use "settings.staging = true" to

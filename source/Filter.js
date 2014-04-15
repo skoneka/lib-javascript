@@ -2,6 +2,7 @@ var _ = require('underscore'),
     SignalEmitter = require('./utility/SignalEmitter.js');
 
 /**
+ * TODO Filter is badly missing a correct documentation
  * @constructor
  */
 var Filter = module.exports = function Filter(settings) {
@@ -56,6 +57,8 @@ function _normalizeTimeFrameST(filterData) {
 
 
 /**
+ * TODO write doc
+ * TODO complete with tags and state and modified and..
  * check if this event is in this filter
  */
 Filter.prototype.matchEvent = function (event) {
@@ -156,7 +159,7 @@ Filter.prototype.cloneWithDelta = function (properties) {
 /**
  *
  * @param ignoreNulls (optional) boolean
- * @param withDelta (optional) apply this differences on the datar
+ * @param withDelta (optional) apply this differences on the data
  * @returns {*}
  */
 Filter.prototype.getData = function (ignoreNulls, withDelta) {
@@ -171,6 +174,9 @@ Filter.prototype.getData = function (ignoreNulls, withDelta) {
   return result;
 };
 
+/**
+ * @private
+ */
 Filter.prototype._fireFilterChange = function (signal, content, batch) {
   // generic
   this._fireEvent(Messages.ON_CHANGE, {filter: this, signal: signal, content: content}, batch);
@@ -179,9 +185,10 @@ Filter.prototype._fireFilterChange = function (signal, content, batch) {
 };
 
 /**
+ * TODO review documentation and add example
  * Change several values of the filter in batch.. this wil group all events behind a batch id
- * @param keyValueMap
- * @param batch
+ * @param keyValueMap {Object}
+ * @param batch {SignalEmitter~Batch}
  */
 Filter.prototype.set = function (keyValueMap, batch) {
   batch = this.startBatch('set', batch);
@@ -258,7 +265,7 @@ Object.defineProperty(Filter.prototype, 'toTimeSTNormalized', {
 });
 
 /**
- * get toTime, return Number.POSITIVE_INFINITY if null
+ * get fromTime, return Number.POSITIVE_INFINITY if null
  */
 Object.defineProperty(Filter.prototype, 'fromTimeSTNormalized', {
   get: function () {
@@ -301,9 +308,12 @@ Object.defineProperty(Filter.prototype, 'streamsIds', {
 });
 
 
-
-
-//TODO: remove or rewrite (name & functionality unclear)
+/**
+ * return true if context (stream is on a single stream)
+ * This is usefull to check when creating and event in a context.
+ * This way, no need to ask the user for a stream specification.
+ * TODO determine if this should stay in the lib.. or handle by apps
+ */
 Filter.prototype.focusedOnSingleStream = function () {
   if (_.isArray(this._settings.streams) && this._settings.streams.length === 1) {
     return this._settings.streams[0];

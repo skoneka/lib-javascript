@@ -173,7 +173,9 @@ Monitor.prototype._initEvents = function () {
     }.bind(this));
 };
 
-
+/**
+ * @private
+ */
 Monitor.prototype._connectionEventsGetChanges = function (signal) {
   var options = { modifiedSince : this.lastSynchedST, state : 'all'};
   this.lastSynchedST = this.connection.getServerTime();
@@ -203,6 +205,9 @@ Monitor.prototype._connectionEventsGetChanges = function (signal) {
     }.bind(this));
 };
 
+/**
+ * @private
+ */
 Monitor.prototype._connectionStreamsGetChanges = function (signal) {
   var streams = {};
   var created = [], modified = [], trashed = [];
@@ -247,7 +252,9 @@ Monitor.prototype._connectionStreamsGetChanges = function (signal) {
   }.bind(this));
 };
 
-
+/**
+ * @private
+ */
 Monitor.prototype._connectionEventsGetAllAndCompare = function (signal, extracontent, batch) {
   this.lastSynchedST = this.connection.getServerTime();
 
@@ -298,6 +305,7 @@ Monitor.prototype._connectionEventsGetAllAndCompare = function (signal, extracon
 
 
 /**
+ * TODO write doc
  * return informations on events
  */
 Monitor.prototype.stats = function (force, callback) {
