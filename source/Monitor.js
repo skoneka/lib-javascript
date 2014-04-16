@@ -173,7 +173,9 @@ Monitor.prototype._initEvents = function () {
     }.bind(this));
 };
 
-
+/**
+ * @private
+ */
 Monitor.prototype._connectionEventsGetChanges = function (signal) {
   var options = { modifiedSince : this.lastSynchedST, state : 'all'};
   this.lastSynchedST = this.connection.getServerTime();
@@ -203,6 +205,9 @@ Monitor.prototype._connectionEventsGetChanges = function (signal) {
     }.bind(this));
 };
 
+/**
+ * @private
+ */
 Monitor.prototype._connectionStreamsGetChanges = function (signal) {
   var streams = {};
   var created = [], modified = [], trashed = [];
@@ -246,10 +251,33 @@ Monitor.prototype._connectionStreamsGetChanges = function (signal) {
     this._fireEvent(signal, { created : created, trashed : trashed, modified: modified});
   }.bind(this));
 };
+
+/**
+ * @private
+ */
 Monitor.prototype._connectionEventsGetAllAndCompare = function (signal, extracontent, batch) {
   this.lastSynchedST = this.connection.getServerTime();
 
 
+  if (false) {
+    // POC code to look into in-memory events for matching events..
+    // do not activate until cache handles DELETE
+    var result1 = { enter : [] };
+    _.extend(result1, extracontent);
+
+    var cachedEvents = this.connection.datastore.getEventsMatchingFilter(this.filter);
+    _.each(cachedEvents, function (event) {
+      if (! this._events.active[event.id]) {  // we don't care for already known event
+        this._events.active[event.id] = event; // store it
+        result1.enter.push(event);
+      }
+    }.bind(this));
+    if (result1.enter.length > 0) {
+      this._fireEvent(signal, result1, batch);
+    }
+  }
+
+  // look online
 
   var result = { enter : [] };
   _.extend(result, extracontent); // pass extracontent to receivers
@@ -278,6 +306,7 @@ Monitor.prototype._connectionEventsGetAllAndCompare = function (signal, extracon
 
 
 /**
+ * TODO write doc
  * return informations on events
  */
 Monitor.prototype.stats = function (force, callback) {

@@ -16,7 +16,7 @@ Javascript library (browser & Node.js) to access and manipulate Pryv users data.
 
 ```
 // set connection to the API
-var connection = new pryv.Connection('{username}', '{token}');
+var connection = new pryv.Connection({username: '{username}', auth: '{token}'});
 
 // create a event
 var eventData = { streamId : 'diary', type: 'note/txt', content: 'I track, therefore I am.' };

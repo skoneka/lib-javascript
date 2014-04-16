@@ -4,6 +4,7 @@
  */
 
 var _ = require('underscore');
+var Event = require('./Event');
 
 function Datastore(connection) {
   this.connection = connection;
@@ -77,7 +78,12 @@ Datastore.prototype.getStreamById = function (streamId, test) {
  * @returns Event or null if not found
  */
 Datastore.prototype.getEventBySerialId = function (serialId) {
-  return this.eventIndex[serialId];
+  var result = null;
+  _.each(this.eventIndex, function (event /*,eventId*/) {
+    if (event.serialId === serialId) { result = event; }
+    // TODO optimize and break
+  }.bind(this));
+  return result;
 };
 
 /**
@@ -85,13 +91,21 @@ Datastore.prototype.getEventBySerialId = function (serialId) {
  * @returns Event or null if not found
  */
 Datastore.prototype.getEventById = function (eventId) {
-  var result = null;
+  return this.eventIndex[eventId];
+
+};
+
+/**
+ * @returns allEvents
+ */
+Datastore.prototype.getEventsMatchingFilter = function (filter) {
+  var result = [];
   _.each(this.eventIndex, function (event /*,eventId*/) {
-    if (event.id === eventId) { result = event; }
-    // TODO optimize and break
+    if (filter.matchEvent(event)) { result.push(event); }
   }.bind(this));
   return result;
 };
+
 
 /**
  * @returns allEvents
@@ -104,8 +118,34 @@ Datastore.prototype.getAllEvents = function () {
  * @param event
  */
 Datastore.prototype.addEvent = function (event) {
-  this.eventIndex[event.serialId] = event;
+  if (! event.id) {
+    throw new Error('Datastore.addEvent cannot add event with unkown id', event);
+  }
+  this.eventIndex[event.id] = event;
 };
 
+
+
+/**
+ * @param {Object} data to map
+ * @return {Event} event
+ */
+Datastore.prototype.createOrReuseEvent = function (data) {
+  if (! data.id) {
+    throw new Error('Datastore.createOrReuseEvent cannot create event with unkown id', data);
+  }
+
+  var result = this.getEventById(data.id);
+  if (result) {  // found event
+    _.extend(result, data);
+    return result;
+  }
+  // create an event and register it
+  result = new Event(this.connection, data);
+  this.addEvent(result);
+
+  return result;
+
+};
 
 

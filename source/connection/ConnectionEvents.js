@@ -117,16 +117,27 @@ ConnectionEvents.prototype.create = function (newEventlike, callback) {
     // TODO if err === API_UNREACHABLE then save event in cache
     if (result && ! err) {
       _.extend(event, result.event);
+      if (this.connection.datastore) {  // if datastore is activated register new event
+        this.connection.datastore.addEvent(event);
+      }
     }
     if (_.isFunction(callback)) {
 
       callback(err, err ? null : event);
     }
-  }, event.getData());
+  }.bind(this), event.getData());
   return event;
 };
-ConnectionEvents.prototype.createWithAttachment = function (newEventLike, file, callback,
-                                                            progressCallback) {
+/**
+ * @param {NewEventLike} event -- minimum {streamId, type } -- if typeof Event, must belong to
+ * the same connection and not exists on the API.
+ * @param {ConnectionEvents~eventCreatedOnTheAPI} callback
+ * @param {FormData} the formData to post for fileUpload. On node.js
+ * refers to pryv.utility.forgeFormData
+ * @return {Event} event
+ */
+ConnectionEvents.prototype.createWithAttachment =
+  function (newEventLike, formData, callback, progressCallback) {
   var event = null;
   if (newEventLike instanceof Event) {
     if (newEventLike.connection !== this.connection) {
@@ -139,14 +150,19 @@ ConnectionEvents.prototype.createWithAttachment = function (newEventLike, file, 
   } else {
     event = new Event(this.connection, newEventLike);
   }
-  file.append('event', JSON.stringify(event.getData()));
+  formData.append('event', JSON.stringify(event.getData()));
   var url = '/events';
   this.connection.request('POST', url, function (err, result) {
     if (result) {
       _.extend(event, result.event);
+
+      if (this.connection.datastore) {  // if datastore is activated register new event
+        this.connection.datastore.addEvent(event);
+      }
+
     }
     callback(err, event);
-  }, file, true, progressCallback);
+  }.bind(this), formData, true, progressCallback);
 };
 ConnectionEvents.prototype.addAttachment = function (eventId, file, callback, progressCallback) {
   var url = '/events/' + eventId;
@@ -157,7 +173,11 @@ ConnectionEvents.prototype.removeAttachment = function (eventId, fileName, callb
   this.connection.request('DELETE', url, callback);
 };
 /**
+ * //TODO rename to batch
  * //TODO make it NewEventLike compatible
+ * //TODO once it support an array of mixed values Event and EventLike, the, no need for
+ *  callBackWithEventsBeforeRequest at it will. A dev who want Event object just have to create
+ *  them before
  * This is the prefered method to create events in batch
  * @param {Object[]} eventsData -- minimum {streamId, type }
  * @param {ConnectionEvents~eventBatchCreatedOnTheAPI}
@@ -195,9 +215,15 @@ ConnectionEvents.prototype.batchWithData =
   this.connection.request('POST', url, function (err, result) {
     _.each(result.results, function (eventData, i) {
       _.extend(eventMap[i], eventData.event); // add the data to the event
-    });
+
+      if (this.connection.datastore) {  // if datastore is activated register new event
+        this.connection.datastore.addEvent(eventMap[i]);
+      }
+
+
+    }.bind(this));
     callback(err, createdEvents);
-  }, mapBeforePush(eventsData));
+  }.bind(this), mapBeforePush(eventsData));
 
   return createdEvents;
 };
@@ -205,6 +231,7 @@ ConnectionEvents.prototype.batchWithData =
 // --- raw access to the API
 
 /**
+ * TODO anonymise by renaming to function _get(..
  * @param {FilterLike} filter
  * @param {Connection~requestCallback} callback
  * @private
@@ -221,6 +248,7 @@ ConnectionEvents.prototype._get = function (filter, callback) {
 
 
 /**
+ * TODO anonymise by renaming to function _xx(..
  * @param {String} eventId
  * @param {Object} data
  * @param  {Connection~requestCallback} callback
@@ -231,6 +259,20 @@ ConnectionEvents.prototype._updateWithIdAndData = function (eventId, data, callb
   this.connection.request('PUT', url, callback, data);
 };
 
+
+/**
+ * @private
+ * @param {Event} event
+ * @param {Object} the data to map
+ */
+ConnectionEvents.prototype._registerNewEvent = function (event, data) {
+  if (! event.connection.datastore) { // no datastore   break
+    _.extend(event, data);
+    return event;
+  }
+
+  return event.connection.datastore.createOrReuseEvent(this, data);
+};
 
 module.exports = ConnectionEvents;
 

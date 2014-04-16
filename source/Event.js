@@ -16,22 +16,9 @@ var Event = module.exports = function Event(connection, data) {
   if (! connection) {
     throw new Error('Cannot create connection less events');
   }
-
-  var result = null;
-  if (connection.datastore && data.id) {
-    result = connection.datastore.getEventById(data.id);
-  }
-
-  if (! result) {
-    result = this;
-    result.connection = connection;
-    result.serialId = this.connection.serialId + '>E' + this.connection._eventSerialCounter++;
-    if (result.connection.datastore) {
-      result.connection.datastore.addEvent(result);
-    }
-  }
-  _.extend(result, data);
-  return result;
+  this.connection = connection;
+  this.serialId = this.connection.serialId + '>E' + this.connection._eventSerialCounter++;
+  _.extend(this, data);
 };
 
 /**
@@ -82,6 +69,12 @@ Event.prototype.attachmentUrl = function (attachment) {
 Event.prototype.trash = function (callback) {
   this.connection.events.trash(this, callback);
 };
+/**
+ * TODO document and rename to getPicturePreviewUrl
+ * @param width
+ * @param height
+ * @returns {string}
+ */
 Event.prototype.getPicturePreview = function (width, height) {
   width = width ? '&w=' + width : '';
   height = height ? '&h=' + height : '';
@@ -90,6 +83,10 @@ Event.prototype.getPicturePreview = function (width, height) {
     this.id + '?auth=' + this.connection.auth + width + height;
   return url;
 };
+
+/**
+ * TODO document
+ */
 Object.defineProperty(Event.prototype, 'timeLT', {
   get: function () {
     return this.connection.getLocalTime(this.time);
@@ -101,18 +98,23 @@ Object.defineProperty(Event.prototype, 'timeLT', {
 
 
 
-
+/**
+ * TODO document
+ */
 Object.defineProperty(Event.prototype, 'stream', {
   get: function () {
     if (! this.connection.datastore) {
       throw new Error('call connection.fetchStructure before to get automatic stream mapping.' +
         ' Or use StreamId');
     }
-    return this.connection.streams.getById(this.streamId);
+    return this.connection.datastore.getStreamById(this.streamId);
   },
   set: function () { throw new Error('Event.stream property is read only'); }
 });
 
+/**
+ * TODO document
+ */
 Object.defineProperty(Event.prototype, 'url', {
   get: function () {
     var url = this.connection.settings.ssl ? 'https://' : 'http://';

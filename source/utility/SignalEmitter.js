@@ -82,6 +82,7 @@ SignalEmitter.prototype._fireEvent = function (signal, content, batch) {
 
 SignalEmitter.batchSerial = 0;
 /**
+ * @private
  * start a batch process
  * @param eventual superBatch you can hook on. In this case it will call superBatch.waitForMe(..)
  * @return an object where you have to call stop when done

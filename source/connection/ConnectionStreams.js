@@ -53,9 +53,22 @@ ConnectionStreams.prototype.get = function (options, callback) {
   }
 };
 
+/**
+ * TODO make it object-aware like for Events
+ * TODO why to we need a _create ?
+ * TODO could return Stream object synchronously before calling the API
+ * @param streamData
+ * @param callback
+ */
+ConnectionStreams.prototype.create = function (streamData, callback) {
+  streamData = _.pick(streamData, 'id', 'name', 'parentId', 'singleActivity',
+    'clientData', 'trashed');
+  this._createWithData(streamData, callback);
+};
 
 
 /**
+ * TODO remove it's unused
  * @param {ConnectionStreamsOptions} options
  * @param {ConnectionStreams~getCallback} callback - handles the response
  */
@@ -75,6 +88,7 @@ ConnectionStreams.prototype.updateProperties = function (stream, properties, opt
 
 
 /**
+ * TODO remove it's unused and could lead to miscumprhension
  * Get a Stream by it's Id.
  * Works only if fetchStructure has been done once.
  * @param {string} streamId
@@ -101,12 +115,10 @@ ConnectionStreams.prototype._getData = function (opts, callback) {
   this.connection.request('GET', url, callback, null);
 };
 
-ConnectionStreams.prototype.create = function (streamData, callback) {
-  streamData = _.pick(streamData, 'id', 'name', 'parentId', 'singleActivity',
-    'clientData', 'trashed');
-  this._createWithData(streamData, callback);
-};
+
 /**
+ * TODO makes it return the Stream object before doing the online request
+ * TODO create a streamLike Object
  * Create a stream on the API with a jsonObject
  * @private
  * @param {Object} streamData an object array.. typically one that can be obtained with
@@ -199,11 +211,6 @@ ConnectionStreams.prototype.walkTree = function (options, eachStream, done) {
 };
 
 
-/**
- * Called when tree has been flatened
- * @callback ConnectionStreams~getFlatenedObjectsDone
- * @param {ConnectionStreams[]} streams
- */
 
 /**
  * Get the all the streams of the Tree in a list.. parents firsts
