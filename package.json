@@ -54,6 +54,8 @@
     "grunt-mocha-test": "latest",
     "grunt-shell": "latest",
     "nock": "latest",
-    "should": "latest"
+    "should": "latest",
+    "replay": "latest",
+    "grunt-env": "latest"
   }
 }

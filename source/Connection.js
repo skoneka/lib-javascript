@@ -6,6 +6,7 @@ var _ = require('underscore'),
     ConnectionBookmarks = require('./connection/ConnectionBookmarks.js'),
     ConnectionAccesses = require('./connection/ConnectionAccesses.js'),
     ConnectionMonitors = require('./connection/ConnectionMonitors.js'),
+    ConnectionAccount = require('./connection/ConnectionAccount.js'),
     CC = require('./connection/ConnectionConstants.js'),
     Datastore = require('./Datastore.js');
 
@@ -107,6 +108,7 @@ var Connection = module.exports = function Connection() {
    */
   this.monitors = new ConnectionMonitors(this);
 
+  this.account = new ConnectionAccount(this);
   this.datastore = null;
 
 };

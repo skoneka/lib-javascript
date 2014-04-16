@@ -4,3 +4,4 @@ lib-javascript.iml
 doc/
 *.DS_Store
 dist
+fixtures

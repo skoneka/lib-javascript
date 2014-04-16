@@ -11,6 +11,7 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-mocha-test');
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-jsdoc');
+  grunt.loadNpmTasks('grunt-env');
 
   grunt.initConfig({
     pkg: package,
@@ -57,7 +58,11 @@ module.exports = function (grunt) {
         ]
       }
     },
-
+    env : {
+      record: {
+        REPLAY : 'record'
+      }
+    },
     mochaTest: {
       test: {
         src: ['test/**/*.test.js'],
@@ -98,4 +103,5 @@ module.exports = function (grunt) {
 
   grunt.registerTask('default', [ 'jshint', 'browserify', 'copy', 'mochaTest', 'jsdoc' ]);
   grunt.registerTask('test', [ 'jshint', 'browserify', 'copy', 'mochaTest' ]);
+  grunt.registerTask('record', [ 'jshint', 'browserify', 'copy', 'env:record', 'mochaTest' ]);
 };
