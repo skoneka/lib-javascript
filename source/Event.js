@@ -16,22 +16,9 @@ var Event = module.exports = function Event(connection, data) {
   if (! connection) {
     throw new Error('Cannot create connection less events');
   }
-
-  var result = null;
-  if (connection.datastore && data.id) {
-    result = connection.datastore.getEventById(data.id);
-  }
-
-  if (! result) {
-    result = this;
-    result.connection = connection;
-    result.serialId = this.connection.serialId + '>E' + this.connection._eventSerialCounter++;
-    if (result.connection.datastore) {
-      result.connection.datastore.addEvent(result);
-    }
-  }
-  _.extend(result, data);
-  return result;
+  this.connection = connection;
+  this.serialId = this.connection.serialId + '>E' + this.connection._eventSerialCounter++;
+  _.extend(this, data);
 };
 
 /**

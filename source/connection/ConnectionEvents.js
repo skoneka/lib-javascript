@@ -117,12 +117,15 @@ ConnectionEvents.prototype.create = function (newEventlike, callback) {
     // TODO if err === API_UNREACHABLE then save event in cache
     if (result && ! err) {
       _.extend(event, result.event);
+      if (this.connection.datastore) {  // if datastore is activated register new event
+        this.connection.datastore.addEvent(event);
+      }
     }
     if (_.isFunction(callback)) {
 
       callback(err, err ? null : event);
     }
-  }, event.getData());
+  }.bind(this), event.getData());
   return event;
 };
 /**
@@ -152,9 +155,14 @@ ConnectionEvents.prototype.createWithAttachment =
   this.connection.request('POST', url, function (err, result) {
     if (result) {
       _.extend(event, result.event);
+
+      if (this.connection.datastore) {  // if datastore is activated register new event
+        this.connection.datastore.addEvent(event);
+      }
+
     }
     callback(err, event);
-  }, formData, true, progressCallback);
+  }.bind(this), formData, true, progressCallback);
 };
 ConnectionEvents.prototype.addAttachment = function (eventId, file, callback, progressCallback) {
   var url = '/events/' + eventId;
@@ -207,9 +215,15 @@ ConnectionEvents.prototype.batchWithData =
   this.connection.request('POST', url, function (err, result) {
     _.each(result.results, function (eventData, i) {
       _.extend(eventMap[i], eventData.event); // add the data to the event
-    });
+
+      if (this.connection.datastore) {  // if datastore is activated register new event
+        this.connection.datastore.addEvent(eventMap[i]);
+      }
+
+
+    }.bind(this));
     callback(err, createdEvents);
-  }, mapBeforePush(eventsData));
+  }.bind(this), mapBeforePush(eventsData));
 
   return createdEvents;
 };
@@ -245,6 +259,20 @@ ConnectionEvents.prototype._updateWithIdAndData = function (eventId, data, callb
   this.connection.request('PUT', url, callback, data);
 };
 
+
+/**
+ * @private
+ * @param {Event} event
+ * @param {Object} the data to map
+ */
+ConnectionEvents.prototype._registerNewEvent = function (event, data) {
+  if (! event.connection.datastore) { // no datastore   break
+    _.extend(event, data);
+    return event;
+  }
+
+  return event.connection.datastore.createOrReuseEvent(this, data);
+};
 
 module.exports = ConnectionEvents;
 

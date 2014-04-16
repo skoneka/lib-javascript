@@ -98,14 +98,13 @@ var testEvent = function (preFetchStructure) {
       };
 
       it('is respected', function (done) {
-        var event1 = new pryv.Event(connection,  event1Data);
-        var event2 = new pryv.Event(connection,  event2Data);
         if (preFetchStructure) {
+          var event1 = connection.datastore.createOrReuseEvent(event1Data);
+          var event2 = connection.datastore.createOrReuseEvent(event2Data);
+
           should.exists(connection.datastore);
           (event2 === event1).should.eql(true);
-        } else {
-          should.not.exists(connection.datastore);
-          (event2 === event1).should.eql(false);
+
         }
 
         done();
