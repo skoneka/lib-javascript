@@ -334,7 +334,7 @@ Auth.prototype.login = function (settings) {
           this.settings.callbacks.signedIn(this.connection);
         }
       } else {
-        if (typeof(this.settings.error) === 'function') {
+        if (typeof(this.settings.callbacks.error) === 'function') {
           this.settings.callbacks.error(data);
         }
       }
