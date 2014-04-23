@@ -45,7 +45,15 @@ ConnectionEvents.prototype.get = function (filter, doneCallback, partialResultCa
   this._get(filter, function (error, res) {
     var eventList = res.events || res.event;
     _.each(eventList, function (eventData) {
-      result.push(new Event(this.connection, eventData));
+
+      var event = null;
+      if (! this.connection.datastore) { // no datastore   break
+        event = new Event(this.connection, eventData);
+      } else {
+        event = this.connection.datastore.createOrReuseEvent(eventData);
+      }
+
+      result.push(event);
     }.bind(this));
     doneCallback(error, result);
     if (partialResultCallback) { partialResultCallback(result); }
@@ -194,7 +202,9 @@ ConnectionEvents.prototype.batchWithData =
   var url = '/';
   // use the serialId as a temporary Id for the batch
   _.each(eventsData, function (eventData, i) {
+
     var event =  new Event(this.connection, eventData);
+
     createdEvents.push(event);
     eventMap[i] = event;
   }.bind(this));
@@ -266,6 +276,8 @@ ConnectionEvents.prototype._updateWithIdAndData = function (eventId, data, callb
  * @param {Object} the data to map
  */
 ConnectionEvents.prototype._registerNewEvent = function (event, data) {
+
+
   if (! event.connection.datastore) { // no datastore   break
     _.extend(event, data);
     return event;
