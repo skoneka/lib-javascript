@@ -59,7 +59,8 @@ module.exports = function (pack)  {
       var result = null;
       if (parseResult === 'json') {
         try {
-          result = JSON.parse(bodyarr.join(''));
+          var response = bodyarr.join('').trim() === '' ? '{}' : bodyarr.join('').trim();
+          result = JSON.parse(response);
         } catch (error) {
           return onError('request failed to parse JSON in response' +
             bodyarr.join('')

@@ -11,5 +11,15 @@ Account.prototype.changePassword = function (oldPassword, newPassword, callback)
     }
   }, {'oldPassword': oldPassword, 'newPassword': newPassword});
 };
+Account.prototype.getInfo = function (callback) {
+  this.connection.request('GET', apiPathAccount, function (error, result) {
+    if (typeof(callback) === 'function') {
+      if (result && result.account) {
+        result = result.account;
+      }
+      callback(error, result);
+    }
+  });
+};
 
 module.exports = Account;

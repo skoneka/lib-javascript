@@ -46,14 +46,27 @@ describe('Connection.events', function () {
     it('must return an error if the given filter had unvalid parameter',
       function (done) {
         var filter = {fromTime: 'toto'};
-        connection.events.get(filter, function (error) {
+        connection.events.get(filter, function (error, result) {
           should.exist(error);
+          should.not.exist(result);
           done();
         });
       });
-    it('must accept null filter');
-    it('result must be null if there is an error');
-    it('must return an empty array if there are no events');
+    it('must accept null filter', function (done) {
+      connection.events.get(null, function (error, result) {
+        should.not.exist(error);
+        should.exist(result);
+        done();
+      });
+    });
+    it('must return an empty array if there are no events', function (done) {
+      var filter = {fromTime: 10, toTime: 11};
+      connection.events.get(filter, function (error, result) {
+        result.should.be.instanceOf(Array);
+        result.length.should.equal(0);
+        done();
+      });
+    });
   });
 
   describe('create()', function () {
@@ -90,11 +103,13 @@ describe('Connection.events', function () {
         });
       });
     // TODO: decide how to handle errors for batch request
+    // when some errors occurs error callback is null and
+    // the result array has an error flag (.hasError)
     it('must return an error for each unvalid events given');
   });
 
   describe('trash()', function () {
-    var eventToTrash;
+    var eventToTrash, eventTrashed;
     before(function (done) {
       eventToTrash = {content: 'I am going to be trashed', streamId: 'diary', type: 'note/txt'};
       connection.events.create(eventToTrash, function (error, result) {
@@ -103,19 +118,43 @@ describe('Connection.events', function () {
         done();
       });
     });
-    it('must accept an Event object', function (done) {
+    it('must accept an Event like object and return an Event object flaged as trashed',
+      function (done) {
       connection.events.trash(eventToTrash, function (error, result) {
         should.not.exist(error);
         should.exist(result);
+        result.should.be.instanceOf(Pryv.Event);
+        result.trashed.should.equal(true);
         done();
       });
     });
-    it('must return an Event object flaged as trashed');
-    it('must return null when the event is already flaged as trashed');
+
+    before(function (done) {
+      eventTrashed = {trashed: true, content: 'I am going to be definitely trashed',
+        streamId: 'diary', type: 'note/txt'};
+      connection.events.create(eventTrashed, function (error, result) {
+        if (error) {done(error); }
+        eventTrashed = result;
+        done();
+      });
+    });
+    it('result must be null when the event is already flaged as trashed', function (done) {
+      connection.events.trash(eventTrashed, function (error, result) {
+        should.not.exist(error);
+        should.not.exist(result);
+        done();
+      });
+    });
     it('must accept event id');
     it('must accept array of event id');
     it('must accept array of Event object');
-    it('must return an error when event is unvalid');
+    it('must return an error when event is unvalid', function (done) {
+      connection.events.trash({id: 'unexistant-id-54s65df4'}, function (error, result) {
+        should.exist(error);
+        should.not.exist(result);
+        done();
+      });
+    });
   });
 
   describe('update()', function () {

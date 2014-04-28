@@ -42,7 +42,11 @@ function ConnectionEvents(connection) {
 ConnectionEvents.prototype.get = function (filter, doneCallback, partialResultCallback) {
   //TODO handle caching
   var result = [];
+  filter = filter || {};
   this._get(filter, function (error, res) {
+    if (error) {
+      result = null;
+    }
     var eventList = res.events || res.event;
     _.each(eventList, function (eventData) {
       result.push(new Event(this.connection, eventData));
@@ -74,7 +78,17 @@ ConnectionEvents.prototype.trash = function (event, callback) {
  */
 ConnectionEvents.prototype.trashWithId = function (eventId, callback) {
   var url = '/events/' + eventId;
-  this.connection.request('DELETE', url, callback, null);
+  this.connection.request('DELETE', url, function (error, result) {
+    // assume there is only one event (no batch for now)
+    if (result && result.event) {
+      result =  new Event(this.connection, result.event);
+    }  else {
+      result = null;
+    }
+    if (callback && typeof(callback) === 'function') {
+      callback(error, result);
+    }
+  }.bind(this), null);
 };
 
 /**

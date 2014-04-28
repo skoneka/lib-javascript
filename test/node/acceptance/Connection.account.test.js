@@ -16,6 +16,23 @@ describe('Connection.account', function () {
     replay.mode = 'bloody';
   });
 
+  describe('getInfo()', function () {
+    it('must return an object with username, email and language as properties');
+    /*it('must return an object with username, email and language as properties', function (done) {
+      connection.account.getInfo(function (error, result) {
+        should.not.exist(error);
+        should.exist(result);
+        result.should.have.properties('username', 'email', 'language');
+        done();
+      });
+    });*/
+    it('must return an error when the connection dont have sufficient right', function (done) {
+      connection.account.getInfo(function (error) {
+        should.exist(error);
+        done();
+      });
+    });
+  });
   describe('changePassword()', function () {
     it('must no return error when given password is valid');
     it('must return error when given password is wrong');
@@ -28,20 +45,20 @@ describe('Connection.account', function () {
       });
     });
     /*it('must no return error when given password is valid', function (done) {
-      var password = 'poilonez';
-      var newPassword = 'poilonez';
-      connection.account.changePassword(password, newPassword, function (error) {
-        should.not.exist(error);
-        done();
-      });
-    });
-    it('must return error when given password is wrong', function (done) {
-      var password = 'wrongpassword';
-      var newPassword = 'poilonez';
-      connection.account.changePassword(password, newPassword, function (error) {
-        should.exist(error);
-        done();
-      });
-    }); */
+     var password = 'poilonez';
+     var newPassword = 'poilonez';
+     connection.account.changePassword(password, newPassword, function (error) {
+     should.not.exist(error);
+     done();
+     });
+     });
+     it('must return error when given password is wrong', function (done) {
+     var password = 'wrongpassword';
+     var newPassword = 'poilonez';
+     connection.account.changePassword(password, newPassword, function (error) {
+     should.exist(error);
+     done();
+     });
+     }); */
   });
 });
