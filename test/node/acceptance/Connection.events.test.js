@@ -167,14 +167,17 @@ describe('Connection.events', function () {
         done();
       });
     });
-    it('must accept Event object only', function (done) {
+    it('must accept Event object only and return an updated Event', function (done) {
+      var newContent = 'I was updated';
+      eventToUpdate.content = newContent;
       connection.events.update(eventToUpdate, function (error, result) {
         should.not.exist(error);
         should.exist(result);
+        result.should.be.instanceOf(Pryv.Event);
+        result.content.should.equal(newContent);
         done();
       });
     });
-    it('must return updated Event object');
     it('must accept an Array of Event object only');
     it('must return an error if event is unvalid');
   });

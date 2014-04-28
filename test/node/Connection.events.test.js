@@ -235,7 +235,6 @@ var testEvents = function (preFetchStructure) {
         connection.events._updateWithIdAndData(eventId, data, function (err, result) {
           should.not.exist(err);
           should.exist(result);
-          result.should.eql(response);
           done();
         });
       });

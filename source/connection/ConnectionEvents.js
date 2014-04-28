@@ -89,7 +89,11 @@ ConnectionEvents.prototype.trashWithId = function (eventId, callback) {
   this.connection.request('DELETE', url, function (error, result) {
     // assume there is only one event (no batch for now)
     if (result && result.event) {
-      result =  new Event(this.connection, result.event);
+      if (! this.connection.datastore) { // no datastore   break
+        result = new Event(this.connection, result.event);
+      } else {
+        result = this.connection.datastore.createOrReuseEvent(result.event);
+      }
     }  else {
       result = null;
     }
@@ -280,7 +284,20 @@ ConnectionEvents.prototype._get = function (filter, callback) {
  */
 ConnectionEvents.prototype._updateWithIdAndData = function (eventId, data, callback) {
   var url = '/events/' + eventId;
-  this.connection.request('PUT', url, callback, data);
+  this.connection.request('PUT', url, function (error, result) {
+    if (!error && result && result.event) {
+      if (!this.connection.datastore) {
+        result = new Event(this.connection, result.event);
+      } else {
+        result = this.connection.datastore.createOrReuseEvent(result.event);
+      }
+    } else {
+      result = null;
+    }
+    if (callback && typeof(callback) === 'function') {
+      callback(error, result);
+    }
+  }.bind(this), data);
 };
 
 
