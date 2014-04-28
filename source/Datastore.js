@@ -132,7 +132,9 @@ Datastore.prototype.addEvent = function (event) {
  */
 Datastore.prototype.createOrReuseEvent = function (data) {
   if (! data.id) {
-    throw new Error('Datastore.createOrReuseEvent cannot create event with unkown id', data);
+    console.log(data);
+    throw new Error('Datastore.createOrReuseEvent cannot create event with ' +
+      ' unkown id' + require('util').inspect(data));
   }
 
   var result = this.getEventById(data.id);

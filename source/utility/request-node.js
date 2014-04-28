@@ -44,7 +44,7 @@ module.exports = function (pack)  {
     _.extend(httpOptions.headers, pack.payload.getHeaders());
   } else {
     if (pack.payload) {
-      pack.headers['Content-Length'] = pack.payload.length;
+      pack.headers['Content-Length'] = Buffer.byteLength(pack.payload, 'utf-8');
     }
   }
 
@@ -99,7 +99,10 @@ module.exports = function (pack)  {
   if (pack.payload instanceof FormData) {
     pack.payload.pipe(req);
   } else {
-    if (pack.payload) { req.write(pack.payload); }
+
+    if (pack.payload) {
+      req.write(pack.payload, 'utf8');
+    }
   }
   req.end();
 
