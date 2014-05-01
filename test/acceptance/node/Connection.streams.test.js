@@ -3,7 +3,7 @@ var Pryv = require('../../../source/main'),
   should = require('should'),
   config = require('../test-support/config.js'),
   replay = require('replay');
-replay.mode = 'bloody';
+
 // TODO: wait to have test account with given data to update tests
 // (i.e number of trashed stream/children)
 describe('Connection.streams', function () {
@@ -13,77 +13,92 @@ describe('Connection.streams', function () {
   before(function () {
     replay.mode = process.env.REPLAY || 'replay';
   });
+
   after(function () {
     replay.mode = 'bloody';
   });
 
   describe('get()', function () {
-    it('must return a tree of non trashed Stream object by default', function (done) {
-      connection.streams.get(null, function (error, result) {
+    it('must return a tree of non-trashed Stream objects by default', function (done) {
+      connection.streams.get(null, function (error, streams) {
         should.not.exist(error);
-        should.exist(result);
-        result.should.be.instanceOf(Array);
-        result.forEach(function (stream) {
-          stream.should.be.instanceOf(Pryv.Stream);
-          should.not.exist(stream.trashed);
-          if (stream.children) {
-            // Test only the first level of children
-            stream.children.forEach(function (child) {
-              child.should.be.instanceOf(Pryv.Stream);
-              should.not.exist(child.trashed);
-            });
-          }
-        });
+        should.exist(streams);
+
+        (function checkStreams(array) {
+          array.should.be.instanceOf(Array);
+          array.forEach(function (stream) {
+            stream.should.be.instanceOf(Pryv.Stream);
+            should.not.exist(stream.trashed);
+            if (stream.children) {
+              checkStreams(stream.children);
+            }
+          });
+        })(streams);
+
         done();
       });
     });
 
     it('must return streams matching the given filter', function (done) {
-      var filter = {parentId: 'diary', state: 'all'};
-      connection.streams.get(filter, function (error, result) {
-        result.forEach(function (stream) {
+      var filter = { parentId: 'diary', state: 'all' };
+      connection.streams.get(filter, function (error, streams) {
+        streams.forEach(function (stream) {
           stream.parentId.should.equal(filter.parentId);
         });
         done();
       });
     });
-    it('must return an empty array if there are no streams', function (done) {
-      var filter = {parentId: 'notes'}; // be sure that this stream got no child
-      connection.streams.get(filter, function (error, result) {
+
+    it('must return an empty array if there are no matching streams', function (done) {
+      var filter = {parentId: 'notes'}; // be sure that this stream has no child
+      connection.streams.get(filter, function (error, streams) {
         should.not.exist(error);
-        result.length.should.equal(0);
+        streams.length.should.equal(0);
         done();
       });
     });
-    it('must return an error if the given filter had unvalid parameters', function (done) {
-      var filter = {parentId: 42, state: 'toto'};
-      connection.streams.get(filter, function (error, result) {
+
+    it('must return an error if the given filter contains invalid parameters', function (done) {
+      var filter = { parentId: 42, state: 'toto' };
+      connection.streams.get(filter, function (error, streams) {
         should.exist(error);
-        should.not.exist(result);
+        should.not.exist(streams);
         done();
       });
     });
   });
+
   describe('create()', function () {
-    it('must accept an stream like object and return an Stream object');
-    it('must accept an array of stream like object an Stream array');
-    it('must return Streams with complementary properties and id');
-    it('must return an error when an unvalid stream is given');
-    it('must return an error for each unvalid stream given');
+    it('must accept a stream-like object and return a Stream object');
+
+    it('must accept an array of stream-like objects and return an array of Stream objects');
+
+    it('must return streams with default values for unspecified properties');
+
+    it('must return an error if the given stream data is invalid');
+
+    it('must return an error for each invalid stream (when given multiple items)');
   });
 
   describe('update()', function () {
-    it('must accept Stream object only');
-    it('must accept Stream array only');
-    it('must return updated Stream object');
-    it('must return an error if stream is unvalid');
+    it('must accept a Stream object and return the updated stream');
+
+    it('must accept an array of Stream objects');
+
+    it('must return an error if the stream is invalid');
   });
 
   describe('delete()', function () {
-    it('must accept Stream object/id or array');
-    it('must return an Stream object flaged as trashed');
-    it('must by default delete linked events (mergeEventsWithParent set to false)');
-    it('must return null when the stream is already flaged as trashed');
-    it('must return an error when event is unvalid');
+    it('must accept a stream-like object and return a Stream object flagged as trashed');
+
+    it('must return null when deleting an already-trashed stream');
+
+    it('must accept a stream id');
+
+    it('must delete linked events by default when deleting an already-trashed stream');
+
+    it('must merge linked events into the parent stream when specified');
+
+    it('must return an error when the specified stream does not exist');
   });
 });

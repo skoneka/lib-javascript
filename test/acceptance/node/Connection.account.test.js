@@ -1,9 +1,8 @@
 /* global describe, it, before, after */
 var Pryv = require('../../../source/main'),
-  should = require('should'),
-  config = require('../test-support/config.js'),
-  replay = require('replay');
-replay.mode = 'bloody';
+    should = require('should'),
+    config = require('../test-support/config.js'),
+    replay = require('replay');
 
 // TODO: need a connection with personal access;
 describe('Connection.account', function () {
@@ -12,53 +11,46 @@ describe('Connection.account', function () {
   before(function () {
     replay.mode = process.env.REPLAY || 'replay';
   });
+
   after(function () {
     replay.mode = 'bloody';
   });
 
   describe('getInfo()', function () {
-    it('must return an object with username, email and language as properties');
-    /*it('must return an object with username, email and language as properties', function (done) {
-      connection.account.getInfo(function (error, result) {
+    it('must return user account info (e.g. username, email, language)'/*, function (done) {
+        connection.account.getInfo(function (error, result) {
         should.not.exist(error);
         should.exist(result);
         result.should.have.properties('username', 'email', 'language');
         done();
-      });
-    });*/
-    it('must return an error when the connection dont have sufficient right', function (done) {
+        });
+        }*/);
+
+    it('must return an error when the connection lacks sufficient permissions', function (done) {
       connection.account.getInfo(function (error) {
         should.exist(error);
         done();
       });
     });
   });
+
   describe('changePassword()', function () {
-    it('must no return error when given password is valid');
-    it('must return error when given password is wrong');
-    it('must return an error when the connection dont have sufficient right', function (done) {
-      var password = 'dontcare';
-      var newPassword = 'dontcare';
-      connection.account.changePassword(password, newPassword, function (error) {
+    it('must change the account password');
+
+    it('must return an error when the given "old" password is not valid', function (done) {
+      connection.account.changePassword('wrongpassword', 'dontcare', function (error) {
         should.exist(error);
         done();
       });
     });
-    /*it('must no return error when given password is valid', function (done) {
-     var password = 'poilonez';
-     var newPassword = 'poilonez';
-     connection.account.changePassword(password, newPassword, function (error) {
-     should.not.exist(error);
-     done();
-     });
-     });
-     it('must return error when given password is wrong', function (done) {
-     var password = 'wrongpassword';
-     var newPassword = 'poilonez';
-     connection.account.changePassword(password, newPassword, function (error) {
-     should.exist(error);
-     done();
-     });
-     }); */
+
+    it('must return an error when the given "new" password does not match requirements');
+
+    it('must return an error when the connection lacks sufficient permissions', function (done) {
+      connection.account.changePassword('dontcare', 'dontcare', function (error) {
+        should.exist(error);
+        done();
+      });
+    });
   });
 });
