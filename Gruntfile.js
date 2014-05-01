@@ -30,7 +30,9 @@ module.exports = function (grunt) {
         options: {
           alias: ['./source/main.js:pryv'],
           ignore: [ './source/system/*-node.js', './source/utility/*-node.js' ],
-          standalone: 'pryv'
+          bundleOptions: {
+            standalone: 'pryv'
+          }
         }
       }
     },

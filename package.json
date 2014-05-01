@@ -39,9 +39,9 @@
     "url": "http://github.com/lib-javascript.git"
   },
   "dependencies": {
+    "form-data": "0.1.x",
     "socket.io-client": "0.9.x",
-    "underscore": "1.5.x",
-    "form-data": "~0.1.2"
+    "underscore": "1.6.x"
   },
   "devDependencies": {
     "blanket": "latest",
@@ -51,12 +51,12 @@
     "grunt-contrib-jshint": "latest",
     "grunt-contrib-uglify": "latest",
     "grunt-contrib-watch": "latest",
+    "grunt-env": "latest",
     "grunt-jsdoc": "latest",
     "grunt-mocha-test": "latest",
     "grunt-shell": "latest",
     "nock": "latest",
-    "should": "latest",
     "replay": "latest",
-    "grunt-env": "latest"
+    "should": "latest"
   }
 }

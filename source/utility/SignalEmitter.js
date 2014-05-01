@@ -82,10 +82,12 @@ SignalEmitter.prototype._fireEvent = function (signal, content, batch) {
 
 SignalEmitter.batchSerial = 0;
 /**
+ * Start a batch process
+ *
+ * @param batchName Name of the new batch
+ * @param orHookOnBatch Existing batch to hook on ("superbatch")
+ * @return A batch object (call `stop()` when done)
  * @private
- * start a batch process
- * @param eventual superBatch you can hook on. In this case it will call superBatch.waitForMe(..)
- * @return an object where you have to call stop when done
  */
 SignalEmitter.prototype.startBatch = function (batchName, orHookOnBatch) {
   if (orHookOnBatch && orHookOnBatch.sender === this) { // test if this batch comes form me
