@@ -1,7 +1,7 @@
 /* global describe, it, before, after */
 var Pryv = require('../../../source/main'),
   should = require('should'),
-  config = require('../../data/config.js'),
+  config = require('../test-support/config.js'),
   replay = require('replay');
 replay.mode = 'bloody';
 

@@ -2,7 +2,7 @@
 
 var nock = require('nock'),
     should = require('should'),
-    utility = require('../../source/main').utility;
+    utility = require('../../../source/main').utility;
 
 describe('utility', function () {
 

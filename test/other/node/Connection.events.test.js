@@ -1,10 +1,10 @@
 /* global before, describe, it */
-var pryv = require('../../source/main'),
-  utility = require('../../source/utility/utility'),
+var pryv = require('../../../source/main'),
+  utility = require('../../../source/utility/utility'),
   nock = require('nock'),
   should = require('should'),
   _ = require('underscore'),
-  responses = require('../data/responses.js');
+  responses = require('../test-support/responses.js');
 
 
 var testEvents = function (preFetchStructure) {

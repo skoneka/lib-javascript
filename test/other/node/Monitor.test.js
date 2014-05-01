@@ -1,10 +1,10 @@
 /* global before, describe, it */
 
-var pryv = require('../../source/main'),
+var pryv = require('../../../source/main'),
   should = require('should'),
   nock = require('nock'),
   _ = require('underscore'),
-  responses = require('../data/responses.js');
+  responses = require('../test-support/responses.js');
 
 // !! Monitor tests are made online
 

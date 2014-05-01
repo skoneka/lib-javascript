@@ -1,9 +1,9 @@
 /* global before, describe, it */
 
-var pryv = require('../../source/main'),
+var pryv = require('../../../source/main'),
   nock = require('nock'),
   should = require('should'),
-  responses = require('../data/responses.js');
+  responses = require('../test-support/responses.js');
 
 var testStream = function (preFetchStructure) {
 

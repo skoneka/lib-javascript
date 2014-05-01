@@ -1,14 +1,14 @@
 /* global describe, it */
 
 var should = require('should'),
-  eventTypes = require('../../source/eventTypes.js');
+  eventTypes = require('../../../source/eventTypes.js');
 
 describe('eventTypes', function () {
 
 
   describe('get files', function () {
     this.timeout(20000);
-    
+
     it('hierarchical', function (done) {
       var catchedErr = null;
       try {

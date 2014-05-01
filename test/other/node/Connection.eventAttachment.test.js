@@ -1,7 +1,7 @@
 /* global before, describe, it */
 
 // jshint -W098
-var pryv = require('../../source/main'),
+var pryv = require('../../../source/main'),
   should = require('should'),
   fs = require('fs');
 
@@ -26,7 +26,7 @@ var testEvents = function () {
 
     var connection = new pryv.Connection(settings);
 
-    var pictureData = fs.readFileSync(__dirname + '/../data/photo.PNG');
+    var pictureData = fs.readFileSync(__dirname + '/../test-support/photo.PNG');
 
     before(function (done) {
       should.exist(pictureData);

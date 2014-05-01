@@ -1,6 +1,6 @@
 /* global describe, it */
 
-var pryv = require('../../source/main'),
+var pryv = require('../../../source/main'),
   _ = require('underscore'),
   should = require('should');
 
