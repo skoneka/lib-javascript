@@ -120,6 +120,76 @@ describe('Connection.events', function () {
     it('must return an error for each invalid event (when given multiple items)');
   });
 
+
+  describe('start( )', function () {
+
+    // make sure that testing stream is singleActivity
+
+    var eventData = {streamId : 'activity', type : 'activity/plain'};
+
+    it('should create an event and beeing able to stop it', function (done) {
+      connection.events.start(eventData, function (err, event) {
+        should.not.exist(err);
+        should.exist(event);
+        should.not.exist(event.duration);
+        done();
+      });
+    });
+
+  });
+
+
+  describe('stopEvent ( ) ', function () {
+
+    var eventData = {streamId : 'activity', type : 'activity/plain', description: 'A'};
+
+    var event = null;
+    before(function (done) {
+      connection.events.start(eventData, function (err, evt) {
+        event = evt;
+        done();
+      });
+    });
+
+    it('should stop the previously started event', function (done) {
+      connection.events.stopEvent(event, null, function (err, stoppedId) {
+        should.not.exist(err);
+        should.exist(stoppedId);
+        stoppedId.should.eql(event.id);
+        done();
+      });
+    });
+
+  });
+
+
+  describe('stopStream( )', function () {
+
+    var eventData = {streamId : 'activity', type : 'activity/plain', description: 'B'};
+
+    var event = null;
+    before(function (done) {
+      connection.events.start(eventData, function (err, evt) {
+        event = evt;
+        done();
+      });
+    });
+
+
+    it('should stop the previously started event in this stream', function (done) {
+      connection.events.stopStream(
+        {id: event.streamId}, null, null, function (err, stoppedId) {
+          should.not.exist(err);
+          should.exist(stoppedId);
+          should.not.exist(event.duration);
+          stoppedId.should.eql(event.id);
+          done();
+        });
+
+    });
+
+  });
+
   // TODO: trash() should be renamed to "delete()"
   // (you can temporarily keep "trash()" for backwards-compat)
   describe('trash() (will be renamed to delete())', function () {
@@ -189,6 +259,9 @@ describe('Connection.events', function () {
       });
     });
   });
+
+
+
 
   // TODO: move that above delete (trash) tests (follow consistent order: read-create-update-delete)
   describe('update()', function () {

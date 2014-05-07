@@ -179,6 +179,94 @@ var testEvents = function (preFetchStructure) {
 
     });
 
+    describe('start( eventData )  - stopEvent( event ) 1' + localEnabledStr, function () {
+
+      // make sure that testing stream is singleActivity
+
+      var eventData = {streamId : 'activity', type : 'activity/plain'};
+
+      var response = {event: _.extend({id: 'Tet5slAP9q'}, eventData)};
+
+
+      // called after event creation
+      function stop(event, done) {
+        var responseStop = {stoppedId: event.id};
+        nock('https://' + username + '.' + settings.domain)
+          .post('/events/stop')
+          .reply(200, responseStop, responses.headersStandard);
+
+        connection.events.stopEvent(eventData, null, function (err, stoppedId) {
+          should.not.exist(err);
+          should.exist(stoppedId);
+          stoppedId.should.eql(response.event.id);
+          done();
+        });
+      }
+
+
+
+      it('should create an event and beeing able to stop it', function (done) {
+        nock('https://' + username + '.' + settings.domain)
+          .post('/events/start')
+          .reply(201, response, responses.headersStandard);
+
+        connection.events.start(eventData, function (err, event) {
+          should.not.exist(err);
+          should.exist(event);
+          should.not.exist(event.duration);
+          event.id.should.eql(response.event.id);
+          stop(event, done);
+
+        });
+
+      });
+
+    });
+
+
+    describe('start( eventData )  - stopStream( stream ) 1' + localEnabledStr, function () {
+
+      var eventData = {streamId : 'activity', type : 'activity/plain'};
+
+      var response = {event: _.extend({id: 'Tet5slAP9q'}, eventData)};
+
+
+      // called after event creation
+      function stop(event, done) {
+        var responseStop = {stoppedId: event.id};
+        nock('https://' + username + '.' + settings.domain)
+          .post('/events/stop')
+          .reply(200, responseStop, responses.headersStandard);
+
+
+        connection.events.stopStream(
+          {id: event.streamId}, null, null, function (err, stoppedId) {
+          should.not.exist(err);
+          should.exist(stoppedId);
+          stoppedId.should.eql(event.id);
+          done();
+        });
+      }
+
+
+
+      it('should create an event and beeing able to stop it', function (done) {
+        nock('https://' + username + '.' + settings.domain)
+          .post('/events/start')
+          .reply(201, response, responses.headersStandard);
+
+        connection.events.start(eventData, function (err, event) {
+          should.not.exist(err);
+          should.exist(event);
+          should.not.exist(event.duration);
+          event.id.should.eql(response.event.id);
+          stop(event, done);
+        });
+
+      });
+
+    });
+
 
     describe('batchWithData() ' + localEnabledStr, function () {
       var eventsData = [
