@@ -166,11 +166,9 @@ var testEvents = function (preFetchStructure) {
           .post('/events')
           .reply(201, response, responses.headersStandard);
 
-        var event = null;
-        event = connection.events.create(eventData, function (err, resultJson) {
+        connection.events.create(eventData, function (err, event) {
           should.not.exist(err);
-          should.exist(resultJson);
-          resultJson.id.should.eql(response.event.id);
+          should.exist(event);
           event.id.should.eql(response.event.id);
           done();
         });

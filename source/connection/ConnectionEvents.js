@@ -112,7 +112,27 @@ ConnectionEvents.prototype.trashWithId = function (eventId, callback) {
  * @param {Boolean} [start = false] if set to true will POST the event to /events/start
  * @return {Event} event
  */
-ConnectionEvents.prototype.create = function (newEventlike, callback, start) {
+ConnectionEvents.prototype.create = function (newEventlike, callback) {
+  _create.call(this, newEventlike, callback, false);
+};
+
+
+/**
+ * This is the preferred method to create and start an event, Starts a new period event.
+ * This is equivalent to starting an event with a null duration. In singleActivity streams,
+ * also stops the previously running period event if any.
+ * @param {NewEventLike} event -- minimum {streamId, type } -- if typeof Event, must belong to
+ * the same connection and not exists on the API.
+ * @param {ConnectionEvents~eventCreatedOnTheAPI} callback
+ * @return {Event} event
+ */
+ConnectionEvents.prototype.start = function (newEventlike, callback) {
+  _create.call(this, newEventlike, callback, true);
+};
+
+
+// common call for create and start
+function _create(newEventlike, callback, start) {
   var event = null;
   if (newEventlike instanceof Event) {
     if (newEventlike.connection !== this.connection) {
@@ -157,20 +177,10 @@ ConnectionEvents.prototype.create = function (newEventlike, callback, start) {
     }
   }.bind(this), event.getData());
   return event;
-};
+}
 
-/**
- * This is the preferred method to create and start an event, Starts a new period event.
- * This is equivalent to starting an event with a null duration. In singleActivity streams,
- * also stops the previously running period event if any.
- * @param {NewEventLike} event -- minimum {streamId, type } -- if typeof Event, must belong to
- * the same connection and not exists on the API.
- * @param {ConnectionEvents~eventCreatedOnTheAPI} callback
- * @return {Event} event
- */
-ConnectionEvents.prototype.start = function (newEventlike, callback) {
-  this.create(newEventlike, callback, true);
-};
+
+
 
 /**
  * Stop an event by it's Id
