@@ -190,14 +190,16 @@ Monitor.prototype._connectionEventsGetChanges = function (signal) {
 
       _.each(events, function (event) {
         if (this._events.active[event.id]) {
-          if (event.trashed) { // trashed
+          if (event.trashed && !this._events.active[event.id].trashed) { // trashed
             result.trashed.push(event);
             delete this._events.active[event.id];
           } else {
             result.modified.push(event);
+            this._events.active[event.id] = event;
           }
         } else {
           result.created.push(event);
+          this._events.active[event.id] = event;
         }
       }.bind(this));
 

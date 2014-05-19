@@ -18,7 +18,7 @@ describe('eventTypes', function () {
       }
       should.exist(catchedErr);
       eventTypes.loadHierarchical(function (error, result) {
-        should.exists(result.classes.activity.formats.pryv);
+        should.exists(result.classes.activity.formats.plain);
         done();
       });
     });

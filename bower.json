@@ -1,6 +1,6 @@
 {
   "name": "pryv",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "homepage": "https://github.com/pryv/lib-javascript",
   "ignore": [ "source/*", "test/*", "package.json", "Gruntfile.js" ],
   "main": "dist/pryv.js"
