@@ -45,11 +45,14 @@ var Connection = module.exports = function Connection() {
     this.username = settings.username;
     this.auth = settings.auth;
     if (settings.url) {
-      this.username = utility.getUsernameFromUrl(settings.url);
-      settings.port = utility.getPortFromUrl(settings.url) || 443;
-      settings.extraPath = utility.getPathFromUrl(settings.url);
-      settings.ssl = utility.isUrlSsl(settings.url);
-      settings.staging = utility.testIfStagingFromUrl(settings.url);
+      var urlInfo = utility.urls.parseServerURL(settings.url);
+      this.username = urlInfo.username;
+      settings.hostname = urlInfo.hostname;
+      settings.domain = urlInfo.domain;
+      settings.port = urlInfo.port;
+      settings.extraPath = urlInfo.path === '/' ? '' : urlInfo.path;
+      settings.ssl = urlInfo.isSSL();
+      settings.staging = urlInfo.environment !== 'production';
     }
   }
   this._serialId = Connection._serialCounter++;
@@ -57,13 +60,11 @@ var Connection = module.exports = function Connection() {
   this.settings = _.extend({
     port: 443,
     ssl: true,
-    domain: 'pryv.io',
     extraPath: '',
     staging: false
   }, settings);
-  this.settings.domain = settings.domain ? settings.domain :
-    settings.staging ? 'pryv.in' : 'pryv.io';
-
+  this.settings.domain = settings.domain ?
+      settings.domain : utility.urls.domains.server[settings.staging ? 'staging' : 'production'];
 
   this.serverInfos = {
     // nowLocalTime - nowServerTime
@@ -247,7 +248,7 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
 
   var request = utility.request({
     method : method,
-    host : domainOfConnection(this),
+    host : getHostname(this),
     port : this.settings.port,
     ssl : this.settings.ssl,
     path : this.settings.extraPath + path,
@@ -313,8 +314,8 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
 Object.defineProperty(Connection.prototype, 'id', {
   get: function () {
     var id = this.settings.ssl ? 'https://' : 'http://';
-    id += domainOfConnection(this) + ':' +
-      this.settings.port + this.settings.extraPath + '/?auth=' + this.auth;
+    id += getHostname(this) + ':' +
+        this.settings.port + this.settings.extraPath + '/?auth=' + this.auth;
     return id;
   },
   set: function () { throw new Error('ConnectionNode.id property is read only'); }
@@ -367,11 +368,8 @@ Object.defineProperty(Connection.prototype, 'serialId', {
 
 // --------- private utils
 
-function domainOfConnection(connection) {
-  if (connection.settings.url) {
-    return utility.getHostFromUrl(connection.settings.url);
-  } else {
-    var host = connection.settings.domain;
-    return connection.username ? connection.username + '.' + host : host;
-  }
+function getHostname(connection) {
+  return connection.settings.hostname ||
+      connection.username ?
+      connection.username + '.' + connection.settings.domain : connection.settings.domain;
 }

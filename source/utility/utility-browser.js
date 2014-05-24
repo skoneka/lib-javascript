@@ -1,115 +1,10 @@
 /* global document, navigator */
-/* jshint -W101*/
 
 /**
  * Browser-only utils
  */
 var utility = module.exports = {};
 
-
-/**
- * Test if hostname is a *.rec.la or pryv.li if yes. it assumes that the client
- * runs on a staging version
- */
-utility.testIfStagingFromUrl = function (url) {
-  var location;
-  if (url) {
-    location = document.createElement('a');
-    location.href = url;
-  } else {
-    location = document.location;
-  }
-  return utility.endsWith(location.hostname, 'pryv.li') ||
-         utility.endsWith(location.hostname, 'pryv.in') ||
-         utility.endsWith(location.hostname, 'rec.la');
-};
-
-utility.getUsernameFromUrl = function (url) {
-  var location;
-  if (url) {
-    location = document.createElement('a');
-    location.href = url;
-  } else {
-    location = document.location;
-  }
-  var hostname = location.hostname.split('.'),
-    recIndex = hostname.indexOf('rec'),
-    pryvIndex = hostname.indexOf('pryv');
-  if (recIndex <= 0 && pryvIndex <= 0) {
-    console.warn('getUsernameFromUrl:', 'unknown hostname:', hostname);
-    return null;
-  }
-  var usernameIndex = pryvIndex > 0 ? pryvIndex - 1: recIndex - 1;
-  if (hostname[usernameIndex].match(utility.regex.username)) {
-    return hostname[usernameIndex];
-  } else {
-    console.warn('getUsernameFromUrl:', 'invalid username:', hostname[usernameIndex]);
-    return null;
-  }
-};
-
-utility.getSharingsFromUrl = function (url) {
-  var username = utility.getUsernameFromUrl(url);
-  if (!username) {
-    return [];
-  }
-  var location;
-  if (url) {
-    location = document.createElement('a');
-    location.href = url;
-  } else {
-    location = document.location;
-  }
-  var path = location.hash.split('/'),
-    sharingsIndex = path.indexOf('sharings');
-  if (sharingsIndex !== -1) {
-    return path.splice(sharingsIndex + 1).filter(function (el) { return el.length > 0; });
-  } else {
-    return [];
-  }
-};
-utility.isSignInFromUrl = function (url) {
-  var username = utility.getUsernameFromUrl(url);
-  if (!username) {
-    return false;
-  }
-  var location;
-  if (url) {
-    location = document.createElement('a');
-    location.href = url;
-  } else {
-    location = document.location;
-  }
-  var path = location.hash.toLowerCase().split('/'),
-    signinIndex = path.indexOf('signin');
-  return signinIndex !== -1;
-
-};
-utility.getParamsFromUrl = function (url) {
-  var location;
-  if (url) {
-    location = document.createElement('a');
-    location.href = url;
-  } else {
-    location = document.location;
-  }
-  var str = location.search;
-  var objURL = {};
-  str.replace(new RegExp('([^?=&]+)(=([^&]*))?', 'g'), function ($0, $1, $2, $3) {
-    objURL[$1] = $3;
-  });
-  return objURL;
-};
-utility.getPathFromUrl = function (url) {
-  var location;
-  if (url) {
-    location = document.createElement('a');
-    location.href = url;
-  } else {
-    location = document.location;
-  }
-  return location.pathname === '/' ? '' : location.pathname;
-};
 utility.getHostFromUrl = function (url) {
   var location;
   if (url) {
@@ -120,6 +15,7 @@ utility.getHostFromUrl = function (url) {
   }
   return location.hostname;
 };
+
 utility.getPortFromUrl = function (url) {
   var location;
   if (url) {
@@ -130,6 +26,7 @@ utility.getPortFromUrl = function (url) {
   }
   return location.port === '' ? null : location.port;
 };
+
 utility.isUrlSsl = function (url) {
   var location;
   if (url) {
@@ -142,10 +39,13 @@ utility.isUrlSsl = function (url) {
 };
 
 /**
- *  return true if browser is seen as a mobile or tablet
- *  list grabbed from https://github.com/codefuze/js-mobile-tablet-redirect/blob/master/mobile-redirect.js
+ *  List grabbed from
+ *  https://github.com/codefuze/js-mobile-tablet-redirect/blob/master/mobile-redirect.js
+ *
+ *  @return {Boolean} `true` if browser is seen as a mobile or tablet
  */
 utility.browserIsMobileOrTablet = function () {
+  /* jshint -W101*/
   return (/iphone|ipod|android|blackberry|opera mini|opera mobi|skyfire|maemo|windows phone|palm|iemobile|symbian|symbianos|fennec|ipad|android 3|sch-i800|playbook|tablet|kindle|gt-p1000|sgh-t849|shw-m180s|a510|a511|a100|dell streak|silk/i.test(navigator.userAgent.toLowerCase()));
 };
 

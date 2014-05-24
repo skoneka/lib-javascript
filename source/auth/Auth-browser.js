@@ -16,6 +16,7 @@ var Auth = function () {
 _.extend(Auth.prototype, {
   connection: null, // actual connection managed by Auth
   config: {
+    // TODO: clean up this hard-coded mess and rely on the one and only Pryv URL domains reference
     registerURL: {ssl: true, host: 'reg.pryv.io'},
     registerStagingURL: {ssl: true, host: 'reg.pryv.in'},
     localDevel : false,
@@ -51,8 +52,9 @@ Auth._init = function (i) {
   utility.loadExternalFiles(
     Auth.prototype.config.sdkFullPath + '/assets/buttonSigninPryv.css', 'css');
 
-  if (utility.testIfStagingFromUrl()) {
-    console.log('staging mode');
+  var urlInfo = utility.urls.parseClientURL();
+  console.log('detected environment: ' + urlInfo.environment);
+  if (urlInfo.environment === 'staging') {
     Auth.prototype.config.registerURL = Auth.prototype.config.registerStagingURL;
   }
 
@@ -292,6 +294,16 @@ Auth.prototype.logout = function () {
  */
 Auth.prototype.retry = Auth.prototype.logout;
 
+
+
+
+/* jshint -W101 */
+// TODO: the 4 methods below belong elsewhere (e.g. static methods of Connection); original author please check with @sgoumaz
+
+/**
+ * TODO: discuss whether signature should be `(settings, callback)`
+ * @param settings
+ */
 Auth.prototype.login = function (settings) {
   // cookies
   this.cookieEnabled = (navigator.cookieEnabled) ? true : false;
@@ -299,26 +311,29 @@ Auth.prototype.login = function (settings) {
     document.cookie = 'testcookie';
     this.cookieEnabled = (document.cookie.indexOf('testcookie') !== -1) ? true : false;
   }
-  this.settings = settings;
 
-  var params = {
-    appId : settings.appId,
-    username : settings.username,
-    password : settings.password
-  };
-  var path = '/auth/login';
-  this.config.registerURL.host = utility.testIfStagingFromUrl() ?
-    settings.username + '.pryv.in' : settings.username + '.pryv.io';
-  var domain = utility.testIfStagingFromUrl() ? 'pryv.in' : 'pryv.io';
-  this.connection = new Connection(null, null, {
-    ssl: this.config.registerURL.ssl,
-    domain: domain
+  var urlInfo = utility.urls.parseClientURL();
+  var defaultDomain = utility.urls.domains.server[urlInfo.environment];
+  this.settings = settings = _.defaults(settings, {
+    ssl: true,
+    domain: defaultDomain
+  });
+
+  this.connection = new Connection({
+    ssl: settings.ssl,
+    domain: settings.domain
   });
 
   var pack = {
-    path :  path,
-    params : params,
-    success : function (data)  {
+    ssl: settings.ssl,
+    host: settings.username + '.' + settings.domain,
+    path: '/auth/login',
+    params: {
+      appId : settings.appId,
+      username : settings.username,
+      password : settings.password
+    },
+    success: function (data)  {
       if (data.token) {
         if (this.cookieEnabled && settings.rememberMe) {
           utility.docCookies.setItem('access_username', settings.username, 3600);
@@ -339,15 +354,17 @@ Auth.prototype.login = function (settings) {
         }
       }
     }.bind(this),
-    error : function (jsonError) {
+    error: function (jsonError) {
       if (typeof(this.settings.callbacks.error) === 'function') {
         this.settings.callbacks.error(jsonError);
       }
     }.bind(this)
   };
 
-  utility.request(_.extend(pack, this.config.registerURL));
+  utility.request(pack);
 };
+
+// TODO: must be an instance member of Connection instead
 Auth.prototype.trustedLogout = function () {
   var path = '/auth/logout';
   if (this.connection) {
@@ -361,22 +378,33 @@ Auth.prototype.trustedLogout = function () {
     }.bind(this));
   }
 };
+
 Auth.prototype.whoAmI = function (settings) {
-  this.settings = settings;
-  var domain = (this.config.registerURL.host === 'reg.pryv.io') ? 'pryv.io' : 'pryv.in';
-  var path = '/auth/who-am-i';
-  this.config.registerURL.host = utility.testIfStagingFromUrl() ?
-    settings.username + '.pryv.in' : settings.username + '.pryv.io';
-  this.connection = new Connection(null, null, {ssl: this.config.registerURL.ssl, domain: domain});
+  var urlInfo = utility.urls.parseClientURL();
+  var defaultDomain = utility.urls.domains.server[urlInfo.environment];
+  this.settings = settings = _.defaults(settings, {
+    ssl: true,
+    domain: defaultDomain
+  });
+
+  this.connection = new Connection({
+    ssl: settings.ssl,
+    domain: settings.domain
+  });
+
   var pack = {
-    path :  path,
+    ssl: settings.ssl,
+    host: settings.username + '.' + settings.domain,
+    path :  '/auth/who-am-i',
     method: 'GET',
     success : function (data)  {
       if (data.token) {
         this.connection.username = data.username;
         this.connection.auth = data.token;
-        var conn = new Connection(data.username, data.token,
-          {ssl: this.config.registerURL.ssl, domain: domain});
+        var conn = new Connection(data.username, data.token, {
+          ssl: settings.ssl,
+          domain: settings.domain
+        });
         console.log('before access info', this.connection);
         conn.accessInfo(function (error) {
           console.log('after access info', this.connection);
@@ -404,13 +432,22 @@ Auth.prototype.whoAmI = function (settings) {
     }.bind(this)
   };
 
-  utility.request(_.extend(pack, this.config.registerURL));
-
+  utility.request(pack);
 };
+
 Auth.prototype.loginWithCookie = function (settings) {
-  this.settings = settings;
-  var domain = (this.config.registerURL.host === 'reg.pryv.io') ? 'pryv.io' : 'pryv.in';
-  this.connection = new Connection(null, null, {ssl: this.config.registerURL.ssl, domain: domain});
+  var urlInfo = utility.urls.parseClientURL();
+  var defaultDomain = utility.urls.domains.server[urlInfo.environment];
+  this.settings = settings = _.defaults(settings, {
+    ssl: true,
+    domain: defaultDomain
+  });
+
+  this.connection = new Connection({
+    ssl: settings.ssl,
+    domain: settings.domain
+  });
+
   this.cookieEnabled = (navigator.cookieEnabled) ? true : false;
   if (typeof navigator.cookieEnabled === 'undefined' && !this.cookieEnabled) {  //if not IE4+ NS6+
     document.cookie = 'testcookie';
@@ -429,6 +466,11 @@ Auth.prototype.loginWithCookie = function (settings) {
   }
   return false;
 };
+
+
+
+
+
 /**
  *
  * @param settings
@@ -500,6 +542,7 @@ Auth.prototype.setup = function (settings) {
   }
 
   this.stateInitialization();
+  // TODO: clean up this hard-coded mess and rely on the one and only Pryv URL domains reference
   var domain = (this.config.registerURL.host === 'reg.pryv.io') ? 'pryv.io' : 'pryv.in';
 
   this.connection = new Connection(null, null, {ssl: this.config.registerURL.ssl, domain: domain});
