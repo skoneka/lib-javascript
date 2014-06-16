@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>Pryv all positions example</title>
+  <script type="text/javascript" src="../../dist/latest/pryv.js"></script>
+</head>
+<body>
+<h1>Pryv get all positions</h1>
+
+<p><span id="pryvButton"></span></p></body>
+
+<p><span id="position-list"></span></p>
+
+<script>
+  /**
+   * process the form and request access
+   */
+  var requestedPermissions = [
+    {
+      "streamId" : "*",
+      "level" : "read"
+    }
+  ];
+
+  // ----------------------- //
+  var pyConn = pryv.Auth.setup({
+    requestingAppId : 'position-test',
+    requestedPermissions : requestedPermissions,
+    spanButtonID : 'pryvButton', // (optional)
+    callbacks : {
+      signedIn : myStart,
+      signedOut : myStop
+    }
+  });
+
+  function myStart() {
+
+    pyConn.fetchStructure(function(error) {
+      getLatestsPositions(200);
+    });
+
+  }
+
+  function myStop() {
+    alert('Signed out.');
+  }
+
+  function getLatestsPositions(limit) {
+    var filter = new pryv.Filter({limit : limit, types : ['position/wgs84']});
+    pyConn.events.get(filter, function(error, events) {
+      alert('Fetched ' + events.length + ' events: ');
+      var html = '<table border="1"><tr><th>stream</th><th>data</th></tr>';
+      console.log(events);
+      var event, i = 0;
+      for (tot = events.length; i < tot; i++) {
+        event = events[i];
+        html += '<tr><td>' + event.stream.name + '</td><td>' +
+          JSON.stringify(event.content) + '</td>';
+      }
+      html += '</table>';
+      document.getElementById('position-list').innerHTML = html;
+    });
+  }
+
+</script>
+</html>
