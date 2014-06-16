@@ -1,17 +1,14 @@
 var socketIO = require('socket.io-client'),
     _ = require('underscore');
 
-function isBrowser() {
-  return typeof(window) !== 'undefined';
-}
-
-var utility = module.exports = isBrowser() ?
-  require('./utility-browser.js') : require('./utility-node.js');
+var utility = module.exports = {};
 
 /**
  * @returns {Boolean} `true` if we're in a web browser environment
  */
-utility.isBrowser = isBrowser;
+utility.isBrowser = function () {
+  return typeof(window) !== 'undefined';
+};
 
 utility.SignalEmitter = require('./SignalEmitter.js');
 
@@ -77,3 +74,8 @@ utility.ioConnect = function (settings) {
   return socketIO.connect(url, {'force new connection': true});
 };
 
+utility.urls = require('./urls');
+
+// platform-specific members
+_.extend(utility, utility.isBrowser() ?
+    require('./utility-browser.js') : require('./utility-node.js'));
