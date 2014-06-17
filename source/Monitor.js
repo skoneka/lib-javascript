@@ -173,10 +173,22 @@ Monitor.prototype._initEvents = function () {
     }.bind(this));
 };
 
+
+
+
+
 /**
  * @private
  */
 Monitor.prototype._connectionEventsGetChanges = function (signal) {
+
+  if (this.eventsGetChangesInProgress) {
+    this.eventsGetChangesNeeded = true;
+    return;
+  }
+  this.eventsGetChangesInProgress = true;
+  this.eventsGetChangesNeeded = false;
+
   var options = { modifiedSince : this.lastSynchedST, state : 'all'};
   this.lastSynchedST = this.connection.getServerTime();
 
@@ -204,6 +216,15 @@ Monitor.prototype._connectionEventsGetChanges = function (signal) {
       }.bind(this));
 
       this._fireEvent(signal, result);
+
+      // ---
+      this.eventsGetChangesInProgress = false;
+      if (this.eventsGetChangesNeeded) {
+        setTimeout(function () {
+          this._connectionEventsGetChanges(signal);
+        }.bind(this), 1);
+
+      }
     }.bind(this));
 };
 
