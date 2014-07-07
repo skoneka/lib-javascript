@@ -98,8 +98,8 @@ Auth.prototype.uiErrorButton = function () {
 
 Auth.prototype.uiLoadingButton = function () {
   var strs = {
-    'en': { 'msg': 'Loading ...' },
-    'fr': { 'msg': 'Chargement ...'}
+    'en': { 'msg': 'Loading...' },
+    'fr': { 'msg': 'Chargement...'}
   }[this.settings.languageCode];
   this.onClick.Loading = function () {
     return false;
@@ -110,8 +110,8 @@ Auth.prototype.uiLoadingButton = function () {
 
 Auth.prototype.uiSigninButton = function () {
   var strs = {
-    'en': { 'msg': 'Pryv Sign-In' },
-    'fr': { 'msg': 'Connection à PrYv'}
+    'en': { 'msg': 'Sign in' },
+    'fr': { 'msg': 'S\'identifier' }
   }[this.settings.languageCode];
   this.onClick.Signin = function () {
     this.popupLogin();
@@ -123,7 +123,7 @@ Auth.prototype.uiSigninButton = function () {
 
 Auth.prototype.uiConfirmLogout = function () {
   var strs = {
-    'en': { 'logout': 'Logout ?'},
+    'en': { 'logout': 'Sign out?'},
     'fr': { 'logout': 'Se déconnecter?'}
   }[this.settings.languageCode];
 
