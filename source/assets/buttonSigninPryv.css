@@ -62,6 +62,11 @@
   -moz-border-radius-bottomright: 3px;
 }
 
+.pryv-access-btn a:hover, .pryv-access-btn a:focus {
+  color: #FFF;
+  text-decoration: none;
+}
+
 /* Style Sign-in button WITH IMAGE */
 .pryv-access-btn-signin-image {
   text-decoration: none;
