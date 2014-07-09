@@ -8,7 +8,7 @@ var Pryv = require('../../../source/main'),
 // TODO: wait to have test account with given data to update tests
 // (i.e number of trashed stream/children)
 describe('Connection.streams', function () {
-  this.timeout(20000);
+  this.timeout(45000);
   var connection = new Pryv.Connection(config.connectionSettings);
 
   before(function () {

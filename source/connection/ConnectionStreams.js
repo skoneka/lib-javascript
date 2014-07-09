@@ -131,7 +131,7 @@ ConnectionStreams.prototype.delete = function (streamData, callback, mergeEvents
       }
     }
     if (_.isFunction(callback)) {
-      return callback(error, error ? null : stream);
+      return callback(error, error ? null : resultData.stream);
     }
   }.bind(this));
 };
