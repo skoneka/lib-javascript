@@ -56,7 +56,12 @@ describe('eventTypes', function () {
       });
     });
 
-
+    it('isNumerical', function (done) {
+      should.equal(true, eventTypes.isNumerical({type: 'time/h'}), 'should work for events');
+      should.equal(true, eventTypes.isNumerical('mass/kg'), 'should work for events type strings');
+      should.equal(false, eventTypes.isNumerical('note/txt'), 'should detect not numerical value');
+      done();
+    });
 
   });
 

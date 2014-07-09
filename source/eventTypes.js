@@ -92,6 +92,18 @@ eventTypes.extras = function (eventType) {
   return null;
 };
 
+eventTypes.isNumerical = function (eventOrEventType) {
+  if (! eventOrEventType) { return false; }
+  var type;
+  if (eventOrEventType.type) {
+    type = eventOrEventType.type;
+  } else {
+    type = eventOrEventType;
+  }
+  var def = eventTypes.flat(type);
+  if (! def) { return false; }
+  return (def.type === 'number');
+};
 
 /**
  * Called with the result of the request
