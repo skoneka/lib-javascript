@@ -5,6 +5,7 @@
 
 var _ = require('underscore');
 var Event = require('./Event');
+var Stream = require('./Stream');
 
 function Datastore(connection) {
   this.connection = connection;
@@ -146,7 +147,29 @@ Datastore.prototype.createOrReuseEvent = function (data) {
   this.addEvent(result);
 
   return result;
+};
 
+
+/**
+ * @param {Object} data to map
+ * @return {Event} event
+ */
+Datastore.prototype.createOrReuseStream = function (data) {
+    if (! data.id) {
+        throw new Error('Datastore.createOrReuseStream cannot create stream with ' +
+            ' unkown id' + require('util').inspect(data));
+    }
+
+    var result = this.getStreamById(data.id);
+    if (result) {  // found event
+        _.extend(result, data);
+        return result;
+    }
+    // create an stream and register it
+    result = new Stream(this.connection, data);
+    this.addEvent(result);
+
+    return result;
 };
 
 
