@@ -189,11 +189,11 @@ describe('Connection.streams', function () {
     };
     var streamToTrashSimple1 = {
       parentId: streamParent.id,
-      name: 'libjs-test-stream-delete-trash'
+      name: 'libjs-test-stream-delete-trash1'
     };
     var streamToTrashSimple2 = {
       parentId: streamParent.id,
-      name: 'libjs-test-stream-delete-trash',
+      name: 'libjs-test-stream-delete-trash2',
       trashed: true
     };
     var streamToTrashChildMerge = {
