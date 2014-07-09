@@ -4,6 +4,7 @@ var _ = require('underscore'),
 
 
 var EXTRA_ALL_EVENTS = {state : 'all', modifiedSince : -100000000 };
+var REALLY_ALL_EVENTS =  EXTRA_ALL_EVENTS; REALLY_ALL_EVENTS.fromTime = -1000000000;
 
 /**
  * Monitoring
@@ -26,6 +27,11 @@ function Monitor(connection, filter) {
   this.filter.addEventListener(Filter.Messages.ON_CHANGE, this._onFilterChange.bind(this));
   this._events = null;
 
+
+  // -- optimization & caching
+  this.useCacheForEventsGetAllAndCompare = true;  // will look into cache before online
+  this.ensureFullCache = true; // will fill the cache with ALL pryv content
+  this.initWithPrefetch = 100; // prefetch some events before ensuringFullCache
 }
 
 Monitor.serial = 0;
@@ -98,6 +104,8 @@ Monitor.prototype._saveLastUsedFilter = function () {
 
 
 Monitor.prototype._onFilterChange = function (signal, batchId, batch) {
+
+
   var changes = this.filter.compareToFilterData(this._lastUsedFilterData);
 
   var processLocalyOnly = 0;
@@ -161,15 +169,41 @@ Monitor.prototype._refilterLocaly = function (signal, extracontent, batch) {
 
 
 Monitor.prototype._initEvents = function () {
-  this.lastSynchedST = this.connection.getServerTime();
+
   this._events = { active : {}};
-  this.connection.events.get(this.filter.getData(true, EXTRA_ALL_EVENTS),
+
+
+  var filterWith = this.filter.getData(true, EXTRA_ALL_EVENTS);
+
+  if (this.initWithPrefetch) {
+    filterWith.limit = this.initWithPrefetch;
+  } else {
+    if (this.ensureFullCache) {  filterWith = REALLY_ALL_EVENTS; }
+  }
+
+
+  this.connection.events.get(filterWith,
     function (error, events) {
       if (error) { this._fireEvent(Messages.ON_ERROR, error); }
+
+      if (! this.initWithPrefetch) { this.lastSynchedST = this.connection.getServerTime(); }
+
       _.each(events, function (event) {
-        this._events.active[event.id] = event;
+        if (! this.ensureFullCache || this.filter.matchEvent(event)) {
+          this._events.active[event.id] = event;
+        }
       }.bind(this));
+
+
       this._fireEvent(Messages.ON_LOAD, events);
+
+      if (this.initWithPrefetch) {
+        setTimeout(function () {
+          this._connectionEventsGetChanges(Messages.ON_EVENT_CHANGE);
+        }.bind(this), 100);
+      }
+
+
     }.bind(this));
 };
 
@@ -190,28 +224,37 @@ Monitor.prototype._connectionEventsGetChanges = function (signal) {
   this.eventsGetChangesNeeded = false;
 
   var options = { modifiedSince : this.lastSynchedST, state : 'all'};
+
+
+  var filterWith = this.filter.getData(true, options);
+  if (this.ensureFullCache) { filterWith = REALLY_ALL_EVENTS; }
+
   this.lastSynchedST = this.connection.getServerTime();
 
   var result = { created : [], trashed : [], modified: []};
 
-  this.connection.events.get(this.filter.getData(true, options),
+  this.connection.events.get(filterWith,
     function (error, events) {
       if (error) {
         this._fireEvent(Messages.ON_ERROR, error);
       }
 
       _.each(events, function (event) {
-        if (this._events.active[event.id]) {
-          if (event.trashed && !this._events.active[event.id].trashed) { // trashed
-            result.trashed.push(event);
-            delete this._events.active[event.id];
+        if (! this.ensureFullCache || this.filter.matchEvent(event)) {
+          if (this._events.active[event.id]) {
+            if (event.trashed && !this._events.active[event.id].trashed) { // trashed
+              result.trashed.push(event);
+              delete this._events.active[event.id];
+            } else {
+              if (event.modified !==  this._events.active[event.id].modified) { // else same }
+                result.modified.push(event);
+              }
+              this._events.active[event.id] = event;
+            }
           } else {
-            result.modified.push(event);
+            result.created.push(event);
             this._events.active[event.id] = event;
           }
-        } else {
-          result.created.push(event);
-          this._events.active[event.id] = event;
         }
       }.bind(this));
 
@@ -282,11 +325,25 @@ Monitor.prototype._connectionEventsGetAllAndCompare = function (signal, extracon
   this.lastSynchedST = this.connection.getServerTime();
 
 
-  if (false) {
+  if (this.useCacheForEventsGetAllAndCompare) {
+
+
+
     // POC code to look into in-memory events for matching events..
     // do not activate until cache handles DELETE
-    var result1 = { enter : [] };
+    var result1 = { enter : [], leave : [], change: []};
     _.extend(result1, extracontent);
+
+
+    // first cleanup same as : this._refilterLocaly(signal, extracontent, batch);
+    _.each(_.clone(this._events.active), function (event) {
+      if (! this.filter.matchEvent(event)) {
+        result1.leave.push(event);
+        delete this._events.active[event.id];
+      }
+    }.bind(this));
+
+
 
     var cachedEvents = this.connection.datastore.getEventsMatchingFilter(this.filter);
     _.each(cachedEvents, function (event) {
@@ -295,36 +352,43 @@ Monitor.prototype._connectionEventsGetAllAndCompare = function (signal, extracon
         result1.enter.push(event);
       }
     }.bind(this));
-    if (result1.enter.length > 0) {
+
+
+
+    if (result1.enter.length + result1.leave.length + result1.change.length> 0) {
       this._fireEvent(signal, result1, batch);
     }
+
+    // remove all events not matching filter
+
+
   }
 
   // look online
+  if (! this.ensureFullCache)  { // not needed when full cache is enabled
+    var result = { enter : [] };
+    _.extend(result, extracontent); // pass extracontent to receivers
 
-  var result = { enter : [] };
-  _.extend(result, extracontent); // pass extracontent to receivers
+    var toremove = _.clone(this._events.active);
 
-  var toremove = _.clone(this._events.active);
-
-  this.connection.events.get(this.filter.getData(true, EXTRA_ALL_EVENTS),
-    function (error, events) {
-      if (error) { this._fireEvent(Messages.ON_ERROR, error); }
-      _.each(events, function (event) {
-        if (this._events.active[event.id]) {  // already known event we don't care
-          delete toremove[event.id];
-        } else {
-          this._events.active[event.id] = event;
-          result.enter.push(event);
-        }
+    this.connection.events.get(this.filter.getData(true, EXTRA_ALL_EVENTS),
+      function (error, events) {
+        if (error) { this._fireEvent(Messages.ON_ERROR, error); }
+        _.each(events, function (event) {
+          if (this._events.active[event.id]) {  // already known event we don't care
+            delete toremove[event.id];
+          } else {
+            this._events.active[event.id] = event;
+            result.enter.push(event);
+          }
+        }.bind(this));
+        _.each(_.keys(toremove), function (streamid) {
+          delete this._events.active[streamid]; // cleanup not found streams
+        }.bind(this));
+        result.leave = _.values(toremove); // unmatched events are to be removed
+        this._fireEvent(signal, result, batch);
       }.bind(this));
-      _.each(_.keys(toremove), function (streamid) {
-        delete this._events.active[streamid]; // cleanup not found streams
-      }.bind(this));
-      result.leave = _.values(toremove); // unmatched events are to be removed
-      this._fireEvent(signal, result, batch);
-    }.bind(this));
-
+  }
 };
 
 
