@@ -1,4 +1,3 @@
-
 var _ = require('underscore');
 
 /**
@@ -31,14 +30,27 @@ Stream.prototype.setClientData = function (keyValueMap, callback) {
 Object.defineProperty(Stream.prototype, 'parent', {
   get: function () {
 
-    if (! this.parentId) { return null; }
-    if (! this.connection.datastore) { // we use this._parent and this._children
+    if (!this.parentId) {
+      return null;
+    }
+    if (!this.connection.datastore) { // we use this._parent and this._children
       return this._parent;
     }
 
     return this.connection.datastore.getStreamById(this.parentId);
   },
-  set: function () { throw new Error('Stream.parent property is read only'); }
+  set: function (p) {
+    if (p instanceof Stream) {
+      p = p.id;
+    }
+
+    this.parentId = p;
+
+    if (!this.connection.datastore) { // we use this._parent and this._children
+      this._parent = p;
+    }
+    throw new Error('Stream.parent property is read only');
+  }
 });
 
 /**
@@ -46,7 +58,7 @@ Object.defineProperty(Stream.prototype, 'parent', {
  */
 Object.defineProperty(Stream.prototype, 'children', {
   get: function () {
-    if (! this.connection.datastore) { // we use this._parent and this._children
+    if (!this.connection.datastore) { // we use this._parent and this._children
       return this._children;
     }
     var children = [];
@@ -56,18 +68,24 @@ Object.defineProperty(Stream.prototype, 'children', {
     }.bind(this));
     return children;
   },
-  set: function () { throw new Error('Stream.children property is read only'); }
+  set: function () {
+    throw new Error('Stream.children property is read only');
+  }
 });
 
 // TODO write test
 Object.defineProperty(Stream.prototype, 'ancestors', {
   get: function () {
-    if (! this.parentId || this.parent === null) { return []; }
+    if (!this.parentId || this.parent === null) {
+      return [];
+    }
     var result = this.parent.ancestors;
     result.push(this.parent);
     return result;
   },
-  set: function () { throw new Error('Stream.ancestors property is read only'); }
+  set: function () {
+    throw new Error('Stream.ancestors property is read only');
+  }
 });
 
 

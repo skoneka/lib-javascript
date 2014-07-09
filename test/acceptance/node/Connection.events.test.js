@@ -5,7 +5,7 @@ var Pryv = require('../../../source/main'),
   replay = require('replay');
 
 describe('Connection.events', function () {
-  this.timeout(5000);
+  this.timeout(20000);
   var connection = new Pryv.Connection(config.connectionSettings);
 
   before(function () {

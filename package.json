@@ -44,6 +44,7 @@
     "underscore": "1.6.x"
   },
   "devDependencies": {
+    "async": "latest",
     "blanket": "latest",
     "grunt": "latest",
     "grunt-browserify": "latest",
