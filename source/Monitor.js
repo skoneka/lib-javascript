@@ -188,14 +188,17 @@ Monitor.prototype._initEvents = function () {
 
       if (! this.initWithPrefetch) { this.lastSynchedST = this.connection.getServerTime(); }
 
+      var result = [];
+
       _.each(events, function (event) {
         if (! this.ensureFullCache || this.filter.matchEvent(event)) {
           this._events.active[event.id] = event;
+          result.push(event);
         }
       }.bind(this));
 
 
-      this._fireEvent(Messages.ON_LOAD, events);
+      this._fireEvent(Messages.ON_LOAD, result);
 
       if (this.initWithPrefetch) {
         setTimeout(function () {
@@ -331,7 +334,7 @@ Monitor.prototype._connectionEventsGetAllAndCompare = function (signal, extracon
 
     // POC code to look into in-memory events for matching events..
     // do not activate until cache handles DELETE
-    var result1 = { enter : [], leave : [], change: []};
+    var result1 = { enter : [], leave : []};
     _.extend(result1, extracontent);
 
 
@@ -355,9 +358,7 @@ Monitor.prototype._connectionEventsGetAllAndCompare = function (signal, extracon
 
 
 
-    if (result1.enter.length + result1.leave.length + result1.change.length> 0) {
-      this._fireEvent(signal, result1, batch);
-    }
+    this._fireEvent(signal, result1, batch);
 
     // remove all events not matching filter
 
