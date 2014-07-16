@@ -2,8 +2,9 @@ var _ = require('underscore'),
   SignalEmitter = require('./utility/SignalEmitter.js'),
   Filter = require('./Filter.js');
 
-
-var EXTRA_ALL_EVENTS = {state : 'all', modifiedSince : -100000000 };
+/*
+var EXTRA_ALL_EVENTS = {state : 'all', modifiedSince : -100000000 }; */
+var EXTRA_ALL_EVENTS = { modifiedSince : -100000000 };
 
 /**
  * Monitoring
@@ -189,6 +190,8 @@ Monitor.prototype._connectionEventsGetChanges = function (signal) {
   this.eventsGetChangesInProgress = true;
   this.eventsGetChangesNeeded = false;
 
+
+  // var options = { modifiedSince : this.lastSynchedST};
   var options = { modifiedSince : this.lastSynchedST, state : 'all'};
   this.lastSynchedST = this.connection.getServerTime();
 

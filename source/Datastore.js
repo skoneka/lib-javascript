@@ -17,7 +17,8 @@ function Datastore(connection) {
 module.exports = Datastore;
 
 Datastore.prototype.init = function (callback) {
-  this.connection.streams._getObjects({state: 'all'}, function (error, result) {
+  // Hack for browser, we dont want trashed stream (removed {state: 'all'})
+  this.connection.streams._getObjects({}, function (error, result) {
     if (error) { return callback('Datastore faild to init - '  + error); }
     if (result) {
       this._rebuildStreamIndex(result); // maybe done transparently
