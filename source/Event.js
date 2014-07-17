@@ -6,7 +6,15 @@ var RW_PROPERTIES =
     'clientData', 'state', 'modified', 'trashed'];
 
 
-
+var escapeHtml = function (obj) {
+  _.each(obj, function (value, key) {
+    if (_.isString(value)) {
+      obj[key] = _.escape(value);
+    } else if (_.isObject(value)) {
+      escapeHtml(value);
+    }
+  });
+};
 /**
  *
  * @type {Function}
@@ -18,6 +26,7 @@ var Event = module.exports = function Event(connection, data) {
   }
   this.connection = connection;
   this.serialId = this.connection.serialId + '>E' + this.connection._eventSerialCounter++;
+  escapeHtml(data);
   _.extend(this, data);
 };
 

@@ -12,6 +12,7 @@ var Stream = module.exports = function Stream(connection, data) {
   this._parent = null;
   this.parentId = null;
   this._children = [];
+  data.name = _.escape(data.name);
   _.extend(this, data);
 };
 
