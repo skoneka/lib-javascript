@@ -10,7 +10,7 @@ var escapeHtml = function (obj) {
   _.each(obj, function (value, key) {
     if (_.isString(value)) {
       obj[key] = _.escape(value);
-    } else if (_.isObject(value)) {
+    } else if (key === 'content' && _.isObject(value)) {
       escapeHtml(value);
     }
   });
