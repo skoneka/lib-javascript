@@ -64,8 +64,12 @@ Object.defineProperty(Stream.prototype, 'children', {
     }
     var children = [];
     _.each(this.childrenIds, function (childrenId) {
-      var child = this.connection.datastore.getStreamById(childrenId);
-      children.push(child);
+      try {
+        var child = this.connection.datastore.getStreamById(childrenId);
+        children.push(child);
+      } catch (e) {
+        console.warn('cannot find child', e);
+      }
     }.bind(this));
     return children;
   },
