@@ -282,10 +282,10 @@ Monitor.prototype._connectionEventsGetChanges = function (signal) {
 Monitor.prototype._connectionStreamsGetChanges = function (signal) {
   var streams = {};
   var created = [], modified = [], trashed = [];
-  var streamCompare = function (streamA, streamB) {
+  var isStreamChanged = function (streamA, streamB) {
     var sA = _.pick(streamA, ['id', 'name', 'parentId', 'singleActivity', 'clientData', 'trashed']);
     var sB = _.pick(streamB, ['id', 'name', 'parentId', 'singleActivity', 'clientData', 'trashed']);
-    return _.isEqual(sA, sB);
+    return !_.isEqual(sA, sB);
   };
   var getFlatTree = function (stream) {
     streams[stream.id] = stream;
@@ -295,7 +295,9 @@ Monitor.prototype._connectionStreamsGetChanges = function (signal) {
   };
   var checkChangedStatus = function (stream) {
 
-    if (!streams[stream.id]) {
+    // Trahsed stream are no longer in the datastore
+    // oldversion:
+   /* if (!streams[stream.id]) {
       created.push(stream);
     } else if (!streamCompare(streams[stream.id], stream)) {
       if (streams[stream.id].trashed !== stream.trashed) {
@@ -307,6 +309,15 @@ Monitor.prototype._connectionStreamsGetChanges = function (signal) {
       } else {
         modified.push(stream);
       }
+    } */
+    // new version:
+    if (!streams[stream.id]) {
+      created.push(stream);
+    } else if (isStreamChanged(streams[stream.id], stream)) {
+      modified.push(stream);
+      delete streams[stream.id];
+    } else {
+      delete streams[stream.id];
     }
     _.each(stream.children, function (child) {
       checkChangedStatus(child);
@@ -318,6 +329,10 @@ Monitor.prototype._connectionStreamsGetChanges = function (signal) {
   this.connection.fetchStructure(function (error, result) {
     _.each(result, function (rootStream) {
       checkChangedStatus(rootStream);
+    });
+    // each stream remaining in streams[] are trashed streams;
+    _.each(streams, function (stream) {
+      trashed.push(stream);
     });
     this._fireEvent(signal, { created : created, trashed : trashed, modified: modified});
   }.bind(this));
