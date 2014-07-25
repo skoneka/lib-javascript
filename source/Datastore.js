@@ -168,7 +168,7 @@ Datastore.prototype.createOrReuseStream = function (data) {
     }
     // create an stream and register it
     result = new Stream(this.connection, data);
-    this.addEvent(result);
+    this.indexStream(result);
 
     return result;
 };

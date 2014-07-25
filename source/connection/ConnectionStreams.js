@@ -85,6 +85,10 @@ ConnectionStreams.prototype.update = function (streamData, callback) {
               result = new Stream(this.connection, result.stream);
             } else {
               result = this.connection.datastore.createOrReuseStream(result.stream);
+              if (result.parent &&
+                _.indexOf(result.parent.childrenIds, result.id) === -1) {
+                result.parent.childrenIds.push(result.id);
+              }
             }
           } else {
             result = null;

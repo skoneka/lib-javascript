@@ -66,7 +66,9 @@ Object.defineProperty(Stream.prototype, 'children', {
     _.each(this.childrenIds, function (childrenId) {
       try {
         var child = this.connection.datastore.getStreamById(childrenId);
-        children.push(child);
+        if (child.parentId === this.id) {
+          children.push(child);
+        }
       } catch (e) {
         console.warn('cannot find child', e);
       }
