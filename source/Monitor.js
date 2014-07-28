@@ -283,8 +283,14 @@ Monitor.prototype._connectionStreamsGetChanges = function (signal) {
   var streams = {};
   var created = [], modified = [], trashed = [];
   var isStreamChanged = function (streamA, streamB) {
-    var sA = _.pick(streamA, ['id', 'name', 'parentId', 'singleActivity', 'clientData', 'trashed']);
-    var sB = _.pick(streamB, ['id', 'name', 'parentId', 'singleActivity', 'clientData', 'trashed']);
+    var sA = _.pick(streamA, ['id', 'name', 'singleActivity', 'parentId', 'clientData', 'trashed']);
+    var sB = _.pick(streamB, ['id', 'name', 'singleActivity', 'parentId', 'clientData', 'trashed']);
+    if (sA.clientData) {
+      sA.clientData = JSON.stringify(sA.clientData);
+    }
+    if (sB.clientData) {
+      sB.clientData = JSON.stringify(sB.clientData);
+    }
     return !_.isEqual(sA, sB);
   };
   var getFlatTree = function (stream) {
