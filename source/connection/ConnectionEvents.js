@@ -336,15 +336,17 @@ ConnectionEvents.prototype.batchWithData =
     };
 
     this.connection.request('POST', url, function (err, result) {
-      _.each(result.results, function (eventData, i) {
-        _.extend(eventMap[i], eventData.event); // add the data to the event
+      if (!err && result) {
+        _.each(result.results, function (eventData, i) {
+          _.extend(eventMap[i], eventData.event); // add the data to the event
 
-        if (this.connection.datastore) {  // if datastore is activated register new event
-          this.connection.datastore.addEvent(eventMap[i]);
-        }
+          if (this.connection.datastore) {  // if datastore is activated register new event
+            this.connection.datastore.addEvent(eventMap[i]);
+          }
 
 
-      }.bind(this));
+        }.bind(this));
+      }
       callback(err, createdEvents);
     }.bind(this), mapBeforePush(eventsData));
 
