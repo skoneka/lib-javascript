@@ -80,23 +80,22 @@ module.exports = function (pack)  {
 
 
   var onError = function (reason) {
-    return pack.error(reason + '\n' + detail, null);
+    if (!aborted) {
+      aborted = true;
+      return pack.error(reason + '\n' + detail, null);
+    }
   };
 
   req.on('error', function (e) {
-    if (!aborted) {
-      aborted = true;
       return onError('Error: ' + e.message);
-    }
   });
 
 
   req.on('socket', function (socket) {
     socket.setTimeout(30000);
     socket.on('timeout', function () {
-      aborted = true;
       req.abort();
-      return pack.error('Timeout');
+      return onError('Timeout');
     });
   });
 
