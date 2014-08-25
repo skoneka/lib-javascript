@@ -56,7 +56,9 @@ eventTypes.hierarchical = function () {
 eventTypes.loadFlat = function (callback) {
   var myCallback = function (error, result) {
     this._flat = result;
-    callback(error, result);
+    if (callback && typeof(callback) === 'function') {
+      callback(error, result);
+    }
   };
   _getFile('flat.json', myCallback.bind(this));
 };
