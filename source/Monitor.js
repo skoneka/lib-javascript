@@ -2,7 +2,7 @@ var _ = require('underscore'),
   SignalEmitter = require('./utility/SignalEmitter.js'),
   Filter = require('./Filter.js');
 
-var EXTRA_ALL_EVENTS = {state : 'all', modifiedSince : -100000000 };
+var EXTRA_ALL_EVENTS = {state : 'default', modifiedSince : -100000000 };
 var REALLY_ALL_EVENTS =  EXTRA_ALL_EVENTS; REALLY_ALL_EVENTS.fromTime = -1000000000;
 
 
