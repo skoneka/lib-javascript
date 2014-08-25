@@ -38,6 +38,7 @@ module.exports = function (pack)  {
   var parseResult = pack.parseResult || 'json';
   var httpMode = pack.ssl ? 'https' : 'http';
   var http = require(httpMode);
+  var aborted = false;
 
   if (pack.payload instanceof FormData) {
     httpOptions.method = 'post';
@@ -79,19 +80,22 @@ module.exports = function (pack)  {
 
 
   var onError = function (reason) {
-    return pack.error(reason + '\n' + detail, null);
+    if (!aborted) {
+      aborted = true;
+      return pack.error(reason + '\n' + detail, null);
+    }
   };
 
   req.on('error', function (e) {
-    return onError('Error: ' + e.message);
+      return onError('Error: ' + e.message);
   });
 
 
   req.on('socket', function (socket) {
-    socket.setTimeout(5000);
+    socket.setTimeout(30000);
     socket.on('timeout', function () {
       req.abort();
-      return pack.error('Timeout');
+      return onError('Timeout');
     });
   });
 

@@ -46,22 +46,26 @@ ConnectionEvents.prototype.get = function (filter, doneCallback, partialResultCa
   this._get(filter, function (error, res) {
     if (error) {
       result = null;
+    } else {
+      var eventList = res.events || res.event;
+      _.each(eventList, function (eventData) {
+
+        var event = null;
+        if (!this.connection.datastore) { // no datastore   break
+          event = new Event(this.connection, eventData);
+        } else {
+          event = this.connection.datastore.createOrReuseEvent(eventData);
+        }
+
+        result.push(event);
+
+      }.bind(this));
     }
-    var eventList = res.events || res.event;
-    _.each(eventList, function (eventData) {
-
-      var event = null;
-      if (! this.connection.datastore) { // no datastore   break
-        event = new Event(this.connection, eventData);
-      } else {
-        event = this.connection.datastore.createOrReuseEvent(eventData);
-      }
-
-      result.push(event);
-    }.bind(this));
     doneCallback(error, result);
+
     if (partialResultCallback) { partialResultCallback(result); }
   }.bind(this));
+
 };
 
 /**
