@@ -65,11 +65,8 @@ Datastore.prototype.getStreams = function () {
  * @param test (do no throw error if Stream is not found
  * @returns Stream or null if not found
  */
-Datastore.prototype.getStreamById = function (streamId, test) {
+Datastore.prototype.getStreamById = function (streamId) {
   var result = this.streamsIndex[streamId];
-  if (! test && ! result) {
-    throw new Error('Datastore.getStreamById cannot find stream with id: ' + streamId);
-  }
   return result;
 };
 

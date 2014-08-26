@@ -256,8 +256,10 @@ Monitor.prototype._connectionEventsGetChanges = function (signal) {
               this._events.active[event.id] = event;
             }
           } else {
-            result.created.push(event);
-            this._events.active[event.id] = event;
+            if(!event.trashed && event.stream && !event.stream.trashed) {
+              result.created.push(event);
+              this._events.active[event.id] = event;
+            }
           }
         }
       }.bind(this));
