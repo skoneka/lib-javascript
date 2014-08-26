@@ -233,7 +233,8 @@ Monitor.prototype._connectionEventsGetChanges = function (signal) {
 
   var filterWith = this.filter.getData(true, options);
   if (this.ensureFullCache) { filterWith = REALLY_ALL_EVENTS; }
-
+  filterWith.modifiedSince = this.lastSynchedST;
+  filterWith.state = 'all';
   this.lastSynchedST = this.connection.getServerTime();
 
   var result = { created : [], trashed : [], modified: []};
@@ -251,9 +252,7 @@ Monitor.prototype._connectionEventsGetChanges = function (signal) {
               result.trashed.push(event);
               delete this._events.active[event.id];
             } else {
-              if (event.modified !==  this._events.active[event.id].modified) { // else same }
-                result.modified.push(event);
-              }
+              result.modified.push(event);
               this._events.active[event.id] = event;
             }
           } else {
