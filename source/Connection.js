@@ -1,6 +1,5 @@
 var _ = require('underscore'),
     utility = require('./utility/utility.js'),
-    eventTypes = require('./eventTypes.js'),
     ConnectionEvents = require('./connection/ConnectionEvents.js'),
     ConnectionStreams = require('./connection/ConnectionStreams.js'),
     ConnectionProfile = require('./connection/ConnectionProfile.js'),
@@ -129,7 +128,6 @@ Connection._serialCounter = 0;
  * @returns {Connection} this
  */
 Connection.prototype.fetchStructure = function (callback /*, keepItUpToDate*/) {
-  eventTypes.loadFlat();
   if (this.datastore) { return this.datastore.init(callback); }
   this.datastore = new Datastore(this);
   this.accessInfo(function (error) {
