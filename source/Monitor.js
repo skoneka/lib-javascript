@@ -5,6 +5,7 @@ var _ = require('underscore'),
 var EXTRA_ALL_EVENTS = {state : 'default', modifiedSince : -100000000 };
 var REALLY_ALL_EVENTS =  EXTRA_ALL_EVENTS; REALLY_ALL_EVENTS.fromTime = -1000000000;
 
+var GETEVENT_MIN_REFRESH_RATE = 2000;
 
 /**
  * Monitoring
@@ -267,13 +268,13 @@ Monitor.prototype._connectionEventsGetChanges = function (signal) {
       this._fireEvent(signal, result);
 
       // ---
-      this.eventsGetChangesInProgress = false;
-      if (this.eventsGetChangesNeeded) {
-        setTimeout(function () {
+      setTimeout(function () {
+        this.eventsGetChangesInProgress = false;
+        if (this.eventsGetChangesNeeded) {
           this._connectionEventsGetChanges(signal);
-        }.bind(this), 1);
+        }
+      }.bind(this), GETEVENT_MIN_REFRESH_RATE);
 
-      }
     }.bind(this));
 };
 
