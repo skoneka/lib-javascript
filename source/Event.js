@@ -25,6 +25,7 @@ var Event = module.exports = function Event(connection, data) {
     throw new Error('Cannot create connection less events');
   }
   this.connection = connection;
+  this.trashed = false;
   this.serialId = this.connection.serialId + '>E' + this.connection._eventSerialCounter++;
   escapeHtml(data);
   _.extend(this, data);

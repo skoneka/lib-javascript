@@ -12,13 +12,14 @@ function Datastore(connection) {
   this.streamsIndex = {}; // streams are linked to their object representation
   this.eventIndex = {}; // events are store by their id
   this.rootStreams = [];
+  this.rootStreamsAll = []; // including trashed streams
 }
 
 module.exports = Datastore;
 
 Datastore.prototype.init = function (callback) {
   // Hack for browser, we dont want trashed stream (removed {state: 'all'})
-  this.connection.streams._getObjects({}, function (error, result) {
+  this.connection.streams._getObjects({state: 'all'}, function (error, result) {
     if (error) { return callback('Datastore faild to init - '  + error); }
     if (result) {
       this._rebuildStreamIndex(result); // maybe done transparently
@@ -32,6 +33,7 @@ Datastore.prototype.init = function (callback) {
 Datastore.prototype._rebuildStreamIndex = function (streamArray) {
   this.streamsIndex = {};
   this.rootStreams = [];
+  this.rootStreamsAll = [];
   this._indexStreamArray(streamArray);
 };
 
@@ -43,7 +45,12 @@ Datastore.prototype._indexStreamArray = function (streamArray) {
 
 Datastore.prototype.indexStream = function (stream) {
   this.streamsIndex[stream.id] = stream;
-  if (! stream.parentId) { this.rootStreams.push(stream); }
+  if (! stream.parentId) {
+    this.rootStreamsAll.push(stream);
+    if (! stream.trashed) {
+      this.rootStreams.push(stream);
+    }
+  }
   this._indexStreamArray(stream._children);
   delete stream._children; // cleanup when in datastore mode
   delete stream._parent;

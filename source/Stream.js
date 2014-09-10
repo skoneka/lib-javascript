@@ -11,6 +11,7 @@ var Stream = module.exports = function Stream(connection, data) {
   /** those are only used when no datastore **/
   this._parent = null;
   this.parentId = null;
+  this.trashed = false;
   this._children = [];
   data.name = _.escape(data.name);
   _.extend(this, data);
@@ -56,6 +57,7 @@ Object.defineProperty(Stream.prototype, 'parent', {
 
 /**
  * TODO write documentation
+ * Does not return trashed childrens
  */
 Object.defineProperty(Stream.prototype, 'children', {
   get: function () {
@@ -66,7 +68,7 @@ Object.defineProperty(Stream.prototype, 'children', {
     _.each(this.childrenIds, function (childrenId) {
       try {
         var child = this.connection.datastore.getStreamById(childrenId);
-        if (child.parentId === this.id) {
+        if (child.parentId === this.id && ! child.trashed) { // exclude trashed childs
           children.push(child);
         }
       } catch (e) {
