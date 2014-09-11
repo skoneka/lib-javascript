@@ -62,7 +62,6 @@ eventTypes.loadFlat = function (callback) {
   };
   _getFile('flat.json', myCallback.bind(this));
 };
-eventTypes.loadFlat();
 
 eventTypes.flat = function (eventType) {
   if (!this._flat) {
