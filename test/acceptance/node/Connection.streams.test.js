@@ -29,7 +29,8 @@ describe('Connection.streams', function () {
           array.should.be.instanceOf(Array);
           array.forEach(function (stream) {
             stream.should.be.instanceOf(Pryv.Stream);
-            should.not.exist(stream.trashed);
+            var trashed = stream.trashed ? true : false;
+            trashed.should.equal(false);
             if (stream.children) {
               checkStreams(stream.children);
             }

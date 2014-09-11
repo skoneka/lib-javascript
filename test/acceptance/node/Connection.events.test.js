@@ -26,7 +26,8 @@ describe('Connection.events', function () {
         events.forEach(function (event) {
           event.time.should.not.be.above(lastTime);
           event.should.be.instanceOf(Pryv.Event);
-          should.not.exist(event.trashed);
+          var trashed = event.trashed ? true : false;
+          trashed.should.equal(false);
           lastTime = event.time;
         });
         done();
@@ -179,6 +180,7 @@ describe('Connection.events', function () {
     it('should stop the previously started event in this stream', function (done) {
       connection.events.stopStream(
         {id: event.streamId}, null, null, function (err, stoppedId) {
+
           should.not.exist(err);
           should.exist(stoppedId);
           should.not.exist(event.duration);
