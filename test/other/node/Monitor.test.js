@@ -83,9 +83,11 @@ var testMonitor = function (preFetchStructure) {
           newStructure.streams.length.should.equal(connection.datastore.getStreams().length + 1);
           should.exist(result);
           should.exist(result.modified);
+          should.exist(result.modifiedPreviousProperties);
           should.exist(result.trashed);
           should.exist(result.created);
           result.modified.length.should.equal(1);
+          should.exists(result.modifiedPreviousProperties[result.modified[0].id]);
           result.trashed.length.should.equal(1);
           result.created.length.should.equal(1);
           result.modified[0].id.should.equal(modifiedStream.id);

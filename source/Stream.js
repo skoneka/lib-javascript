@@ -1,5 +1,7 @@
 var _ = require('underscore');
 
+
+
 /**
  * TODO write documentation  with use cases.. !!
  * @type {Function}
@@ -16,6 +18,21 @@ var Stream = module.exports = function Stream(connection, data) {
   data.name = _.escape(data.name);
   _.extend(this, data);
 };
+
+Stream.RW_PROPERTIES =
+  ['name', 'parentId', 'singleActivity', 'clientData', 'trashed'];
+
+/**
+ * get Json object ready to be posted on the API
+ */
+Stream.prototype.getData = function () {
+  var data = {};
+  _.each(Stream.RW_PROPERTIES, function (key) { // only set non null values
+    if (_.has(this, key)) { data[key] = this[key]; }
+  }.bind(this));
+  return data;
+};
+
 
 /**
  * Set or erase clientData properties

@@ -257,7 +257,7 @@ Monitor.prototype._connectionEventsGetChanges = function (signal) {
               this._events.active[event.id] = event;
             }
           } else {
-            if(!event.trashed && event.stream && !event.stream.trashed) {
+            if (!event.trashed && event.stream && !event.stream.trashed) {
               result.created.push(event);
               this._events.active[event.id] = event;
             }
@@ -282,18 +282,11 @@ Monitor.prototype._connectionEventsGetChanges = function (signal) {
  * @private
  */
 Monitor.prototype._connectionStreamsGetChanges = function (signal) {
-  var previousStreams = {};
-  var created = [], modified = [], trashed = [], deleted = [];
+  var previousStreamsData = {};
+  var created = [], modified = [], modifiedPreviousProperties = {}, trashed = [], deleted = [];
+
   var isStreamChanged = function (streamA, streamB) {
-    var sA = _.pick(streamA, ['id', 'name', 'singleActivity', 'parentId', 'clientData', 'trashed']);
-    var sB = _.pick(streamB, ['id', 'name', 'singleActivity', 'parentId', 'clientData', 'trashed']);
-    if (sA.clientData) {
-      sA.clientData = JSON.stringify(sA.clientData);
-    }
-    if (sB.clientData) {
-      sB.clientData = JSON.stringify(sB.clientData);
-    }
-    return !_.isEqual(sA, sB);
+    return !_.isEqual(streamA, streamB);
   };
 
 
@@ -301,10 +294,11 @@ Monitor.prototype._connectionStreamsGetChanges = function (signal) {
   var checkChangedStatus = function (stream) {
 
 
-    if (! previousStreams[stream.id]) { // new stream
+    if (! previousStreamsData[stream.id]) { // new stream
       created.push(stream);
-    } else if (isStreamChanged(previousStreams[stream.id], stream)) {
-      if (previousStreams[stream.id].trashed !== stream.trashed) {
+    } else if (isStreamChanged(previousStreamsData[stream.id], stream.getData())) {
+
+      if (previousStreamsData[stream.id].trashed !== stream.trashed) {
         if (!stream.trashed) {
           created.push(stream);
         } else {
@@ -312,18 +306,21 @@ Monitor.prototype._connectionStreamsGetChanges = function (signal) {
         }
       } else {
         modified.push(stream);
+        modifiedPreviousProperties[stream.id] = previousStreamsData[stream.id];
       }
     }
 
     _.each(stream.children, function (child) {
       checkChangedStatus(child);
     });
-    delete previousStreams[stream.id];
+    delete previousStreamsData[stream.id];
   };
 
   //-- get all current streams before matching with new ones --//
   var getFlatTree = function (stream) {
-    previousStreams[stream.id] = stream;
+    previousStreamsData[stream.id] = stream.getData();
+    //console.log(previousStreamsData[stream.id]);
+
     _.each(stream.children, function (child) {
       getFlatTree(child);
     });
@@ -337,11 +334,12 @@ Monitor.prototype._connectionStreamsGetChanges = function (signal) {
       checkChangedStatus(rootStream);
     });
     // each stream remaining in streams[] are deleted streams;
-    _.each(previousStreams, function (stream) {
-      deleted.push(stream);
+    _.each(previousStreamsData, function (streamData, streamId) {
+      deleted.push(streamId);
     });
     this._fireEvent(signal,
-      { created : created, trashed : trashed, modified: modified, deleted: deleted});
+      { created : created, trashed : trashed, modified: modified, deleted: deleted,
+        modifiedPreviousProperties: modifiedPreviousProperties});
   }.bind(this));
 };
 
