@@ -18,7 +18,6 @@ function Datastore(connection) {
 module.exports = Datastore;
 
 Datastore.prototype.init = function (callback) {
-  // Hack for browser, we dont want trashed stream (removed {state: 'all'})
   this.connection.streams._getObjects({state: 'all'}, function (error, result) {
     if (error) { return callback('Datastore faild to init - '  + error); }
     if (result) {
@@ -58,10 +57,11 @@ Datastore.prototype.indexStream = function (stream) {
 
 /**
  *
- * @param streamId
+ * @param all True to get all root streams including trashed one
  * @returns Stream or null if not found
  */
-Datastore.prototype.getStreams = function () {
+Datastore.prototype.getStreams = function (all) {
+  if (all) { return this.rootStreamsAll; }
   return this.rootStreams;
 };
 

@@ -282,8 +282,8 @@ Monitor.prototype._connectionEventsGetChanges = function (signal) {
  * @private
  */
 Monitor.prototype._connectionStreamsGetChanges = function (signal) {
-  var streams = {};
-  var created = [], modified = [], trashed = [];
+  var previousStreams = {};
+  var created = [], modified = [], trashed = [], deleted = [];
   var isStreamChanged = function (streamA, streamB) {
     var sA = _.pick(streamA, ['id', 'name', 'singleActivity', 'parentId', 'clientData', 'trashed']);
     var sB = _.pick(streamB, ['id', 'name', 'singleActivity', 'parentId', 'clientData', 'trashed']);
@@ -295,20 +295,16 @@ Monitor.prototype._connectionStreamsGetChanges = function (signal) {
     }
     return !_.isEqual(sA, sB);
   };
-  var getFlatTree = function (stream) {
-    streams[stream.id] = stream;
-    _.each(stream.children, function (child) {
-      getFlatTree(child);
-    });
-  };
+
+
+  // check if the stream has changed it.. and save it in the right message box
   var checkChangedStatus = function (stream) {
 
-    // Trahsed stream are no longer in the datastore
-    // oldversion:
-   /* if (!streams[stream.id]) {
+
+    if (! previousStreams[stream.id]) { // new stream
       created.push(stream);
-    } else if (!streamCompare(streams[stream.id], stream)) {
-      if (streams[stream.id].trashed !== stream.trashed) {
+    } else if (isStreamChanged(previousStreams[stream.id], stream)) {
+      if (previousStreams[stream.id].trashed !== stream.trashed) {
         if (!stream.trashed) {
           created.push(stream);
         } else {
@@ -317,32 +313,35 @@ Monitor.prototype._connectionStreamsGetChanges = function (signal) {
       } else {
         modified.push(stream);
       }
-    } */
-    // new version:
-    if (!streams[stream.id]) {
-      created.push(stream);
-    } else if (isStreamChanged(streams[stream.id], stream)) {
-      modified.push(stream);
-      delete streams[stream.id];
-    } else {
-      delete streams[stream.id];
     }
+
     _.each(stream.children, function (child) {
       checkChangedStatus(child);
     });
+    delete previousStreams[stream.id];
   };
-  _.each(this.connection.datastore.getStreams(), function (rootStream) {
+
+  //-- get all current streams before matching with new ones --//
+  var getFlatTree = function (stream) {
+    previousStreams[stream.id] = stream;
+    _.each(stream.children, function (child) {
+      getFlatTree(child);
+    });
+  };
+  _.each(this.connection.datastore.getStreams(true), function (rootStream) {
     getFlatTree(rootStream);
   });
+
   this.connection.fetchStructure(function (error, result) {
     _.each(result, function (rootStream) {
       checkChangedStatus(rootStream);
     });
-    // each stream remaining in streams[] are trashed streams;
-    _.each(streams, function (stream) {
-      trashed.push(stream);
+    // each stream remaining in streams[] are deleted streams;
+    _.each(previousStreams, function (stream) {
+      deleted.push(stream);
     });
-    this._fireEvent(signal, { created : created, trashed : trashed, modified: modified});
+    this._fireEvent(signal,
+      { created : created, trashed : trashed, modified: modified, deleted: deleted});
   }.bind(this));
 };
 

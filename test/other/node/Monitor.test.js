@@ -15,7 +15,7 @@ var testMonitor = function (preFetchStructure) {
   describe('Monitor' + localEnabledStr, function () {
     var username = 'hello',
       auth = 'auth-token',
-      connection = new pryv.Connection(username, auth, {staging: true});
+      connection = new pryv.Connection({username: username, auth: auth, staging: true});
 
 
     if (preFetchStructure) {
@@ -60,9 +60,12 @@ var testMonitor = function (preFetchStructure) {
       it('should return new stream structure', function (done) {
         var newStructure = _.clone(responses.streams);
         newStructure.streams[0].children[0].clientData = {'new-value': 'hello'};
+
         var modifiedStream = newStructure.streams[0].children[0];
-        newStructure.streams[1].trashed = true;
+        newStructure.streams[1].trashed = true;    // trash 2nd stream
+
         var trashedStream = newStructure.streams[1];
+
         var newStream = JSON.parse(
           '{"name":"Victoria","parentId":"PVxE_JMMzM","id":"victoria","children":[]}');
         newStructure.streams[0].children.push(newStream);
@@ -70,11 +73,14 @@ var testMonitor = function (preFetchStructure) {
         nock('https://' + username + '.pryv.in')
           .get('/streams?state=all')
           .reply(200, newStructure, responses.headersStandard);
-        console.log('MONITOR', connection.datastore.getStreams()[0].children[0].clientData);
+        //console.log('MONITOR', connection.datastore.getStreams()[0].children[0].clientData);
         responses.streams.streams.length.should.equal(connection.datastore.getStreams().length);
         monitor.addEventListener('streamsChanged', function (result) {
-          console.log('MONITOR', connection.datastore.getStreams()[0].children[0].clientData);
-          newStructure.streams.length.should.equal(connection.datastore.getStreams().length);
+          //console.log('MONITOR', connection.datastore.getStreams()[0].children[0].clientData);
+          // include trashed
+          newStructure.streams.length.should.equal(connection.datastore.getStreams(true).length);
+          // without trashed
+          newStructure.streams.length.should.equal(connection.datastore.getStreams().length + 1);
           should.exist(result);
           should.exist(result.modified);
           should.exist(result.trashed);

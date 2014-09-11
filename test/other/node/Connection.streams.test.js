@@ -102,7 +102,7 @@ var testStreams = function (preFetchStructure) {
       };
       var response = { response : 'ok'};
 
-      it('should call proper the proper API method', function (done) {
+      it('_getData should call the proper API method', function (done) {
 
         nock('https://' + username + '.' + settings.domain)
           .get('/streams?parentId=test-id&state=default')
@@ -226,14 +226,14 @@ var testStreams = function (preFetchStructure) {
       var streamData = {name : 'test-name'},
         response = {stream: _.extend({id : 'test-id'}, streamData)};
 
-      it('should call proper the proper API method', function (done) {
+      it('_createWithData should call the proper API method', function (done) {
         nock('https://' + username + '.' + settings.domain)
           .post('/streams')
           .reply(201, response, responses.headersStandard);
         connection.streams._createWithData(streamData, function (err, result) {
           should.not.exist(err);
           should.exist(result);
-          result.should.eql(response.stream);
+          result.id.should.eql(response.stream.id);
           done();
         });
       });
