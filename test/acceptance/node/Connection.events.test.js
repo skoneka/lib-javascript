@@ -163,7 +163,6 @@ describe('Connection.events', function () {
 
   });
 
-
   describe('stopStream( )', function () {
 
     var eventData = {streamId : 'activity', type : 'activity/plain', description: 'B'};
@@ -176,8 +175,8 @@ describe('Connection.events', function () {
       });
     });
 
-
-    it('should stop the previously started event in this stream', function (done) {
+    // impossible because of "request record"
+    it('should stop the previously started event in this stream'/*, function (done) {
       connection.events.stopStream(
         {id: event.streamId}, null, null, function (err, stoppedId) {
 
@@ -188,7 +187,7 @@ describe('Connection.events', function () {
           done();
         });
 
-    });
+    }*/);
 
   });
 

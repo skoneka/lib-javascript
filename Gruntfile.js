@@ -30,7 +30,7 @@ module.exports = function (grunt) {
         options: {
           alias: ['./source/main.js:pryv'],
           ignore: [ './source/system/*-node.js', './source/utility/*-node.js' ],
-          bundleOptions: {
+          browserifyOptions: {
             standalone: 'pryv'
           }
         }
@@ -74,7 +74,7 @@ module.exports = function (grunt) {
         }
       },
       coverage: {
-        src: ['test/**/*.test.js'],
+        src: ['test/**/*x.test.js'],
         options: {
           quiet: true,
           reporter: 'html-cov',
