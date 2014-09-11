@@ -4,3 +4,5 @@ module.exports.connectionSettings = {
   staging: true
 };
 
+module.exports.testStreamId = 'diary';
+

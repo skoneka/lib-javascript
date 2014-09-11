@@ -169,7 +169,7 @@ describe('Connection', function () {
   });
 
   describe('time management', function () {
-    it('should retrieve server time from server response');
+
     it('getLocalTime getServerTime', function (done) {
 
       var serverTime = 0;
@@ -178,7 +178,7 @@ describe('Connection', function () {
 
 
       connection.getServerTime().should.be.approximately(
-        connection.getServerTime((new Date()).getTime()), 0.001
+        connection.getServerTime((new Date()).getTime()), 1
       );
 
       done();

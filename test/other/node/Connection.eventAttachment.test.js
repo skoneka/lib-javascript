@@ -3,28 +3,21 @@
 // jshint -W098
 var pryv = require('../../../source/main'),
   should = require('should'),
+  config = require('../../acceptance/test-support/config.js'),
   fs = require('fs');
 
 
 var testEvents = function () {
 
 
-  var username = 'perkikiki',
-    auth = 'chtr9ciwn000smzwkeuwqs3x7',
-    streamId = 'libjstest';
+  var streamId = config.testStreamId;
 
   describe('Connection.events', function () {
     this.timeout(15000);
 
-    var settings = {
-      username: username,
-      auth: auth,
-      port: 443,
-      ssl: true,
-      domain: 'pryv.in'
-    };
 
-    var connection = new pryv.Connection(settings);
+
+    var connection = new pryv.Connection(config.connectionSettings);
 
     var pictureData = fs.readFileSync(__dirname + '/../test-support/photo.PNG');
 
@@ -35,8 +28,7 @@ var testEvents = function () {
 
 
     // TODO Fix this test (it cause crash of other test)
-    it('createWithAttachment( eventData )');
-     /* , function (done) {
+    it('createWithAttachment( eventData )', function (done) {
 
       var eventData = {streamId : streamId, type : 'picture/attached', description: 'test'};
 
@@ -53,7 +45,7 @@ var testEvents = function () {
           done();
         });
 
-    });*/
+    });
 
   });
 
