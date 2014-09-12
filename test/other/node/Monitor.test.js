@@ -31,6 +31,9 @@ var testMonitor = function (preFetchStructure) {
 
         connection.fetchStructure(function (error) {
           should.not.exist(error);
+
+
+
           done();
         });
       });
@@ -54,7 +57,13 @@ var testMonitor = function (preFetchStructure) {
 
         connection.fetchStructure(function (error) {
           should.not.exist(error);
-          done();
+
+          monitor.start(function (error) {
+            console.log('monitor started ' + error);
+            done();
+          });
+
+
         });
       });
       it('should return new stream structure', function (done) {

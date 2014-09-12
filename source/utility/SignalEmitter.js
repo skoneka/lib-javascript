@@ -73,7 +73,7 @@ SignalEmitter.prototype._fireEvent = function (signal, content, batch) {
 
   _.each(this._signalEmitterEvents[signal], function (callback) {
     if (callback !== null &&
-      SignalEmitter.Messages.UNREGISTER_LISTENER === callback(content, batchId, batch)) {
+      SignalEmitter.Messages.UNREGISTER_LISTENER === callback(content, batch)) {
       this.removeEventListener(signal, callback);
     }
   }, this);

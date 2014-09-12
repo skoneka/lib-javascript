@@ -34,11 +34,23 @@ var Messages = Filter.Messages = {
    */
   STREAMS_CHANGE : 'streamsChanged',
 
+  /**
+   * called on streams structure changes
+   * content: changes
+   */
+  STRUCTURE_CHANGE : 'structureChange',
+
   /*
    * called on date changes
    * content: streams
    */
-  DATE_CHANGE : 'timeFrameChanged'
+  DATE_CHANGE : 'timeFrameChanged',
+
+  /*
+   * called on state changes
+   * content: {state: value}
+   */
+  STATE_CHANGE : 'stateChanged'
 };
 
 // TODO
@@ -62,23 +74,30 @@ function _normalizeTimeFrameST(filterData) {
  * check if this event is in this filter
  */
 Filter.prototype.matchEvent = function (event) {
-  if (event.time > this.toTimeSTNormalized) { return 0; }
-  if (event.time < this.fromTimeSTNormalized) { return 0; }
+  if (event.time > this.toTimeSTNormalized) { return false; }
+  if (event.time < this.fromTimeSTNormalized) { return false; }
 
+
+  if (this._settings.state !== 'all') {
+    if (event.trashed) { return false; }
+  }
 
   if (this._settings.streams) {
 
-    if (this._settings.streams.length === 0) { return 0; }
+    if (this._settings.streams.length === 0) { return false; }
 
     if (this._settings.streams.indexOf(event.streamId) < 0) {
       var found = false;
       event.stream.ancestors.forEach(function (ancestor) {
         if (this._settings.streams.indexOf(ancestor.id) >= 0) {
+          if (this._settings.state !== 'all') {
+            if (ancestor.trashed) { return false; }
+          }
           found = true;
         }
       }.bind(this));
       if (!found) {
-        return 0;
+        return false;
       }
     }
   }
@@ -86,7 +105,7 @@ Filter.prototype.matchEvent = function (event) {
 
 
   // TODO complete test
-  return 1;
+  return true;
 };
 
 /**
@@ -221,6 +240,15 @@ Filter.prototype._setValue = function (key, newValue, batch) {
     return;
   }
 
+
+  if (key === 'state') {
+    if (this._settings.state !== newValue) {
+      this._settings.state = newValue;
+      this._fireFilterChange(Messages.STATE_CHANGE, {state: newValue}, batch);
+    }
+    if (waitForMe) { waitForMe.done(); }
+    return;
+  }
 
   if (key === 'timeFrameST') {
     if (! _.isArray(newValue) || newValue.length !== 2) {

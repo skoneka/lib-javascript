@@ -91,7 +91,8 @@ Monitor.prototype._onIoEventsChanged = function () {
 };
 Monitor.prototype._onIoStreamsChanged = function () {
   console.log('SOCKETIO', '_onIoStreamsChanged');
-  this._connectionStreamsGetChanges(Messages.ON_STRUCTURE_CHANGE);
+  var batch = this.startBatch('IoStreamsChanged');
+  this._connectionStreamsGetChanges(Messages.ON_STRUCTURE_CHANGE, batch);
 };
 
 
@@ -104,7 +105,7 @@ Monitor.prototype._saveLastUsedFilter = function () {
 };
 
 
-Monitor.prototype._onFilterChange = function (signal, batchId, batch) {
+Monitor.prototype._onFilterChange = function (signal, batch) {
 
 
   var changes = this.filter.compareToFilterData(this._lastUsedFilterData);
@@ -132,6 +133,22 @@ Monitor.prototype._onFilterChange = function (signal, batchId, batch) {
     if (changes.streams < 0) {  // new timeFrame contains more data
       processLocalyOnly = 1;
     }
+  }
+
+  if (signal.signal === Filter.Messages.STREAMS_CHANGE) {
+    foundsignal = 1;
+    console.log('** STREAMS_CHANGE', changes.streams);
+    if (changes.streams === 0) {
+      return;
+    }
+    if (changes.streams < 0) {  // new timeFrame contains more data
+      processLocalyOnly = 1;
+    }
+  }
+
+  if (signal.signal === Filter.Messages.STRUCTURE_CHANGE) {
+    foundsignal = 1;
+    // force full refresh
   }
 
 
@@ -281,8 +298,9 @@ Monitor.prototype._connectionEventsGetChanges = function (signal) {
 /**
  * @private
  */
-Monitor.prototype._connectionStreamsGetChanges = function (signal) {
+Monitor.prototype._connectionStreamsGetChanges = function (signal, batch) {
   var previousStreamsData = {};
+  var previousStreamsMap = {}; // !! only used to get back deleted streams..
   var created = [], modified = [], modifiedPreviousProperties = {}, trashed = [], deleted = [];
 
   var isStreamChanged = function (streamA, streamB) {
@@ -319,7 +337,7 @@ Monitor.prototype._connectionStreamsGetChanges = function (signal) {
   //-- get all current streams before matching with new ones --//
   var getFlatTree = function (stream) {
     previousStreamsData[stream.id] = stream.getData();
-    //console.log(previousStreamsData[stream.id]);
+    previousStreamsMap[stream.id] = stream;
 
     _.each(stream.children, function (child) {
       getFlatTree(child);
@@ -335,11 +353,15 @@ Monitor.prototype._connectionStreamsGetChanges = function (signal) {
     });
     // each stream remaining in streams[] are deleted streams;
     _.each(previousStreamsData, function (streamData, streamId) {
-      deleted.push(streamId);
+      deleted.push(previousStreamsMap[streamId]);
     });
+
     this._fireEvent(signal,
       { created : created, trashed : trashed, modified: modified, deleted: deleted,
-        modifiedPreviousProperties: modifiedPreviousProperties});
+        modifiedPreviousProperties: modifiedPreviousProperties}, batch);
+
+    this._onFilterChange({signal : Filter.Messages.STRUCTURE_CHANGE}, batch);
+
   }.bind(this));
 };
 
@@ -361,6 +383,9 @@ Monitor.prototype._connectionEventsGetAllAndCompare = function (signal, extracon
 
 
     // first cleanup same as : this._refilterLocaly(signal, extracontent, batch);
+    if (! this._events) {
+      throw new Error('Not yet started!!!');
+    }
     _.each(_.clone(this._events.active), function (event) {
       if (! this.filter.matchEvent(event)) {
         result1.leave.push(event);

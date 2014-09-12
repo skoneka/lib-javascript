@@ -116,11 +116,11 @@ var testFilter = function (preFetchStructure) {
 
     it('Event in filter timeframe', function (done) {
       var event1 = new pryv.Event(connection, {streamId : 'a', time : 1});
-      filter1.matchEvent(event1).should.equal(1);
-      filter2.matchEvent(event1).should.equal(1);
+      filter1.matchEvent(event1).should.equal(true);
+      filter2.matchEvent(event1).should.equal(true);
 
       var event2 = new pryv.Event(connection, {streamId : 'a', time : 3});
-      filter1.matchEvent(event2).should.equal(0);
+      filter1.matchEvent(event2).should.equal(false);
 
       done();
     });
@@ -128,13 +128,28 @@ var testFilter = function (preFetchStructure) {
 
     it('Event in filter timeframe', function (done) {
       var event1 = new pryv.Event(connection, {streamId : 'a', time : 1});
-      filter1.matchEvent(event1).should.equal(1);
-      filter2.matchEvent(event1).should.equal(1);
+      filter1.matchEvent(event1).should.equal(true);
+      filter2.matchEvent(event1).should.equal(true);
 
       var event2 = new pryv.Event(connection, {streamId : 'e', time : 1});
       if (preFetchStructure) {
-        filter1.matchEvent(event2).should.equal(0);
+        filter1.matchEvent(event2).should.equal(false);
       }
+      done();
+    });
+
+
+    it('Event in trashed stream', function (done) {
+      var settings =  {streams : ['a'], modifiedSince: 1};
+      var filter = new pryv.Filter(settings);
+
+
+      var event1 = new pryv.Event(connection, {streamId : 'a', time : 1, trashed: true});
+      filter.matchEvent(event1).should.equal(false);
+
+      filter.set({state: 'all'});
+      filter.matchEvent(event1).should.equal(true);
+
       done();
     });
 

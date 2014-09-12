@@ -44,6 +44,7 @@ describe('Connection.streams', function () {
     it('must return streams matching the given filter', function (done) {
       var filter = { parentId: 'diary', state: 'all' };
       connection.streams.get(filter, function (error, streams) {
+        should.exist(streams);
         streams.forEach(function (stream) {
           stream.parentId.should.equal(filter.parentId);
         });
