@@ -3,7 +3,8 @@ var _ = require('underscore'),
   Filter = require('./Filter.js');
 
 var EXTRA_ALL_EVENTS = {state : 'default', modifiedSince : -100000000 };
-var REALLY_ALL_EVENTS =  EXTRA_ALL_EVENTS; REALLY_ALL_EVENTS.fromTime = -1000000000;
+var REALLY_ALL_EVENTS =  EXTRA_ALL_EVENTS;
+REALLY_ALL_EVENTS.fromTime = -1000000000;
 
 var GETEVENT_MIN_REFRESH_RATE = 2000;
 
@@ -54,13 +55,19 @@ var Messages = Monitor.Messages = {
 
 Monitor.prototype.start = function (done) {
   done = done || function () {};
+  var batch = this.startBatch('Monitor:start');
+  batch.addOnDoneListener('Monitor:startCompletion', function () {
+    //TODO move this logic to ConnectionMonitors ??
+    this.connection.monitors._monitors[this.id] = this;
+    this.connection.monitors._startMonitoring(done);
+  }.bind(this));
+
 
   this.lastSynchedST = -1000000000000;
-  this._initEvents();
+  this._initEvents(batch);
+  batch.done('Monitor:start');
 
-  //TODO move this logic to ConnectionMonitors ??
-  this.connection.monitors._monitors[this.id] = this;
-  this.connection.monitors._startMonitoring(done);
+
 };
 
 
@@ -87,12 +94,15 @@ Monitor.prototype._onIoError = function (error) {
   console.log('Monitor _onIoError' + error);
 };
 Monitor.prototype._onIoEventsChanged = function () {
-  this._connectionEventsGetChanges(Messages.ON_EVENT_CHANGE);
+  var batch = this.startBatch('IoEventChanged');
+  this._connectionEventsGetChanges(batch);
+  batch.done('IoEventChanged');
 };
 Monitor.prototype._onIoStreamsChanged = function () {
   console.log('SOCKETIO', '_onIoStreamsChanged');
   var batch = this.startBatch('IoStreamsChanged');
-  this._connectionStreamsGetChanges(Messages.ON_STRUCTURE_CHANGE, batch);
+  this._connectionStreamsGetChanges(batch);
+  batch.done('IoStreamsChanged');
 };
 
 
@@ -186,8 +196,8 @@ Monitor.prototype._refilterLocaly = function (signal, extracontent, batch) {
 };
 
 
-Monitor.prototype._initEvents = function () {
-
+Monitor.prototype._initEvents = function (batch) {
+  batch = this.startBatch('Monitor:initEvents', batch);
   this._events = { active : {}};
 
 
@@ -202,7 +212,11 @@ Monitor.prototype._initEvents = function () {
 
   this.connection.events.get(filterWith,
     function (error, events) {
-      if (error) { this._fireEvent(Messages.ON_ERROR, error); }
+      if (error) {
+        this._fireEvent(Messages.ON_ERROR, error, batch);
+        batch.done('Monitor:initEvents error');
+        return;
+      }
 
       if (! this.initWithPrefetch) { this.lastSynchedST = this.connection.getServerTime(); }
 
@@ -216,13 +230,16 @@ Monitor.prototype._initEvents = function () {
       }.bind(this));
 
 
-      this._fireEvent(Messages.ON_LOAD, result);
+      this._fireEvent(Messages.ON_LOAD, result, batch);
 
       if (this.initWithPrefetch) {
+        batch.waitForMeToFinish('delay');
         setTimeout(function () {
-          this._connectionEventsGetChanges(Messages.ON_EVENT_CHANGE);
+          this._connectionEventsGetChanges(batch);
+          batch.done('delay');
         }.bind(this), 100);
       }
+      batch.done('Monitor:initEvents finished');
 
 
     }.bind(this));
@@ -235,10 +252,12 @@ Monitor.prototype._initEvents = function () {
 /**
  * @private
  */
-Monitor.prototype._connectionEventsGetChanges = function (signal) {
-
+Monitor.prototype._connectionEventsGetChanges = function (batch) {
+  batch = this.startBatch('connectionEventsGetChanges', batch);
   if (this.eventsGetChangesInProgress) {
     this.eventsGetChangesNeeded = true;
+    console.log('[WARNING] Skipping _connectionEventsGetChanges because one is in Progress');
+    batch.done('connectionEventsGetChanges in Progress');
     return;
   }
   this.eventsGetChangesInProgress = true;
@@ -260,7 +279,9 @@ Monitor.prototype._connectionEventsGetChanges = function (signal) {
   this.connection.events.get(filterWith,
     function (error, events) {
       if (error) {
-        this._fireEvent(Messages.ON_ERROR, error);
+        this._fireEvent(Messages.ON_ERROR, error, batch);
+        batch.done('connectionEventsGetChanges error');
+        return;
       }
 
       _.each(events, function (event) {
@@ -282,13 +303,14 @@ Monitor.prototype._connectionEventsGetChanges = function (signal) {
         }
       }.bind(this));
 
-      this._fireEvent(signal, result);
+      this._fireEvent(Messages.ON_EVENT_CHANGE, result, batch);
+      batch.done('connectionEventsGetChanges');
 
       // ---
       setTimeout(function () {
         this.eventsGetChangesInProgress = false;
         if (this.eventsGetChangesNeeded) {
-          this._connectionEventsGetChanges(signal);
+          this._connectionEventsGetChanges();
         }
       }.bind(this), GETEVENT_MIN_REFRESH_RATE);
 
@@ -298,7 +320,8 @@ Monitor.prototype._connectionEventsGetChanges = function (signal) {
 /**
  * @private
  */
-Monitor.prototype._connectionStreamsGetChanges = function (signal, batch) {
+Monitor.prototype._connectionStreamsGetChanges = function (batch) {
+  batch = this.startBatch('connectionStreamsGetChanges', batch);
   var previousStreamsData = {};
   var previousStreamsMap = {}; // !! only used to get back deleted streams..
   var created = [], modified = [], modifiedPreviousProperties = {}, trashed = [], deleted = [];
@@ -348,6 +371,10 @@ Monitor.prototype._connectionStreamsGetChanges = function (signal, batch) {
   });
 
   this.connection.fetchStructure(function (error, result) {
+    if (error) {
+      batch.done('connectionStreamsGetChanges fetchStructure error');
+      return;
+    }
     _.each(result, function (rootStream) {
       checkChangedStatus(rootStream);
     });
@@ -356,12 +383,12 @@ Monitor.prototype._connectionStreamsGetChanges = function (signal, batch) {
       deleted.push(previousStreamsMap[streamId]);
     });
 
-    this._fireEvent(signal,
+    this._fireEvent(Messages.ON_STRUCTURE_CHANGE,
       { created : created, trashed : trashed, modified: modified, deleted: deleted,
         modifiedPreviousProperties: modifiedPreviousProperties}, batch);
 
     this._onFilterChange({signal : Filter.Messages.STRUCTURE_CHANGE}, batch);
-
+    batch.done('connectionStreamsGetChanges');
   }.bind(this));
 };
 
@@ -419,9 +446,14 @@ Monitor.prototype._connectionEventsGetAllAndCompare = function (signal, extracon
 
     var toremove = _.clone(this._events.active);
 
+    batch = this.startBatch('connectionEventsGetAllAndCompare:online', batch);
     this.connection.events.get(this.filter.getData(true, EXTRA_ALL_EVENTS),
       function (error, events) {
-        if (error) { this._fireEvent(Messages.ON_ERROR, error); }
+        if (error) {
+          this._fireEvent(Messages.ON_ERROR, error, batch);
+          batch.done('connectionEventsGetAllAndCompare:online error');
+          return;
+        }
         _.each(events, function (event) {
           if (this._events.active[event.id]) {  // already known event we don't care
             delete toremove[event.id];
@@ -435,6 +467,7 @@ Monitor.prototype._connectionEventsGetAllAndCompare = function (signal, extracon
         }.bind(this));
         result.leave = _.values(toremove); // unmatched events are to be removed
         this._fireEvent(signal, result, batch);
+        batch.done('connectionEventsGetAllAndCompare:online');
       }.bind(this));
   }
 };

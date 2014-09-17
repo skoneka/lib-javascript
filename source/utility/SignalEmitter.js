@@ -96,9 +96,9 @@ SignalEmitter.prototype.startBatch = function (name, orHookOnBatch) {
   }
   name = orHookOnBatch.name + '/' + name;
   var batch = new Batch(name, this);
-  orHookOnBatch.waitForMeToFinish(name);
+  orHookOnBatch.waitForMeToFinish(name + ':hook');
   batch.addOnDoneListener(name, function () {
-    orHookOnBatch.done(name);
+    orHookOnBatch.done(name + ':hook');
   });
   return batch;
 };
@@ -107,9 +107,12 @@ var Batch = function (name, owner) {
   this.owner = owner;
   this.name = name || 'x';
   this.id = owner._signalEmitterName + SignalEmitter.batchSerial++;
-  this.waitFor = 1;
+  this.waitFor = 0;
+  this.history = [];
   this.doneCallbacks = {};
+  this.waitForMeToFinish(this.name);
   this.owner._fireEvent(SignalEmitter.Messages.BATCH_BEGIN, this.id, this);
+
 };
 
 
@@ -121,26 +124,36 @@ var Batch = function (name, owner) {
  * @param callback
  */
 Batch.prototype.addOnDoneListener = function (key, callback) {
+  this.checkAlreadyDone('addOnDoneListener(' + key + ')');
   this.doneCallbacks[key] = callback;
 };
 
-Batch.prototype.waitForMeToFinish = function () {
+Batch.prototype.waitForMeToFinish = function (key) {
+  this.checkAlreadyDone('waitForMeToFinish(' + key + ')');
   this.waitFor++;
+  this.history.push({wait: key, waitFor: this.waitFor});
   return this;
 };
 
 Batch.prototype.done = function (key) {
-  key = key || '';
+  this.checkAlreadyDone('done(' + key + ')');
+  key = key || '--';
   this.waitFor--;
+  this.history.push({done: key, waitFor: this.waitFor});
   if (this.waitFor === 0) {
-    _.each(this.doneCallbacks, function (callback) { callback(); });
+
+    this.doneTriggered = true;
+    _.each(this.doneCallbacks, function (callback) {
+      callback();
+    });
+    delete this.doneCallbacks; // prevents memory leaks
     this.owner._fireEvent(SignalEmitter.Messages.BATCH_DONE, this.id, this);
-  }
-  if (this.waitFor < 0) {
-    var msg = 'Batch ' + this.name + ', ' + this.id +
-      ' called done() to much last: ' + key;
-    console.error(msg);
-    throw new Error(msg);
   }
 };
 
+Batch.prototype.checkAlreadyDone = function (addon) {
+  if (this.doneTriggered) {
+    var msg = 'Batch ' + this.name + ', ' + this.id + ' called ' + addon + '  when already done';
+    throw new Error(msg + '     ' + JSON.stringify(this.history));
+  }
+};

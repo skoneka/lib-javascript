@@ -221,7 +221,7 @@ Filter.prototype.set = function (keyValueMap, batch) {
     this._setValue(key, value, batch);
   }.bind(this));
 
-  batch.done();
+  batch.done('set');
 };
 
 /**
@@ -231,7 +231,7 @@ Filter.prototype.set = function (keyValueMap, batch) {
  * @private
  */
 Filter.prototype._setValue = function (key, newValue, batch) {
-  var waitForMe = batch ? batch.waitForMeToFinish() : null;
+  batch = this.startBatch('setValue:' + key, batch);
 
   if (key === 'limit') {
     this._settings.limit = newValue;
@@ -246,7 +246,7 @@ Filter.prototype._setValue = function (key, newValue, batch) {
       this._settings.state = newValue;
       this._fireFilterChange(Messages.STATE_CHANGE, {state: newValue}, batch);
     }
-    if (waitForMe) { waitForMe.done(); }
+    batch.done('setValue:' + key);
     return;
   }
 
@@ -259,7 +259,7 @@ Filter.prototype._setValue = function (key, newValue, batch) {
       this._settings.toTime = newValue[1];
       this._fireFilterChange(Messages.DATE_CHANGE, this.timeFrameST, batch);
     }
-    if (waitForMe) { waitForMe.done(); }
+    batch.done('setValue:' + key);
     return;
   }
 
@@ -277,11 +277,11 @@ Filter.prototype._setValue = function (key, newValue, batch) {
     // TODO check that this stream is valid
     this._settings.streams = newValue;
     this._fireFilterChange(Messages.STREAMS_CHANGE, this.streams, batch);
-    if (waitForMe) { waitForMe.done(); }
+    batch.done('setValue:' + key);
     return;
   }
 
-  if (waitForMe) { waitForMe.done(); }
+  batch.done('setValue:' + key);
   throw new Error('Filter has no property : ' + key);
 };
 
