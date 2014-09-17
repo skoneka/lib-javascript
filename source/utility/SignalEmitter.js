@@ -86,46 +86,61 @@ SignalEmitter.batchSerial = 0;
  *
  * @param batchName Name of the new batch
  * @param orHookOnBatch Existing batch to hook on ("superbatch")
- * @return A batch object (call `stop()` when done)
+ * @return A batch object (call `done()` when done)
  * @private
  */
-SignalEmitter.prototype.startBatch = function (batchName, orHookOnBatch) {
-  if (orHookOnBatch && orHookOnBatch.sender === this) { // test if this batch comes form me
-    return orHookOnBatch.waitForMeToFinish();
+SignalEmitter.prototype.startBatch = function (name, orHookOnBatch) {
+
+  if (! orHookOnBatch) {
+    return new Batch(name, this);
   }
-  var batch = {
-    sender : this,
-    batchName : batchName || '',
-    id : this._signalEmitterName + SignalEmitter.batchSerial++,
-    filter : this,
-    waitFor : 1,
-    doneCallbacks : {},
-
-    waitForMeToFinish : function () {
-      batch.waitFor++;
-      return this;
-    },
-
-    /**
-     * listener are stored in key/map fashion, so addOnDoneListener('bob',..)
-     * may be called several time, callback 'bob', will be done just once
-     * @param key a unique key per callback
-     * @param callback
-     */
-    addOnDoneListener : function (key, callback) {
-      this.doneCallbacks[key] = callback;
-    },
-    done : function (name) {
-      this.waitFor--;
-      if (this.waitFor === 0) {
-        _.each(this.doneCallbacks, function (callback) { callback(); });
-        this.filter._fireEvent(SignalEmitter.Messages.BATCH_DONE, this.id, this);
-      }
-      if (this.waitFor < 0) {
-        console.error('This batch has been done() to much :' + name);
-      }
-    }
-  };
-  this._fireEvent(SignalEmitter.Messages.BATCH_BEGIN, batch.id, batch);
+  name = orHookOnBatch.name + '/' + name;
+  var batch = new Batch(name, this);
+  orHookOnBatch.waitForMeToFinish(name);
+  batch.addOnDoneListener(name, function () {
+    orHookOnBatch.done(name);
+  });
   return batch;
 };
+
+var Batch = function (name, owner) {
+  this.owner = owner;
+  this.name = name || 'x';
+  this.id = owner._signalEmitterName + SignalEmitter.batchSerial++;
+  this.waitFor = 1;
+  this.doneCallbacks = {};
+  this.owner._fireEvent(SignalEmitter.Messages.BATCH_BEGIN, this.id, this);
+};
+
+
+
+/**
+ * listener are stored in key/map fashion, so addOnDoneListener('bob',..)
+ * may be called several time, callback 'bob', will be done just once
+ * @param key a unique key per callback
+ * @param callback
+ */
+Batch.prototype.addOnDoneListener = function (key, callback) {
+  this.doneCallbacks[key] = callback;
+};
+
+Batch.prototype.waitForMeToFinish = function () {
+  this.waitFor++;
+  return this;
+};
+
+Batch.prototype.done = function (key) {
+  key = key || '';
+  this.waitFor--;
+  if (this.waitFor === 0) {
+    _.each(this.doneCallbacks, function (callback) { callback(); });
+    this.owner._fireEvent(SignalEmitter.Messages.BATCH_DONE, this.id, this);
+  }
+  if (this.waitFor < 0) {
+    var msg = 'Batch ' + this.name + ', ' + this.id +
+      ' called done() to much last: ' + key;
+    console.error(msg);
+    throw new Error(msg);
+  }
+};
+

@@ -79,6 +79,7 @@ module.exports = function (pack)  {
   xhr.onreadystatechange = function () {
     detail += ' xhrstatus:' + xhr.statusText;
     if (xhr.readyState === 0) {
+      pack.callBackSent = 'error in request';
       pack.error({
         message: 'pryvXHRCall unsent',
         detail: detail,
@@ -106,6 +107,12 @@ module.exports = function (pack)  {
         headers : parseResponseHeaders(xhr.getAllResponseHeaders())
       };
 
+      if (pack.callBackSent) {
+        console.error('xhr.onreadystatechange called with status==4 even if callback is done:' +
+          pack.callBackSent);
+        return;
+      }
+      pack.callBackSent = 'success';
       pack.success(result, resultInfo);
     }
   };
@@ -124,6 +131,7 @@ module.exports = function (pack)  {
   try {
     xhr.send(pack.params);
   } catch (e) {
+    pack.callBackSent = 'error sending request';
     return pack.error({
       message: 'pryvXHRCall unsent',
       detail: detail,
