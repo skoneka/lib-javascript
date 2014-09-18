@@ -2,7 +2,7 @@ var _ = require('underscore'),
   SignalEmitter = require('./utility/SignalEmitter.js'),
   Filter = require('./Filter.js');
 
-var EXTRA_ALL_EVENTS = {state : 'default', modifiedSince : -100000000 };
+var EXTRA_ALL_EVENTS = {state : 'all', modifiedSince : -100000000 };
 var REALLY_ALL_EVENTS =  EXTRA_ALL_EVENTS;
 REALLY_ALL_EVENTS.fromTime = -1000000000;
 
@@ -269,9 +269,10 @@ Monitor.prototype._connectionEventsGetChanges = function (batch) {
 
 
   var filterWith = this.filter.getData(true, options);
-  if (this.ensureFullCache) { filterWith = REALLY_ALL_EVENTS; }
-  filterWith.modifiedSince = this.lastSynchedST;
-  filterWith.state = 'all';
+  if (this.ensureFullCache) {
+    filterWith = REALLY_ALL_EVENTS;
+    filterWith = _.extend(filterWith, options);
+  }
   this.lastSynchedST = this.connection.getServerTime();
 
   var result = { created : [], trashed : [], modified: []};
