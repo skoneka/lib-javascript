@@ -94,6 +94,9 @@ Event.prototype.getPicturePreview = function (width, height) {
   return url;
 };
 
+Event.prototype.isRunning = function () {
+  return !!('duration' in this && !this.duration && this.duration !== 0);
+};
 /**
  * TODO document
  */

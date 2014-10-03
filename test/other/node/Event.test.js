@@ -55,6 +55,23 @@ var testEvent = function (preFetchStructure) {
     var event = new pryv.Event(connection,  eventData);
     var eventSerial = connection.serialId + '>E' + (connection._eventSerialCounter - 1);
 
+    describe('isRunning()', function () {
+      it('should return false when duration key is not present', function (done) {
+        delete event.duration;
+        event.isRunning().should.equal(false);
+        done();
+      });
+      it('should return false when duration is set to non null value', function (done) {
+        event.duration = 123;
+        event.isRunning().should.equal(false);
+        done();
+      });
+      it('should return true when duration is set null', function (done) {
+        event.duration = null;
+        event.isRunning().should.equal(true);
+        done();
+      });
+    });
 
     describe('various methods', function ()  {
       it('.getData() generate correct JSONdata', function (done) {
