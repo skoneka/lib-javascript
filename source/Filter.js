@@ -193,7 +193,7 @@ Filter.prototype.getData = function (ignoreNulls, withDelta) {
     _.extend(result, withDelta);
   }
   _.each(_.keys(result), function (key) {
-    if (result[key] === null) { delete result[key]; }
+    if ((result[key] === null)) { delete result[key]; }
   });
   return result;
 };
@@ -270,6 +270,7 @@ Filter.prototype._setValue = function (key, newValue, batch) {
 
         return;
       }
+      newValue = null;
     } else if (! _.isArray(newValue)) {
       newValue = [newValue];
     }
