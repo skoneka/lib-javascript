@@ -74,7 +74,7 @@ module.exports = function (grunt) {
         }
       },
       coverage: {
-        src: ['test/**/*x.test.js'],
+        src: ['test/**/*.test.js'],
         options: {
           quiet: true,
           reporter: 'html-cov',

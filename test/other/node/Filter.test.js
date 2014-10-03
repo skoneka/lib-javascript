@@ -9,6 +9,18 @@ var testFilter = function (preFetchStructure) {
 
   var localEnabledStr = preFetchStructure ? ' + LocalStorage' : '';
 
+
+  describe('Filter getData()' + localEnabledStr, function () {
+    it('undefined streamIds is considered as null', function (done) {
+      var settings =  {streams : ['test'], state: 'all', modifiedSince: 1};
+      var filter = new pryv.Filter(settings);
+
+      filter.streamsIds = undefined;
+      filter.getData().hasOwnProperty('streams').should.equal(false);
+      done();
+    });
+  });
+
   describe('Filter ' + localEnabledStr, function () {
 
     it('Create a new filter with settings', function (done) {
@@ -22,6 +34,7 @@ var testFilter = function (preFetchStructure) {
       filter.timeFrameST = [0, 1];
       filter.getData().fromTime.should.equal(0);
       filter.getData().toTime.should.equal(1);
+
 
       done();
     });
@@ -154,6 +167,7 @@ var testFilter = function (preFetchStructure) {
     });
 
   });
+
 };
 
 
