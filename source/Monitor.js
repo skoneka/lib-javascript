@@ -5,6 +5,7 @@ var _ = require('underscore'),
 var EXTRA_ALL_EVENTS = {state : 'all', modifiedSince : -100000000 };
 var REALLY_ALL_EVENTS =  EXTRA_ALL_EVENTS;
 REALLY_ALL_EVENTS.fromTime = -1000000000;
+REALLY_ALL_EVENTS.toTime = 10000000000;
 
 var GETEVENT_MIN_REFRESH_RATE = 2000;
 
