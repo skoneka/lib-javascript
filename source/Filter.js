@@ -88,6 +88,9 @@ Filter.prototype.matchEvent = function (event) {
 
     if (this._settings.streams.indexOf(event.streamId) < 0) {
       var found = false;
+      if (!event.stream) {
+        return false;
+      }
       event.stream.ancestors.forEach(function (ancestor) {
         if (this._settings.streams.indexOf(ancestor.id) >= 0) {
           if (this._settings.state !== 'all') {
