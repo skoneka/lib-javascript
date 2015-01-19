@@ -37,6 +37,18 @@ module.exports = function (grunt) {
       }
     },
 
+    jsdoc : {
+      dist : {
+        src: [ 'README.md', 'source/**/*.*' ],
+        options : {
+          destination : currentDistPath + 'docs',
+          private: false,
+          plugins: ['plugins/markdown'],
+          markdown: {parser: 'evilstreak'}
+        }
+      }
+    },
+
     copy: {
       assetsToDist: {
         files: [
@@ -83,18 +95,6 @@ module.exports = function (grunt) {
       }
     },
 
-    jsdoc : {
-      dist : {
-        src: [ 'README.md', 'source/**/*.*' ],
-        options : {
-          destination : 'doc',
-          private: false,
-          plugins: ['plugins/markdown'],
-          markdown: {parser: 'evilstreak'}
-        }
-      }
-    },
-
     watch: {
       all: {
         files: [ 'source/**/*.*', 'test/**/*.*' ],
@@ -103,7 +103,7 @@ module.exports = function (grunt) {
     }
   });
 
-  grunt.registerTask('default', [ 'jshint', 'browserify', 'copy', 'mochaTest', 'jsdoc' ]);
+  grunt.registerTask('default', [ 'jshint', 'browserify', 'jsdoc', 'copy', 'mochaTest' ]);
   grunt.registerTask('test', [ 'jshint', 'browserify', 'copy', 'mochaTest' ]);
   grunt.registerTask('record', [ 'jshint', 'browserify', 'copy', 'env:record', 'mochaTest' ]);
 };

@@ -19,7 +19,7 @@ describe('Connection.events', function () {
   describe('get()', function () {
     it('must return the last 20 non-trashed Event objects (sorted descending) by default',
         function (done) {
-      connection.events.get({}, function (error, events) {
+      connection.events.get({}, function (err, events) {
         should.exist(events);
         events.length.should.equal(20);
         var lastTime = Number.POSITIVE_INFINITY;
@@ -36,7 +36,7 @@ describe('Connection.events', function () {
 
     it('must return events matching the given filter', function (done) {
       var filter = { limit: 10, types: ['note/txt'] };
-      connection.events.get(filter, function (error, events) {
+      connection.events.get(filter, function (err, events) {
         events.length.should.equal(filter.limit);
         events.forEach(function (event) {
           filter.types.indexOf(event.type).should.not.equal(-1);
@@ -47,16 +47,16 @@ describe('Connection.events', function () {
 
     it('must return an error if the given filter contains an invalid parameter', function (done) {
       var filter = {fromTime: 'toto'};
-      connection.events.get(filter, function (error, events) {
-        should.exist(error);
+      connection.events.get(filter, function (err, events) {
+        should.exist(err);
         should.not.exist(events);
         done();
       });
     });
 
     it('must accept a null filter', function (done) {
-      connection.events.get(null, function (error, events) {
-        should.not.exist(error);
+      connection.events.get(null, function (err, events) {
+        should.not.exist(err);
         should.exist(events);
         done();
       });
@@ -64,7 +64,7 @@ describe('Connection.events', function () {
 
     it('must return an empty array if there are no events', function (done) {
       var filter = {fromTime: 10, toTime: 11};
-      connection.events.get(filter, function (error, events) {
+      connection.events.get(filter, function (err, events) {
         events.should.be.instanceOf(Array);
         events.length.should.equal(0);
         done();
@@ -80,8 +80,8 @@ describe('Connection.events', function () {
     };
 
     it('must accept an event-like object and return an Event object', function (done) {
-      connection.events.create(eventData, function (error, event) {
-        should.not.exist(error);
+      connection.events.create(eventData, function (err, event) {
+        should.not.exist(err);
         should.exist(event);
         event.should.be.instanceOf(Pryv.Event);
         done();
@@ -93,7 +93,7 @@ describe('Connection.events', function () {
     it('must accept attachment only with Event object');
 
     it('must return events with default values for unspecified properties', function (done) {
-      connection.events.create(eventData, function (error, event) {
+      connection.events.create(eventData, function (err, event) {
         should.exist(event.id);
         should.exist(event.time);
         should.exist(event.tags);
@@ -108,8 +108,8 @@ describe('Connection.events', function () {
           content: 'I am a devil event which is missing streamId',
           type: 'note/txt'
         };
-        connection.events.create(invalidData, function (error, event) {
-          should.exist(error);
+        connection.events.create(invalidData, function (err, event) {
+          should.exist(err);
           should.not.exist(event);
           done();
         });
@@ -122,7 +122,7 @@ describe('Connection.events', function () {
   });
 
 
-  describe('start( )', function () {
+  describe('start()', function () {
 
     // make sure that testing stream is singleActivity
 
@@ -140,7 +140,7 @@ describe('Connection.events', function () {
   });
 
 
-  describe('stopEvent ( ) ', function () {
+  describe('stopEvent() ', function () {
 
     var eventData = {streamId : 'activity', type : 'activity/plain', description: 'A'};
 
@@ -148,7 +148,7 @@ describe('Connection.events', function () {
     before(function (done) {
       connection.events.start(eventData, function (err, evt) {
         event = evt;
-        done();
+        done(err);
       });
     });
 
@@ -163,7 +163,7 @@ describe('Connection.events', function () {
 
   });
 
-  describe('stopStream( )', function () {
+  describe('stopStream()', function () {
 
     var eventData = {streamId : 'activity', type : 'activity/plain', description: 'B'};
 
@@ -171,7 +171,7 @@ describe('Connection.events', function () {
     before(function (done) {
       connection.events.start(eventData, function (err, evt) {
         event = evt;
-        done();
+        done(err);
       });
     });
 
@@ -191,9 +191,7 @@ describe('Connection.events', function () {
 
   });
 
-  // TODO: trash() should be renamed to "delete()"
-  // (you can temporarily keep "trash()" for backwards-compat)
-  describe('trash() (will be renamed to delete())', function () {
+  describe('delete()', function () {
     var eventToTrash,
         eventTrashed;
 
@@ -205,17 +203,16 @@ describe('Connection.events', function () {
         streamId: 'diary',
         type: 'note/txt'
       };
-      connection.events.create(eventToTrash, function (error, event) {
-        if (error) { done(error); }
+      connection.events.create(eventToTrash, function (err, event) {
         eventToTrash = event;
-        done();
+        done(err);
       });
     });
 
     it('must accept an event-like object and return an Event object flagged as trashed',
         function (done) {
-      connection.events.trash(eventToTrash, function (error, updatedEvent) {
-        should.not.exist(error);
+      connection.events.delete(eventToTrash, function (err, updatedEvent) {
+        should.not.exist(err);
         should.exist(updatedEvent);
         updatedEvent.should.be.instanceOf(Pryv.Event);
         updatedEvent.trashed.should.equal(true);
@@ -231,16 +228,15 @@ describe('Connection.events', function () {
         streamId: 'diary',
         type: 'note/txt'
       };
-      connection.events.create(eventTrashed, function (error, event) {
-        if (error) {done(error); }
+      connection.events.create(eventTrashed, function (err, event) {
         eventTrashed = event;
-        done();
+        done(err);
       });
     });
 
     it('must return null when deleting an already-trashed event', function (done) {
-      connection.events.trash(eventTrashed, function (error, updatedEvent) {
-        should.not.exist(error);
+      connection.events.delete(eventTrashed, function (err, updatedEvent) {
+        should.not.exist(err);
         should.not.exist(updatedEvent);
         done();
       });
@@ -253,8 +249,8 @@ describe('Connection.events', function () {
     it('must accept an array of Event objects');
 
     it('must return an error when the specified event does not exist', function (done) {
-      connection.events.trash({id: 'unexistant-id-54s65df4'}, function (error, updatedEvent) {
-        should.exist(error);
+      connection.events.delete({id: 'unexistant-id-54s65df4'}, function (err, updatedEvent) {
+        should.exist(err);
         should.not.exist(updatedEvent);
         done();
       });
@@ -271,18 +267,17 @@ describe('Connection.events', function () {
     // TODO: same comment as above
     before(function (done) {
       eventToUpdate = {content: 'I am going to be updated', streamId: 'diary', type: 'note/txt'};
-      connection.events.create(eventToUpdate, function (error, event) {
-        if (error) {done(error); }
+      connection.events.create(eventToUpdate, function (err, event) {
         eventToUpdate = event;
-        done();
+        done(err);
       });
     });
 
     it('must accept an Event object and return the updated event', function (done) {
       var newContent = 'I was updated';
       eventToUpdate.content = newContent;
-      connection.events.update(eventToUpdate, function (error, updatedEvent) {
-        should.not.exist(error);
+      connection.events.update(eventToUpdate, function (err, updatedEvent) {
+        should.not.exist(err);
         should.exist(updatedEvent);
         updatedEvent.should.be.instanceOf(Pryv.Event);
         updatedEvent.content.should.equal(newContent);

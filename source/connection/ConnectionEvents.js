@@ -80,7 +80,7 @@ ConnectionEvents.prototype.update = function (event, callback) {
  * @param {Event | eventId} event
  * @param {Connection~requestCallback} callback
  */
-ConnectionEvents.prototype.trash = function (event, callback) {
+ConnectionEvents.prototype.delete = ConnectionEvents.prototype.trash = function (event, callback) {
   this.trashWithId(event.id, callback);
 };
 

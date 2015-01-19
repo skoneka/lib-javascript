@@ -115,7 +115,8 @@ ConnectionStreams.prototype.update = function (streamData, callback) {
  * @param callback
  * @param mergeEventsWithParent
  */
-ConnectionStreams.prototype.delete = function (streamData, callback, mergeEventsWithParent) {
+ConnectionStreams.prototype.delete = ConnectionStreams.prototype.trash =
+    function (streamData, callback, mergeEventsWithParent) {
   var id;
   if (streamData && streamData.id) {
     id = streamData.id;

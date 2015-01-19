@@ -12,18 +12,11 @@ Javascript library (browser & Node.js) to access and manipulate Pryv users data.
 - Browser: `<script type="text/javascript" src="http://api.pryv.com/lib-javascript/latest/pryv.js"></script>`
 - Node.js: `npm install pryv`
 
-### Examples
+### Docs
 
-```
-// set connection to the API
-var connection = new pryv.Connection({username: '{username}', auth: '{token}'});
+- [Getting started guide](http://pryv.github.io/getting-started/javascript/)
+- [JS docs](http://pryv.github.io/lib-javascript/docs/)
 
-// create a event
-var eventData = { streamId : 'diary', type: 'note/txt', content: 'I track, therefore I am.' };
-connection.events.create(eventData, function(err, event) { 
-   console.log('Event created: ' + event.id);
-});
-```
 
 ## Contribute
 
@@ -36,9 +29,9 @@ Read, then run `./scripts/setup-environment-dev.sh`
 `grunt`:
 
 - applies code linting (with JSHint)
+- builds documentation into `dist/{version}/docs`
 - browserifies the lib into `dist/{version}` as well as `dist/latest` for browser standalone distribution
 - runs the tests, outputting coverage info into `test/coverage.html`
-- builds documentation into `doc`
 
 Also: `grunt test` & `grunt watch` (runs tests on changes)
 

@@ -76,7 +76,7 @@ Event.prototype.attachmentUrl = function (attachment) {
  *
  * @param {Connection~requestCallback} callback
  */
-Event.prototype.trash = function (callback) {
+Event.prototype.delete = Event.prototype.trash = function (callback) {
   this.connection.events.trash(this, callback);
 };
 /**
