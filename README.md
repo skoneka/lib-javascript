@@ -15,7 +15,7 @@ Javascript library (browser & Node.js) to access and manipulate Pryv users data.
 ### Docs
 
 - [Getting started guide](http://pryv.github.io/getting-started/javascript/)
-- [JS docs](http://pryv.github.io/lib-javascript/docs/)
+- [JS docs](http://pryv.github.io/lib-javascript/latest/docs/)
 
 
 ## Contribute
