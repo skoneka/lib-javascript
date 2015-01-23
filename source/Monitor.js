@@ -297,9 +297,16 @@ Monitor.prototype._connectionEventsGetChanges = function (batch) {
               this._events.active[event.id] = event;
             }
           } else {
-            if (!event.trashed && event.stream && !event.stream.trashed) {
-              result.created.push(event);
-              this._events.active[event.id] = event;
+            if (this.ensureFullCache) { // can test streams  state (trashed)
+              if (!event.trashed && event.stream && !event.stream.trashed) {
+                result.created.push(event);
+                this._events.active[event.id] = event;
+              }
+            } else {  // cannot test stream state
+              if (!event.trashed) {
+                result.created.push(event);
+                this._events.active[event.id] = event;
+              }
             }
           }
         }
