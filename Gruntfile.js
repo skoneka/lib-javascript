@@ -42,9 +42,8 @@ module.exports = function (grunt) {
         src: [ 'README.md', 'source/**/*.*' ],
         options : {
           destination : currentDistPath + 'docs',
-          private: false,
-          plugins: ['plugins/markdown'],
-          markdown: {parser: 'evilstreak'}
+          configure: 'doc-src/jsdoc.conf',
+          private: false
         }
       }
     },
