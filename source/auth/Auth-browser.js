@@ -7,7 +7,31 @@ var _ = require('underscore');
 
 //--------------------- access ----------//
 /**
- * @class Auth
+ * @class Auth (browser)
+ * # Web app (Javascript)
+ *
+ * Obtaining an access token for your web app.
+ *
+ *
+ * ## What you need
+ *
+ * * make sure you got the [initial requirements](#intro-initial-requirements) ready.
+ *  * include the following script in your page:
+ *  - From github:
+ *  ```html
+ *  <script type="text/javascript" src="//pryv.github.io/lib-javascript/latest/pryv.js"></script>
+ *  ```
+ *  - or the optimized CloudFront cache: (recommended)
+ *  ```html
+ *  <script type="text/javascript" src="//dlw0lofo79is5.cloudfront.net/lib-javascript/latest/pryv.js"></script>
+ *  ```
+ *  * construct a `settings` JSON object
+ *  * call `Pryv.Auth.setup(settings)`
+ *
+ *  For a more fleshed-out example look at the source code of [http://jsfiddle.net/pryv/fr4e834p/](http://jsfiddle.net/pryv/fr4e834p/).
+ *
+ *  Or make your own tests from the page:
+ *  [https://sw.pryv.li:2443/access/test.html](https://sw.pryv.li:2443/access/test.html)
  * */
 var Auth = function () {
 };
@@ -468,12 +492,134 @@ Auth.prototype.loginWithCookie = function (settings) {
 };
 
 
-
+/**
+ * Called when user needs to sign-in
+ * @callback Auth~BrowserSetupNeedSignin
+ * @param {string} popupUrl Url of the authentication page to present to the user
+ * @param {string} pollUrl  The URL to poll regularly in the background to monitor the signin process.
+ * @param {number} pollRateMs rate in millisecond of the polling to apply on pollUrl
+ */
 
 
 /**
+ * Called when user successfully signed-in  (or sign out)
+ * @callback Auth~BrowserSetupAccepted
+ * @param {string} username
+ * @param {string} appToken
+ * @param {string} languageCode (2 characters ISO 639-1 Code)
+ */
+
+/**
+ * Called when user successfully signed-in
+ * @callback Auth~BrowserSetupSignedIn
+ * @param {Connection} pryv connection
+ * @param {string} languageCode (2 characters ISO 639-1 Code)
+ */
+
+
+/**
+ * Called when the user refuse to grant the requested permissions.ss
+ * @callback Auth~BrowserSetupRefuse
+ * @param {string} reason  Technical information on how the user refused (not to be displayed).
+ */
+
+/**
+ * Called when an error interupting the signup process occurs.
+ * @callback Auth~BrowserSetupError
+ * @param {Object} error
+ * @param {string} error.id
+ * @param {string} error.message
+ */
+
+/**
  *
- * @param settings
+ * Popup or URL Callback
+ *
+ *
+ *  During the authentication process, we need to open a PrYv access web page in a separate window. This is in order to secure personal user's information.
+ *
+ *  This window can be opened in:
+ *
+ *  - A popup, leaving the actual window open behind. This should be more comfortable on desktop browsers.
+ *  - In place of the actual window, the user goes thru the process and come back to the URL you set at the end of the process.
+ *
+ *
+ *  #### * Popup
+ *
+ *  If you want the authorization process to take place in a popup just set the `returnURL` settings to `false`.
+ *
+ *  #### * Self or Auto
+ *
+ *  If you want the authorization process to take place in the same windows, returning to this same exact url you can use `self[extra_params]<trailer>` or `auto[extra_params]<trailer>`.
+ *
+ *  When the user returns to this same page, the pryv-access-sdk will parse `prYv` parameters.
+ *
+ *  * command
+ *  - **self**: Use the current page as returnURL value
+ *  - **auto**: (prefered method) Use a returnURL when a mobile or tablet browser is detected and a popupOtherwise
+ *  * parameters
+ *  - **&lt;trailer>**: one of `?`, a `#` or a `&`
+ *  - **[extra_parms]**: Use this space (uri_encoded) as a custom payload for the returning user.
+ *
+ *  EXAMPLES
+ *
+ *  * with `https://mysite.com/page.php` as source URL.
+ *  - **self#** -> `https://mysite.com/page.php#prYvkey=JDJKhadja&prYvstatus=...`
+ *  - **self?** -> `https://mysite.com/page.php?prYvkey=JDJKhadja&prYvstatus=...`
+ *  - **self?mycustom=A&** -> `https://mysite.com/page.php?mycustom=A&prYvkey=JDJKh...`
+ *  - **auto?mobile=1&** (if mobile) -> `https://mysite.com/page.php?mobile=1&prYvkey=JD...`
+ *
+ *  * with `https://mysite.com/page.php?mycustom=1` as source URL.
+ *  - **self&** -> `https://mysite.com/page.php?mycustom=1&prYvk...`
+ *
+ *  Make your own tests from the [test page](webapp.test).
+ *
+ *
+ *  #### * Custom
+ *
+ *  Set the return URL to your own page such as
+ *
+ *  https://www.mysite.com/end-of-Pryv.Access-process.php?
+ *
+ *  **Attention!!** The url submitted *must* end with a `?`, a `#` or a `&`
+ *  Returned status will be appended to this URL.
+ *
+ *
+ *  #### Examples of return URL
+ *
+ *  * ACCEPTED
+ *
+ *    https://www.mysite.com/end-of-Pryv.Access-process.php?
+ *    prYvkey=GSbdasjgdv&prYvstatus=ACCEPTED&prYvusername=yacinthe&prYvtoken=VVhjDJDDG
+ *
+ *  * REFUSED
+ *
+ *    https://www.mysite.com/end-of-Pryv.Access-process.php?
+ *    prYvkey=GSbdasjgdv&prYvstatus=REFUSED&prYvmessage=refused+by+user
+ *
+ *  * ERROR
+ *
+ *    https://www.mysite.com/end-of-Pryv.Access-process.php?
+ *    prYvkey=GSbdasjgdv&prYvstatus=ERROR&prYvid=INTERNAL_ERROR&prYvmessage=...
+ *
+ * @typedef {string} Auth~SetupReturnUrl
+ */
+
+/**
+ *
+ *
+ * @param {Object} settings
+ * @param {string} settings.requestingAppId` Unique. Given by PrYv identifier for this app. It will be the key for the requested set of permission after user agreement.
+ * @param {string} settings.languageCode (2 characters ISO 639-1 Code): Optional. If known the current language used by the user. This will influence the signin and register interface language.
+ * @param {Object} settings.requestedPermissions (object): The requested set of permissions to access user's streams.
+ * @param {Auth~SetupReturnUrl} [settings.returnURL] (url or 'auto<extra>'): If you don't want (or can't have) the popup signin-process and prefer set a returnURL. This URL will be called at the en of the SIGNIN process.This provides a better user experience on mobile devices. Details: [settings.returnURL](#webapp.returnURL)
+ * @param {string} [settings.spanButtonID]. The id of a `<span />` element in the DOM of your web page. Details: [settings.spanButtonID](#webapp.spanButtonID)
+ * @param {Object} settings.callbacks (functionS): called on each step of the sign-in process. Most of them are optional if you decided to rely on PrYv signin Button. All are optional excepted "accepted". Details: [settings.callbacks](#webapp.callbacks)
+ * @param {Function} [settings.callbacks.initialization] (function()): When the initialization process is started. You may display a "loading" animation or for the user.
+ * @param {Auth~BrowserSetupNeedSignin} [settings.callbacks.needSignin] Called when user needs to sign-in
+ * @param {Auth~BrowserSetupAccepted} [settings.callbacks.accepted] Called when the signin process succeed and the permissions requested a granted. It's also triggered after a logout action with `(false,false,false)` as parameters.
+ * @param {Auth~BrowserSetupSignedIn} [settings.callbacks.signedIn] Alternative to **accepted** callback.
+ * @param {Auth~BrowserSetupRefuse} [settings.callbacks.refused] called when the user refuse to grant the requested permissions.
  * @returns {Connection} the connection managed by Auth.. A new one is created each time setup is
  * called.
  */
