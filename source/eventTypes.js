@@ -1,6 +1,4 @@
-
 var utility = require('./utility/utility');
-var eventTypes = module.exports = { };
 
 // staging cloudfront https://d1kp76srklnnah.cloudfront.net/dist/data-types/event-extras.json
 // staging direct https://sw.pryv.li/dist/data-types/event-extras.json
@@ -8,83 +6,64 @@ var eventTypes = module.exports = { };
 var HOSTNAME = 'd1kp76srklnnah.cloudfront.net';
 var PATH = '/dist/data-types/';
 
-
 /**
- * @private
- * @param fileName
- * @param callback
+ * Event types directory data.
+ * @link http://api.pryv.com/event-types/
  */
-function _getFile(fileName, callback) {
-  utility.request({
-    method : 'GET',
-    host : HOSTNAME,
-    path : PATH + fileName,
-    port : 443,
-    ssl : true,
-    withoutCredentials: true,
-    success : function (result) { callback(null, result); },
-    error : function (error) { callback(error, null); }
-  });
-}
+var eventTypes = module.exports = {};
 
 /**
- * @link http://api.pryv.com/event-typez.html#about-json-file
- * @param {eventTypes~contentCallback} callback
+ * @link http://api.pryv.com/event-types/#json-file
+ * @param {Function} callback
  */
 eventTypes.loadHierarchical = function (callback) {
-  var myCallback = function (error, result) {
+  requestFile('hierarchical.json', function (err, result) {
     this._hierarchical = result;
-    callback(error, result);
-  };
-  _getFile('hierarchical.json', myCallback.bind(this));
+    callback(err, result);
+  }.bind(this));
 };
 
 eventTypes.hierarchical = function () {
-  if (!this._hierarchical) {
-    throw new Error('Call eventTypes.loadHierarchical, before accessing hierarchical');
+  if (! this._hierarchical) {
+    throw new Error('Load data via loadHierarchical() first');
   }
   return this._hierarchical;
 };
 
-
-
 /**
- * @link http://api.pryv.com/event-typez.html#about-json-file
- * @param {eventTypes~contentCallback} callback
+ * @link http://api.pryv.com/event-types/#json-file
+ * @param {Function} callback
  */
-
 eventTypes.loadFlat = function (callback) {
-  var myCallback = function (error, result) {
+  requestFile('flat.json', function (err, result) {
     this._flat = result;
     if (callback && typeof(callback) === 'function') {
-      callback(error, result);
+      callback(err, result);
     }
-  };
-  _getFile('flat.json', myCallback.bind(this));
+  }.bind(this));
 };
 
 eventTypes.flat = function (eventType) {
-  if (!this._flat) {
-    throw new Error('Call eventTypes.loadFlat, before accessing flat');
+  if (! this._flat) {
+    throw new Error('Load data via loadFlat() first');
   }
   return this._flat.types[eventType];
 };
 
 /**
- * @link http://api.pryv.com/event-typez.html#about-json-file
- * @param {eventTypes~contentCallback} callback
+ * @link http://api.pryv.com/event-types/#json-file
+ * @param {Function} callback
  */
 eventTypes.loadExtras = function (callback) {
-  var myCallback = function (error, result) {
+  requestFile('extras.json', function (error, result) {
     this._extras = result;
     callback(error, result);
-  };
-  _getFile('extras.json', myCallback.bind(this));
+  }.bind(this));
 };
 
 eventTypes.extras = function (eventType) {
-  if (!this._extras) {
-    throw new Error('Call eventTypes.loadExtras, before accessing extras');
+  if (! this._extras) {
+    throw new Error('Load data via loadExtras() first');
   }
   var type = eventType.split('/');
   if (this._extras.extras[type[0]] && this._extras.extras[type[0]].formats[type[1]]) {
@@ -107,8 +86,19 @@ eventTypes.isNumerical = function (eventOrEventType) {
 };
 
 /**
- * Called with the result of the request
- * @callback eventTypes~contentCallback
- * @param {Object} error - eventual error
- * @param {Object} result - jSonEncoded result
+ * @private
+ * @param fileName
+ * @param callback
  */
+function requestFile(fileName, callback) {
+  utility.request({
+    method : 'GET',
+    host : HOSTNAME,
+    path : PATH + fileName,
+    port : 443,
+    ssl : true,
+    withoutCredentials: true,
+    success : function (result) { callback(null, result); },
+    error : function (error) { callback(error, null); }
+  });
+}
