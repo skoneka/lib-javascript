@@ -1,10 +1,5 @@
-var utility = require('./utility/utility');
-
-// staging cloudfront https://d1kp76srklnnah.cloudfront.net/dist/data-types/event-extras.json
-// staging direct https://sw.pryv.li/dist/data-types/event-extras.json
-
-var HOSTNAME = 'd1kp76srklnnah.cloudfront.net';
-var PATH = '/dist/data-types/';
+var utility = require('./utility/utility'),
+    _ = require('underscore');
 
 /**
  * Event types directory data.
@@ -12,42 +7,52 @@ var PATH = '/dist/data-types/';
  */
 var eventTypes = module.exports = {};
 
-/**
- * @link http://api.pryv.com/event-types/#json-file
- * @param {Function} callback
- */
-eventTypes.loadHierarchical = function (callback) {
-  requestFile('hierarchical.json', function (err, result) {
-    this._hierarchical = result;
-    callback(err, result);
-  }.bind(this));
-};
+// staging cloudfront: https://d1kp76srklnnah.cloudfront.net/dist/data-types/event-extras.json
+// staging direct: https://sw.pryv.li/dist/data-types/event-extras.json
+var HOSTNAME = 'd1kp76srklnnah.cloudfront.net',
+    PATH = '/dist/data-types/',
+    FLATFILE = 'flat.json',
+    EXTRASFILE = 'extras.json',
+    // TODO: discuss if hierarchical data is really needed (apparently not); remove all that if not
+    HIERARCHICALFILE = 'hierarchical.json';
 
-eventTypes.hierarchical = function () {
-  if (! this._hierarchical) {
-    throw new Error('Load data via loadHierarchical() first');
-  }
-  return this._hierarchical;
-};
+// load default data (fallback)
+var types = require('./event-types.default.json'),
+    extras = require('./event-extras.default.json'),
+    hierarchical = null;
+types.isDefault = true;
+extras.isDefault = true;
 
 /**
  * @link http://api.pryv.com/event-types/#json-file
  * @param {Function} callback
  */
 eventTypes.loadFlat = function (callback) {
-  requestFile('flat.json', function (err, result) {
-    this._flat = result;
-    if (callback && typeof(callback) === 'function') {
-      callback(err, result);
+  if (! callback || typeof(callback) !== 'function') {
+    callback = function () {};
+  }
+  requestFile(FLATFILE, function (err, result) {
+    if (err) { return callback(err); }
+    if (! isValidTypesFile(result)) {
+      return callback(new Error('Missing or corrupt types file: "' +
+                                HOSTNAME + PATH + FLATFILE + '"'));
     }
-  }.bind(this));
+    _.extend_.extend(types, result);
+    types.isDefault = false;
+    callback(null, types);
+  });
 };
 
+/**
+ * Performs a basic check to avoid corrupt data (more smoke test than actual validation).
+ * @param {Object} data
+ */
+function isValidTypesFile(data) {
+  return data && data.version && data.types && data.types['activity/plain'];
+}
+
 eventTypes.flat = function (eventType) {
-  if (! this._flat) {
-    throw new Error('Load data via loadFlat() first');
-  }
-  return this._flat.types[eventType];
+  return types.types[eventType];
 };
 
 /**
@@ -55,21 +60,33 @@ eventTypes.flat = function (eventType) {
  * @param {Function} callback
  */
 eventTypes.loadExtras = function (callback) {
-  requestFile('extras.json', function (error, result) {
-    this._extras = result;
-    callback(error, result);
-  }.bind(this));
+  if (! callback || typeof(callback) !== 'function') {
+    callback = function () {};
+  }
+  requestFile(EXTRASFILE, function (err, result) {
+    if (err) { return callback(err); }
+    if (! isValidExtrasFile(result)) {
+      return callback(new Error('Missing or corrupt extras file: "' +
+                                HOSTNAME + PATH + EXTRASFILE + '"'));
+    }
+    _.extend_.extend(extras, result);
+    extras.isDefault = false;
+    callback(null, extras);
+  });
 };
 
+/**
+ * Performs a basic check to avoid corrupt data (more smoke test than actual validation).
+ * @param {Object} data
+ */
+function isValidExtrasFile(data) {
+  return data && data.version && data.extras && data.extras.count && data.extras.count.formats;
+}
+
 eventTypes.extras = function (eventType) {
-  if (! this._extras) {
-    throw new Error('Load data via loadExtras() first');
-  }
-  var type = eventType.split('/');
-  if (this._extras.extras[type[0]] && this._extras.extras[type[0]].formats[type[1]]) {
-    return this._extras.extras[type[0]].formats[type[1]];
-  }
-  return null;
+  var parts = eventType.split('/');
+  return extras.extras[parts[0]] && extras.extras[parts[0]].formats[parts[1]] ?
+      extras.extras[parts[0]].formats[parts[1]] : null;
 };
 
 eventTypes.isNumerical = function (eventOrEventType) {
@@ -81,8 +98,30 @@ eventTypes.isNumerical = function (eventOrEventType) {
     type = eventOrEventType;
   }
   var def = eventTypes.flat(type);
-  if (! def) { return false; }
-  return (def.type === 'number');
+  return def ? def.type === 'number' : false;
+};
+
+/**
+ * @link http://api.pryv.com/event-types/#json-file
+ * @param {Function} callback
+ */
+eventTypes.loadHierarchical = function (callback) {
+  if (! callback || typeof(callback) !== 'function') {
+    callback = function () {};
+  }
+  requestFile(HIERARCHICALFILE, function (err, result) {
+    if (err) { return callback(err); }
+    hierarchical = result;
+    hierarchical.isDefault = false;
+    callback(null, hierarchical);
+  });
+};
+
+eventTypes.hierarchical = function () {
+  if (! hierarchical) {
+    throw new Error('Load data via loadHierarchical() first');
+  }
+  return hierarchical;
 };
 
 /**

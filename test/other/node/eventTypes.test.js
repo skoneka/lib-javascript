@@ -10,29 +10,24 @@ describe('eventTypes', function () {
     this.timeout(20000);
 
     it('hierarchical', function (done) {
-      var catchedErr = null;
+      var expectedErr = null;
       try {
         eventTypes.hierarchical();
       } catch (e) {
-        catchedErr = e;
+        expectedErr = e;
       }
-      should.exist(catchedErr);
-      eventTypes.loadHierarchical(function (error, result) {
-        should.exists(result.classes.activity.formats.plain);
+      should.exist(expectedErr);
+      eventTypes.loadHierarchical(function (err, result) {
+        should.not.exist(err);
+        should.exist(result.classes.activity.formats.plain);
         done();
       });
     });
 
     it('extras', function (done) {
-      var catchedErr = null;
-      try {
-        eventTypes.extras('mass/kg');
-      } catch (e) {
-        catchedErr = e;
-      }
-      should.exist(catchedErr);
-      eventTypes.loadExtras(function (error, result) {
-        should.exists(result.sets);
+      eventTypes.loadExtras(function (err, result) {
+        should.not.exist(err);
+        should.exist(result.sets);
         var info = eventTypes.extras('mass/kg');
         info.symbol.should.equal('Kg');
         done();
@@ -41,15 +36,9 @@ describe('eventTypes', function () {
 
 
     it('flat', function (done) {
-      var catchedErr = null;
-      try {
-        eventTypes.flat('activity/pryv');
-      } catch (e) {
-        catchedErr = e;
-      }
-      should.exist(catchedErr);
-      eventTypes.loadFlat(function (error, result) {
-        should.exists(result);
+      eventTypes.loadFlat(function (err, result) {
+        should.not.exist(err);
+        should.exist(result);
         var info = eventTypes.flat('mass/kg');
         info.type.should.equal('number');
         done();
@@ -57,15 +46,13 @@ describe('eventTypes', function () {
     });
 
     it('isNumerical', function (done) {
-      eventTypes.loadFlat(function (/*error, result*/) {
-        should.equal(true, eventTypes.isNumerical({type: 'time/h'}),
-          'should work for events');
-        should.equal(true, eventTypes.isNumerical('mass/kg'),
-          'should work for events type strings');
-        should.equal(false, eventTypes.isNumerical('note/txt'),
-          'should detect not numerical value');
-        done();
-      });
+      should.equal(true, eventTypes.isNumerical({type: 'time/h'}),
+        'should work for events');
+      should.equal(true, eventTypes.isNumerical('mass/kg'),
+        'should work for events type strings');
+      should.equal(false, eventTypes.isNumerical('note/txt'),
+        'should detect not numerical value');
+      done();
     });
 
   });
