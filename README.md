@@ -2,7 +2,7 @@
 
 Javascript library (browser & Node.js) to access and manipulate Pryv users data.
 
-[![NPM version](https://badge.fury.io/js/pryv.png)](http://badge.fury.io/js/pryv)
+[![NPM version](https://badge.fury.io/js/pryv.png)](http://badge.fury.io/js/pryv)  [![Stories in Ready](https://badge.waffle.io/pryv/lib-javascript.svg?label=ready&title=Ready)](http://waffle.io/pryv/lib-javascript) 
 
 
 ## Usage
