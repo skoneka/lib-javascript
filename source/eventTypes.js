@@ -1,96 +1,92 @@
-
-var utility = require('./utility/utility');
-var eventTypes = module.exports = { };
-
-// staging cloudfront https://d1kp76srklnnah.cloudfront.net/dist/data-types/event-extras.json
-// staging direct https://sw.pryv.li/dist/data-types/event-extras.json
-
-var HOSTNAME = 'd1kp76srklnnah.cloudfront.net';
-var PATH = '/dist/data-types/';
-
+var utility = require('./utility/utility'),
+    _ = require('underscore');
 
 /**
- * @private
- * @param fileName
- * @param callback
+ * Event types directory data.
+ * @link http://api.pryv.com/event-types/
  */
-function _getFile(fileName, callback) {
-  utility.request({
-    method : 'GET',
-    host : HOSTNAME,
-    path : PATH + fileName,
-    port : 443,
-    ssl : true,
-    withoutCredentials: true,
-    success : function (result) { callback(null, result); },
-    error : function (error) { callback(error, null); }
+var eventTypes = module.exports = {};
+
+// staging cloudfront: https://d1kp76srklnnah.cloudfront.net/dist/data-types/event-extras.json
+// staging direct: https://sw.pryv.li/dist/data-types/event-extras.json
+var HOSTNAME = 'd1kp76srklnnah.cloudfront.net',
+    PATH = '/dist/data-types/',
+    FLATFILE = 'flat.json',
+    EXTRASFILE = 'extras.json',
+    // TODO: discuss if hierarchical data is really needed (apparently not); remove all that if not
+    HIERARCHICALFILE = 'hierarchical.json';
+
+// load default data (fallback)
+var types = require('./event-types.default.json'),
+    extras = require('./event-extras.default.json'),
+    hierarchical = null;
+types.isDefault = true;
+extras.isDefault = true;
+
+/**
+ * @link http://api.pryv.com/event-types/#json-file
+ * @param {Function} callback
+ */
+eventTypes.loadFlat = function (callback) {
+  if (! callback || typeof(callback) !== 'function') {
+    callback = function () {};
+  }
+  requestFile(FLATFILE, function (err, result) {
+    if (err) { return callback(err); }
+    if (! isValidTypesFile(result)) {
+      return callback(new Error('Missing or corrupt types file: "' +
+                                HOSTNAME + PATH + FLATFILE + '"'));
+    }
+    _.extend_.extend(types, result);
+    types.isDefault = false;
+    callback(null, types);
   });
+};
+
+/**
+ * Performs a basic check to avoid corrupt data (more smoke test than actual validation).
+ * @param {Object} data
+ */
+function isValidTypesFile(data) {
+  return data && data.version && data.types && data.types['activity/plain'];
 }
 
-/**
- * @link http://api.pryv.com/event-typez.html#about-json-file
- * @param {eventTypes~contentCallback} callback
- */
-eventTypes.loadHierarchical = function (callback) {
-  var myCallback = function (error, result) {
-    this._hierarchical = result;
-    callback(error, result);
-  };
-  _getFile('hierarchical.json', myCallback.bind(this));
-};
-
-eventTypes.hierarchical = function () {
-  if (!this._hierarchical) {
-    throw new Error('Call eventTypes.loadHierarchical, before accessing hierarchical');
-  }
-  return this._hierarchical;
-};
-
-
-
-/**
- * @link http://api.pryv.com/event-typez.html#about-json-file
- * @param {eventTypes~contentCallback} callback
- */
-
-eventTypes.loadFlat = function (callback) {
-  var myCallback = function (error, result) {
-    this._flat = result;
-    if (callback && typeof(callback) === 'function') {
-      callback(error, result);
-    }
-  };
-  _getFile('flat.json', myCallback.bind(this));
-};
-
 eventTypes.flat = function (eventType) {
-  if (!this._flat) {
-    throw new Error('Call eventTypes.loadFlat, before accessing flat');
-  }
-  return this._flat.types[eventType];
+  return types.types[eventType];
 };
 
 /**
- * @link http://api.pryv.com/event-typez.html#about-json-file
- * @param {eventTypes~contentCallback} callback
+ * @link http://api.pryv.com/event-types/#json-file
+ * @param {Function} callback
  */
 eventTypes.loadExtras = function (callback) {
-  var myCallback = function (error, result) {
-    this._extras = result;
-    callback(error, result);
-  };
-  _getFile('extras.json', myCallback.bind(this));
+  if (! callback || typeof(callback) !== 'function') {
+    callback = function () {};
+  }
+  requestFile(EXTRASFILE, function (err, result) {
+    if (err) { return callback(err); }
+    if (! isValidExtrasFile(result)) {
+      return callback(new Error('Missing or corrupt extras file: "' +
+                                HOSTNAME + PATH + EXTRASFILE + '"'));
+    }
+    _.extend_.extend(extras, result);
+    extras.isDefault = false;
+    callback(null, extras);
+  });
 };
 
+/**
+ * Performs a basic check to avoid corrupt data (more smoke test than actual validation).
+ * @param {Object} data
+ */
+function isValidExtrasFile(data) {
+  return data && data.version && data.extras && data.extras.count && data.extras.count.formats;
+}
+
 eventTypes.extras = function (eventType) {
-  if (!this._extras) {
-    throw new Error('Call eventTypes.loadExtras, before accessing extras');
-  }
-  var type = eventType.split('/');
-  if (this._extras.extras[type[0]] && this._extras.extras[type[0]].formats[type[1]]) {
-    return this._extras.extras[type[0]].formats[type[1]];
-  }
-  return null;
+  var parts = eventType.split('/');
+  return extras.extras[parts[0]] && extras.extras[parts[0]].formats[parts[1]] ?
+      extras.extras[parts[0]].formats[parts[1]] : null;
 };
 
 eventTypes.isNumerical = function (eventOrEventType) {
@@ -102,13 +98,46 @@ eventTypes.isNumerical = function (eventOrEventType) {
     type = eventOrEventType;
   }
   var def = eventTypes.flat(type);
-  if (! def) { return false; }
-  return (def.type === 'number');
+  return def ? def.type === 'number' : false;
 };
 
 /**
- * Called with the result of the request
- * @callback eventTypes~contentCallback
- * @param {Object} error - eventual error
- * @param {Object} result - jSonEncoded result
+ * @link http://api.pryv.com/event-types/#json-file
+ * @param {Function} callback
  */
+eventTypes.loadHierarchical = function (callback) {
+  if (! callback || typeof(callback) !== 'function') {
+    callback = function () {};
+  }
+  requestFile(HIERARCHICALFILE, function (err, result) {
+    if (err) { return callback(err); }
+    hierarchical = result;
+    hierarchical.isDefault = false;
+    callback(null, hierarchical);
+  });
+};
+
+eventTypes.hierarchical = function () {
+  if (! hierarchical) {
+    throw new Error('Load data via loadHierarchical() first');
+  }
+  return hierarchical;
+};
+
+/**
+ * @private
+ * @param fileName
+ * @param callback
+ */
+function requestFile(fileName, callback) {
+  utility.request({
+    method : 'GET',
+    host : HOSTNAME,
+    path : PATH + fileName,
+    port : 443,
+    ssl : true,
+    withoutCredentials: true,
+    success : function (result) { callback(null, result); },
+    error : function (error) { callback(error, null); }
+  });
+}

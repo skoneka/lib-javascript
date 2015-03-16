@@ -2,7 +2,7 @@
 
 Javascript library (browser & Node.js) to access and manipulate Pryv users data.
 
-[![NPM version](https://badge.fury.io/js/pryv.png)](http://badge.fury.io/js/pryv)
+[![NPM version](https://badge.fury.io/js/pryv.png)](http://badge.fury.io/js/pryv)  [![Stories in Ready](https://badge.waffle.io/pryv/lib-javascript.svg?label=ready&title=Ready)](http://waffle.io/pryv/lib-javascript) 
 
 
 ## Usage
@@ -34,6 +34,8 @@ Read, then run `./scripts/setup-environment-dev.sh`
 - runs the tests, outputting coverage info into `test/coverage.html`
 
 Also: `grunt test` & `grunt watch` (runs tests on changes)
+
+`./scripts/update-event-types.bash` updates the default event types and extras by fetching the latest master versions online.
 
 ### Publish
 

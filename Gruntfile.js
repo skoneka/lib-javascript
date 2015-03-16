@@ -71,22 +71,30 @@ module.exports = function (grunt) {
         ]
       }
     },
+
     env : {
       record: {
         REPLAY : 'record'
       }
     },
+
     mochaTest: {
-      test: {
-        src: ['test/**/*.test.js'],
+      acceptance: {
+        src: ['test/acceptance/**/*.test.js'],
         options: {
-          require: [ './test/blanket', './source/main.js' ],
+          reporter: 'spec'
+        }
+      },
+      other: {
+        src: ['test/other/**/*.test.js'],
+        options: {
           reporter: 'spec'
         }
       },
       coverage: {
         src: ['test/**/*.test.js'],
         options: {
+          require: [ './test/blanket', './source/main.js' ],
           quiet: true,
           reporter: 'html-cov',
           captureFile: 'test/coverage.html'
@@ -104,5 +112,6 @@ module.exports = function (grunt) {
 
   grunt.registerTask('default', [ 'jshint', 'browserify', 'jsdoc', 'copy', 'mochaTest' ]);
   grunt.registerTask('test', [ 'jshint', 'browserify', 'copy', 'mochaTest' ]);
+  grunt.registerTask('test:acceptance', [ 'jshint', 'browserify', 'copy', 'mochaTest:acceptance' ]);
   grunt.registerTask('record', [ 'jshint', 'browserify', 'copy', 'env:record', 'mochaTest' ]);
 };
