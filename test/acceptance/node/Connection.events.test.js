@@ -307,6 +307,7 @@ describe('Connection.events', function () {
     });
 
     before(function (done) {
+      eventToUpdate = {content: 'I am going to be updated', streamId: 'diary', type: 'note/txt'};
       eventToUpdate2 = {content: 'I am also going to be updated', streamId: 'diary', type: 'note/txt'};
       arrayOfEventsToUpdate = [eventToUpdate, eventToUpdate2];
       connection.events.create(arrayOfEventsToUpdate, function (err, events) {
@@ -379,6 +380,118 @@ describe('Connection.events', function () {
 
   });
 
+  // TODO: move that above delete (trash) tests (follow consistent order: read-create-update-delete)
+  describe('update()', function () {
+    var eventToUpdate, eventToUpdate2, arrayOfEventsToUpdate,
+      eventSingleActivityToUpdate;
+
+
+    // TODO: same comment as above
+    beforeEach(function (done) {
+      eventToUpdate = {content: 'I am going to be updated', streamId: 'diary', type: 'note/txt'};
+      connection.events.create(eventToUpdate, function (err, event) {
+        eventToUpdate = event;
+        done(err);
+      });
+    });
+
+    it('must accept an Event object and return the updated event', function (done) {
+      var newContent = 'I was updated';
+      eventToUpdate.content = newContent;
+      connection.events.update(eventToUpdate, function (err, updatedEvent) {
+        should.not.exist(err);
+        should.exist(updatedEvent);
+        updatedEvent.should.be.instanceOf(Pryv.Event);
+        updatedEvent.content.should.equal(newContent);
+        done();
+      });
+    });
+
+    it('must accept an event-like object and return an Event object', function (done) {
+      var newContent = 'I was updated again';
+      eventToUpdate.content = newContent;
+      var eventDataToUpdate = eventToUpdate.getData;
+      connection.events.update(eventDataToUpdate, function (err, updatedEvent) {
+        should.not.exist(err);
+        should.exist(updatedEvent);
+        updatedEvent.should.be.instanceOf(Pryv.Event);
+        updatedEvent.content.should.equal(newContent);
+        done();
+      });
+    });
+
+    before(function (done) {
+      eventToUpdate2 = {content: 'I am also going to be updated', streamId: 'diary', type: 'note/txt'};
+      arrayOfEventsToUpdate = [eventToUpdate, eventToUpdate2];
+      connection.events.create(arrayOfEventsToUpdate, function (err, events) {
+        arrayOfEventsToUpdate = events;
+        done(err);
+      });
+    });
+
+    it('must accept an array of Event objects', function (done) {
+      var newContent1 = 'I was updated';
+      var newContent2 = 'I was also updated';
+      arrayOfEventsToUpdate[0].content = newContent1;
+      arrayOfEventsToUpdate[1].content = newContent2;
+      connection.events.update(arrayOfEventsToUpdate, function (err, updatedEvents) {
+        should.not.exist(err);
+        should.exist(updatedEvents);
+        for (var e in updatedEvents) {
+          if (e.id === arrayOfEventsToUpdate[0].id) {
+            e.content.should.equal(newContent1);
+          }
+          if (e.id === arrayOfEventsToUpdate[1].id) {
+            e.content.should.equal(newContent2);
+          }
+        }
+        done();
+      });
+    });
+
+    before(function (done) {
+      eventSingleActivityToUpdate = {streamId: 'activity', type: 'activity/plain'};
+      connection.events.create(eventSingleActivityToUpdate, function (err, event) {
+        eventSingleActivityToUpdate = event;
+        done(err);
+      });
+
+    });
+
+    it('must return a stoppedId field when called in a SingleActivity stream', function (done) {
+      connection.events.update(eventSingleActivityToUpdate, function (err, event, stoppedId) {
+        should.not.exist(err);
+        should.exist(event);
+        should.exist(stoppedId);
+        done();
+      });
+    });
+
+    // TODO
+    it('must return a periods-overlap error when called in a singleActivity stream and durations overlap');
+
+    before(function (done) {
+      eventToUpdate = {
+        content: 'I am going to be updated with invalid data',
+        streamId: 'diary',
+        type: 'note/txt'
+      };
+      connection.events.create(eventToUpdate, function (err, event) {
+        eventToUpdate = event;
+        done(err);
+      });
+    });
+
+    it('must return an error if the event is invalid', function (done) {
+      eventToUpdate.streamId = null;
+      connection.events.update(eventToUpdate, function (err, event) {
+        should.exist(err);
+        should.not.exist(event);
+        done();
+      });
+    });
+
+  });
 
   // TODO: maybe also create addAttachmentS() method
   describe('addAttachment()'), function () {
