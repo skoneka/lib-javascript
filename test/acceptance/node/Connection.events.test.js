@@ -3,7 +3,8 @@ var Pryv = require('../../../source/main'),
   should = require('should'),
   config = require('../test-support/config.js'),
   replay = require('replay'),
-  _ = require('underscore');
+  _ = require('underscore'),
+  async = require('async');
 
 
 describe('Connection.events', function () {
@@ -19,6 +20,29 @@ describe('Connection.events', function () {
   });
 
   describe('get()', function () {
+
+    before(function (done) {
+      var eventDeleted = {
+        content: 'I am a deleted test event from js lib, please kill me',
+        type: 'note/txt',
+        streamId: 'diary'
+      };
+
+      async.series([
+        function (stepDone) {
+          connection.events.create(eventDeleted, function (err, event) {
+            eventDeleted = event;
+            return stepDone(err);
+          }, false);
+        },
+        function (stepDone) {
+          connection.events.delete(eventDeleted, function (err) {
+            stepDone(err);
+          }, false);
+        }
+      ], done);
+    });
+
     it('must return the last 20 non-trashed Event objects (sorted descending) by default',
       function (done) {
         connection.events.get({}, function (err, events) {
@@ -36,30 +60,15 @@ describe('Connection.events', function () {
         });
       });
 
-    before(function (done) {
-      var eventDeleted = {
-        content: 'I am a deleted test event from js lib, please kill me',
-        type: 'note/txt',
-        streamId: 'diary'
-      };
-      connection.events.create(eventDeleted, function (err, event) {
-        eventDeleted = event;
-        done(err);
-      });
-      connection.events.delete(eventDeleted, function (err) {
-        done(err);
-      });
-    });
-
-    it('must return deleted events when the flag includeDeletions is set', function (done) {
-
-      var filter = {limit: 100000, includeDeletions: true};
-      connection.events.get(filter, function (err, events) {
-        should.not.exist(err);
-        should.exist(events.eventDeletions);
-        done();
-      });
-    });
+    /*
+     it('must return deleted events when the flag includeDeletions is set', function (done) {
+     var filter = {limit: 100000, includeDeletions: true};
+     connection.events.get(filter, function (err, events) {
+     should.not.exist(err);
+     should.exist(events.eventDeletions);
+     done();
+     });
+     });*/
 
     it('must return events matching the given filter', function (done) {
       var filter = {limit: 10, types: ['note/txt']};
@@ -100,27 +109,32 @@ describe('Connection.events', function () {
   });
 
   describe('create()', function () {
-    var eventData = {
-      content: 'I am a test from js lib, please kill me',
-      type: 'note/txt',
-      streamId: 'diary'
-    };
+    var eventData, eventData2, eventDataWithAttachmentOnly,
+      eventDataSingleActivity, eventsDataArray;
 
-    var eventData2 = _.clone(eventData);
-    eventData2.content = 'I am the second test from js lib, please kill me too';
+    before(function (done) {
+      eventData = {
+        content: 'I am a test from js lib, please kill me',
+        type: 'note/txt',
+        streamId: 'diary'
+      };
 
-    var eventDataWithAttachmentOnly = new Pryv.Event(connection, {
-      attachments: [{
-        'id': 'ci6w6i6ux000tx2puftadoiya',
-        'fileName': 'photo.jpg',
-        'type': 'image/jpeg',
-        'size': 2561
-      }]
+      eventData2 = _.clone(eventData);
+      eventData2.content = 'I am the second test from js lib, please kill me too';
+
+      eventDataWithAttachmentOnly = new Pryv.Event(connection, {
+        attachments: [{
+          'id': 'ci6w6i6ux000tx2puftadoiya',
+          'fileName': 'photo.jpg',
+          'type': 'image/jpeg',
+          'size': 2561
+        }]
+      });
+
+      eventDataSingleActivity = {streamId: 'activity', type: 'activity/plain'};
+      eventsDataArray = [eventData, eventData2];
+      done();
     });
-
-    var eventDataSingleActivity = {streamId: 'activity', type: 'activity/plain'};
-
-    var eventsDataArray = [eventData, eventData2];
 
     it('must accept an event-like object and return an Event object', function (done) {
       connection.events.create(eventData, function (err, event) {
@@ -132,16 +146,19 @@ describe('Connection.events', function () {
     });
 
     // COMMENT: method? if same, it should maybe be exported in its own describe() paragraph
-    it('must accept an array of event-like objects and return an array of Event objects', function (done) {
-      connection.events.create(eventsDataArray, function (err, eventsArray) {
-        should.not.exist(err);
-        should.exist(eventsArray);
-        for (var e in eventsArray) {
-          e.should.be.instanceOf(Pryv.Event);
-        }
-        done();
+    it('must accept an array of event-like objects and return an array of Event objects',
+      function (done) {
+        console.log(eventsDataArray);
+        connection.events.create(eventsDataArray, function (err, eventsArray) {
+          should.not.exist(err);
+          should.exist(eventsArray);
+          Array.isArray(eventsArray).should.be.true();
+          eventsArray.forEach(function (e) {
+            e.should.be.instanceOf(Pryv.Event);
+          });
+          done();
+        });
       });
-    });
 
     it('must accept attachment only with Event object', function (done) {
       connection.events.create(eventDataWithAttachmentOnly, function (err, event) {
@@ -173,9 +190,11 @@ describe('Connection.events', function () {
     });
 
     // TODO
-    it('must return a periods-overlap error when called in a singleActivity stream and durations overlap', function (done) {
-      done();
-    });
+    it('must return a periods-overlap error when called in a singleActivity stream ' +
+      'and durations overlap',
+      function (done) {
+        done();
+      });
 
     it('must return an error if the given event data is invalid', function (done) {
       var invalidData = {
@@ -265,20 +284,85 @@ describe('Connection.events', function () {
 
   });
 
-
-  // TODO: move that above delete (trash) tests (follow consistent order: read-create-update-delete)
   describe('update()', function () {
     var eventToUpdate, eventToUpdate2, arrayOfEventsToUpdate,
-      eventSingleActivityToUpdate;
+      eventSingleActivityToUpdate, eventSingleActivityToUpdate2;
 
+    before(function (done) {
 
-    // TODO: same comment as above
-    beforeEach(function (done) {
-      eventToUpdate = {content: 'I am going to be updated', streamId: 'diary', type: 'note/txt'};
-      connection.events.create(eventToUpdate, function (err, event) {
-        eventToUpdate = event;
-        done(err);
-      });
+      async.series([
+        function (stepDone) {
+          eventToUpdate =
+          {content: 'I am going to be updated', streamId: 'diary', type: 'note/txt'};
+          connection.events.create(eventToUpdate, function (err, event) {
+            eventToUpdate = event;
+            return stepDone(err);
+          }, false);
+        },
+        function (stepDone) {
+          eventToUpdate2 = {
+            content: 'I am also going to be updated', streamId: 'diary',
+            type: 'note/txt'
+          };
+          connection.events.create(eventToUpdate2, function (err, event) {
+            eventToUpdate2 = event;
+            return stepDone(err);
+          }, false);
+        },
+        function (stepDone) {
+          arrayOfEventsToUpdate = [
+            {content: 'I am going to be updated in an array', streamId: 'diary', type: 'note/txt'},
+            {
+              content: 'I am also going to be updated in an array', streamId: 'diary',
+              type: 'note/txt'
+            }];
+          connection.events.create(arrayOfEventsToUpdate, function (err, events) {
+            arrayOfEventsToUpdate = events;
+            return stepDone(err);
+          }, false);
+        },
+        function (stepDone) {
+          eventSingleActivityToUpdate = {
+            streamId: 'activity', type: 'activity/plain',
+            time: 100, duration: 10
+          };
+          connection.events.create(eventSingleActivityToUpdate, function (err, event) {
+            eventSingleActivityToUpdate = event;
+            return stepDone(err);
+          }, false);
+        },
+        function (stepDone) {
+          eventSingleActivityToUpdate2 = {
+            streamId: 'activity', type: 'activity/plain', time: 200,
+            duration: 10
+          };
+          connection.events.create(eventSingleActivityToUpdate2, function (err, event) {
+            eventSingleActivityToUpdate2 = event;
+            return stepDone(err);
+          }, false);
+        }
+      ], done);
+    });
+
+    after(function (done) {
+      var deletedEvents = [
+        eventToUpdate, eventToUpdate2, eventSingleActivityToUpdate, eventSingleActivityToUpdate2
+      ].concat(arrayOfEventsToUpdate);
+
+      async.series([
+        function (stepDone) {
+          connection.events.delete(deletedEvents, function (err, delEvents) {
+            deletedEvents = delEvents;
+            return stepDone(err);
+          }, false);
+        },
+        function (stepDone) {
+          connection.events.delete(deletedEvents, function (err) {
+            return stepDone(err);
+          }, false);
+        }
+      ]);
+      done();
     });
 
     it('must accept an Event object and return the updated event', function (done) {
@@ -306,16 +390,6 @@ describe('Connection.events', function () {
       });
     });
 
-    before(function (done) {
-      eventToUpdate = {content: 'I am going to be updated', streamId: 'diary', type: 'note/txt'};
-      eventToUpdate2 = {content: 'I am also going to be updated', streamId: 'diary', type: 'note/txt'};
-      arrayOfEventsToUpdate = [eventToUpdate, eventToUpdate2];
-      connection.events.create(arrayOfEventsToUpdate, function (err, events) {
-        arrayOfEventsToUpdate = events;
-        done(err);
-      });
-    });
-
     it('must accept an array of Event objects', function (done) {
       var newContent1 = 'I was updated';
       var newContent2 = 'I was also updated';
@@ -324,28 +398,32 @@ describe('Connection.events', function () {
       connection.events.update(arrayOfEventsToUpdate, function (err, updatedEvents) {
         should.not.exist(err);
         should.exist(updatedEvents);
-        for (var e in updatedEvents) {
+        Array.isArray(updatedEvents).should.be.true();
+        updatedEvents.forEach(function (e) {
           if (e.id === arrayOfEventsToUpdate[0].id) {
             e.content.should.equal(newContent1);
           }
           if (e.id === arrayOfEventsToUpdate[1].id) {
             e.content.should.equal(newContent2);
           }
-        }
+        });
         done();
       });
     });
 
-    before(function (done) {
-      eventSingleActivityToUpdate = {streamId: 'activity', type: 'activity/plain'};
-      connection.events.create(eventSingleActivityToUpdate, function (err, event) {
-        eventSingleActivityToUpdate = event;
-        done(err);
+    it('must return an error if the event is invalid', function (done) {
+      var tmp = eventToUpdate.streamId;
+      eventToUpdate.streamId = null;
+      connection.events.update(eventToUpdate, function (err, event) {
+        should.exist(err);
+        should.not.exist(event);
+        eventToUpdate.streamId = tmp;
+        done();
       });
-
     });
 
     it('must return a stoppedId field when called in a SingleActivity stream', function (done) {
+      eventSingleActivityToUpdate.content = 'I am updated';
       connection.events.update(eventSingleActivityToUpdate, function (err, event, stoppedId) {
         should.not.exist(err);
         should.exist(event);
@@ -354,139 +432,20 @@ describe('Connection.events', function () {
       });
     });
 
-    // TODO
-    it('must return a periods-overlap error when called in a singleActivity stream and durations overlap');
-
-    before(function (done) {
-      eventToUpdate = {
-        content: 'I am going to be updated with invalid data',
-        streamId: 'diary',
-        type: 'note/txt'
-      };
-      connection.events.create(eventToUpdate, function (err, event) {
-        eventToUpdate = event;
-        done(err);
-      });
-    });
-
-    it('must return an error if the event is invalid', function (done) {
-      eventToUpdate.streamId = null;
-      connection.events.update(eventToUpdate, function (err, event) {
+    it('must return an invalid-operation error if duration=null and ' +
+    'other events exist later in time', function (done) {
+      eventSingleActivityToUpdate.duration = null;
+      connection.events.update(eventSingleActivityToUpdate, function (err) {
         should.exist(err);
-        should.not.exist(event);
         done();
       });
     });
 
-  });
-
-  // TODO: move that above delete (trash) tests (follow consistent order: read-create-update-delete)
-  describe('update()', function () {
-    var eventToUpdate, eventToUpdate2, arrayOfEventsToUpdate,
-      eventSingleActivityToUpdate;
-
-
-    // TODO: same comment as above
-    beforeEach(function (done) {
-      eventToUpdate = {content: 'I am going to be updated', streamId: 'diary', type: 'note/txt'};
-      connection.events.create(eventToUpdate, function (err, event) {
-        eventToUpdate = event;
-        done(err);
-      });
-    });
-
-    it('must accept an Event object and return the updated event', function (done) {
-      var newContent = 'I was updated';
-      eventToUpdate.content = newContent;
-      connection.events.update(eventToUpdate, function (err, updatedEvent) {
-        should.not.exist(err);
-        should.exist(updatedEvent);
-        updatedEvent.should.be.instanceOf(Pryv.Event);
-        updatedEvent.content.should.equal(newContent);
-        done();
-      });
-    });
-
-    it('must accept an event-like object and return an Event object', function (done) {
-      var newContent = 'I was updated again';
-      eventToUpdate.content = newContent;
-      var eventDataToUpdate = eventToUpdate.getData;
-      connection.events.update(eventDataToUpdate, function (err, updatedEvent) {
-        should.not.exist(err);
-        should.exist(updatedEvent);
-        updatedEvent.should.be.instanceOf(Pryv.Event);
-        updatedEvent.content.should.equal(newContent);
-        done();
-      });
-    });
-
-    before(function (done) {
-      eventToUpdate2 = {content: 'I am also going to be updated', streamId: 'diary', type: 'note/txt'};
-      arrayOfEventsToUpdate = [eventToUpdate, eventToUpdate2];
-      connection.events.create(arrayOfEventsToUpdate, function (err, events) {
-        arrayOfEventsToUpdate = events;
-        done(err);
-      });
-    });
-
-    it('must accept an array of Event objects', function (done) {
-      var newContent1 = 'I was updated';
-      var newContent2 = 'I was also updated';
-      arrayOfEventsToUpdate[0].content = newContent1;
-      arrayOfEventsToUpdate[1].content = newContent2;
-      connection.events.update(arrayOfEventsToUpdate, function (err, updatedEvents) {
-        should.not.exist(err);
-        should.exist(updatedEvents);
-        for (var e in updatedEvents) {
-          if (e.id === arrayOfEventsToUpdate[0].id) {
-            e.content.should.equal(newContent1);
-          }
-          if (e.id === arrayOfEventsToUpdate[1].id) {
-            e.content.should.equal(newContent2);
-          }
-        }
-        done();
-      });
-    });
-
-    before(function (done) {
-      eventSingleActivityToUpdate = {streamId: 'activity', type: 'activity/plain'};
-      connection.events.create(eventSingleActivityToUpdate, function (err, event) {
-        eventSingleActivityToUpdate = event;
-        done(err);
-      });
-
-    });
-
-    it('must return a stoppedId field when called in a SingleActivity stream', function (done) {
-      connection.events.update(eventSingleActivityToUpdate, function (err, event, stoppedId) {
-        should.not.exist(err);
-        should.exist(event);
-        should.exist(stoppedId);
-        done();
-      });
-    });
-
-    // TODO
-    it('must return a periods-overlap error when called in a singleActivity stream and durations overlap');
-
-    before(function (done) {
-      eventToUpdate = {
-        content: 'I am going to be updated with invalid data',
-        streamId: 'diary',
-        type: 'note/txt'
-      };
-      connection.events.create(eventToUpdate, function (err, event) {
-        eventToUpdate = event;
-        done(err);
-      });
-    });
-
-    it('must return an error if the event is invalid', function (done) {
-      eventToUpdate.streamId = null;
-      connection.events.update(eventToUpdate, function (err, event) {
+    it('must return a periods-overlap error when called in a singleActivity stream ' +
+    'and durations overlap', function (done) {
+      eventToUpdate2.time = eventToUpdate.time + eventToUpdate.duration / 2;
+      connection.update(eventToUpdate2, function (err) {
         should.exist(err);
-        should.not.exist(event);
         done();
       });
     });
@@ -494,26 +453,29 @@ describe('Connection.events', function () {
   });
 
   // TODO: maybe also create addAttachmentS() method
-  describe('addAttachment()'), function () {
+  describe('addAttachment()', function () {
 
     //var event = new Pryv.Event(connection, {});
 
 
     // TODO
-    it('must accept an Attachment and return the event with the right attachment property', function (done) {
-      done();
-
-    });
+    it('must accept an Attachment and return the event with the right attachment property',
+      function (done) {
+        done();
+      });
 
     // TODO
-    it('must return an error in case of invalid parameters');
-  };
+    it('must return an error in case of invalid parameters', function (done) {
+      done();
+    });
+  });
 
 
   describe('getAttachment()', function () {
 
     // TODO
-    it('must accept an attachment\'s and its event\'s parameters and return the binary file contents');
+    it('must accept an attachment\'s and its event\'s parameters and ' +
+    'return the binary file contents');
 
     // TODO
     it('must return an error in case of invalid parameters');
