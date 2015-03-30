@@ -92,6 +92,20 @@ describe('Connection.events', function () {
       });
     });
 
+    // Dead end filter is used when we don't want to fetch anymore data for a connection
+    // but still want to preserve the cached data.
+    it('must receive an empty array of events when using a dead end filter', function (done) {
+      var deadEndFilter = new Pryv.Filter();
+      deadEndFilter.streamsIds = [];
+      connection.events.get(deadEndFilter, function (err, emptyEvents) {
+        should.not.exist(err);
+        should.exist(emptyEvents);
+        emptyEvents.should.be.instanceOf(Array);
+        emptyEvents.length.should.equal(0);
+        done();
+      });
+    });
+
     it('must accept a null filter', function (done) {
       connection.events.get(null, function (err, events) {
         should.not.exist(err);
@@ -229,13 +243,86 @@ describe('Connection.events', function () {
 
   describe('start() - stopEvent() - stopStream()', function () {
 
-    var eventId;
-    var eventData = {streamId: 'activity', type: 'activity/plain'};
-    var eventToStop;
+    var eventData, eventId, eventToStop, stream, singleActivityStream;
 
-    it('should start an event and stop it using stopEvent()', function (done) {
+    before(function (done) {
+      singleActivityStream = {name: 'singleActivityStream', singleActivity: true};
+      stream = {name: 'startStopTestStream'};
+      eventData = {type: 'activity/plain'};
+
       async.series([
         function (stepDone) {
+          connection.streams.create(stream, function (err, newStream) {
+            stream = newStream;
+            stepDone();
+          });
+        },
+        function (stepDone) {
+          connection.streams.create(singleActivityStream, function (err, newStream) {
+            singleActivityStream = newStream;
+            stepDone();
+          });
+        }
+      ], done());
+    });
+
+    after(function (done) {
+      async.series([
+        function (stepDone) {
+          connection.streams.delete(stream, function (err, trashedStream) {
+            stream = trashedStream;
+            stepDone(err);
+          });
+        },
+        function (stepDone) {
+          connection.streams.delete(stream, function (err) {
+            stepDone(err);
+          });
+        },
+        function (stepDone) {
+          connection.streams.delete(singleActivityStream, function (err, trashedStream) {
+            singleActivityStream = trashedStream;
+            stepDone(err);
+          });
+        },
+        function (stepDone) {
+          connection.streams.delete(singleActivityStream, function (err) {
+            stepDone(err);
+          });
+        }
+      ], done());
+    });
+
+    it('must start an event and stop it using stopEvent() in normal stream', function (done) {
+      async.series([
+        function (stepDone) {
+          eventData.streamId = stream.id;
+          connection.events.start(eventData, function (err, event) {
+            should.not.exist(err);
+            eventToStop = event;
+            should.exist(event);
+            should.not.exist(event.duration);
+              eventId = event.id;
+            stepDone();
+          });
+        },
+        function (stepDone) {
+          connection.events.stopEvent(eventToStop, null, function (err, stoppedId) {
+            should.not.exist(err);
+            should.exist(stoppedId);
+            stoppedId.should.equal(eventId);
+            stepDone();
+          });
+        }
+      ], done);
+    });
+
+    // TODO: is stopEvent unusable in a singleActivity stream?
+    it.skip('must start an event and stop it using stopEvent() in singleActivity stream',
+      function (done) {
+      async.series([
+        function (stepDone) {
+          eventData.streamId = singleActivityStream.id;
           connection.events.start(eventData, function (err, event) {
             should.not.exist(err);
             eventToStop = event;
@@ -253,33 +340,32 @@ describe('Connection.events', function () {
             stepDone();
           });
         }
-      ]);
-      done();
+      ], done);
     });
 
-    it('should start an event and stop it using stopStream()', function (done) {
+    it('must start an event and stop it using stopStream()', function (done) {
       async.series([
         function (stepDone) {
+          eventData.streamId = singleActivityStream.id;
           connection.events.start(eventData, function (err, event) {
-
             should.not.exist(err);
             should.exist(event);
             should.not.exist(event.duration);
-            eventId = event.id;
+            eventToStop = event;
+            eventId = eventToStop.id;
             stepDone();
           });
         },
         function (stepDone) {
           connection.events.stopStream(
-            {id: eventData.streamId}, null, null, function (err, stoppedId) {
+            {id: eventToStop.streamId}, null, null, function (err, stoppedId) {
               should.not.exist(err);
               should.exist(stoppedId);
               stoppedId.should.eql(eventId);
               stepDone();
             });
         }
-      ]);
-      done();
+      ], done);
     });
 
   });
@@ -287,7 +373,7 @@ describe('Connection.events', function () {
   describe('update()', function () {
     var eventToUpdate, eventToUpdate2, arrayOfEventsToUpdate,
       eventSingleActivityToUpdate, eventSingleActivityToUpdate2,
-      streamSingleActivty;
+      streamSingleActivity;
 
     before(function (done) {
 
@@ -297,8 +383,9 @@ describe('Connection.events', function () {
             id: 'singleActivtyTestStream',
             name: 'singleActivtyTestStream',
             type: 'activity/plain',
-            singleActivity: true}, function (err, stream) {
-            streamSingleActivty = stream;
+            singleActivity: true
+          }, function (err, stream) {
+            streamSingleActivity = stream;
             stepDone();
           });
         },
@@ -320,18 +407,6 @@ describe('Connection.events', function () {
             return stepDone(err);
           });
         },
-        /*function (stepDone) {
-         arrayOfEventsToUpdate = [
-         {content: 'I am going to be updated in an array', streamId: 'diary', type: 'note/txt'},
-         {
-         content: 'I am also going to be updated in an array', streamId: 'diary',
-         type: 'note/txt'
-         }];
-         connection.events.create(arrayOfEventsToUpdate, function (err, events) {
-         arrayOfEventsToUpdate = events;
-         return stepDone(err);
-         });
-         },*/
         function (stepDone) {
           eventSingleActivityToUpdate = {
             streamId: 'activity', type: 'activity/plain',
@@ -355,34 +430,52 @@ describe('Connection.events', function () {
       ], done);
     });
 
-    /*after(function (done) {
-     var deletedEvents = [
-     eventToUpdate, eventToUpdate2, eventSingleActivityToUpdate, eventSingleActivityToUpdate2
-     ].concat(arrayOfEventsToUpdate);
-
-     async.series([
-     function (stepDone) {
-     connection.events.delete(deletedEvents, function (err, delEvents) {
-     deletedEvents = delEvents;
-     return stepDone(err);
-     });
-     },
-     function (stepDone) {
-     connection.events.delete(deletedEvents, function (err) {
-     return stepDone(err);
-     });
-     }
-     ]);
-     done();
-     });*/
-    /*
     after(function (done) {
       async.series([
         function (stepDone) {
-          connection.
+          connection.events.delete(eventToUpdate, function (err, deletedEvent) {
+            eventToUpdate = deletedEvent;
+            return stepDone(err);
+          });
+        },
+        function (stepDone) {
+          connection.events.delete(eventToUpdate, function (err) {
+            return stepDone(err);
+          });
+        },
+        function (stepDone) {
+          connection.events.delete(eventToUpdate2, function (err, deletedEvent) {
+            eventToUpdate2 = deletedEvent;
+            return stepDone(err);
+          });
+        },
+        function (stepDone) {
+          connection.events.delete(eventToUpdate2, function (err) {
+            return stepDone(err);
+          });
+        },function (stepDone) {
+          connection.events.delete(eventSingleActivityToUpdate, function (err, deletedEvent) {
+            eventSingleActivityToUpdate = deletedEvent;
+            return stepDone(err);
+          });
+        },
+        function (stepDone) {
+          connection.events.delete(eventSingleActivityToUpdate, function (err) {
+            return stepDone(err);
+          });
+        },function (stepDone) {
+          connection.events.delete(eventSingleActivityToUpdate2, function (err, deletedEvent) {
+            eventSingleActivityToUpdate2 = deletedEvent;
+            return stepDone(err);
+          });
+        },
+        function (stepDone) {
+          connection.events.delete(eventSingleActivityToUpdate2, function (err) {
+            return stepDone(err);
+          });
         }
-      ]);
-    });*/
+      ], done);
+    });
 
     it('must accept an Event object and return the updated event', function (done) {
       var newContent = 'I was updated';
@@ -492,8 +585,7 @@ describe('Connection.events', function () {
             return stepDone(err);
           });
         }
-      ]);
-      done();
+      ], done);
     });
 
     // TODO: to be implemented based on ConnectionEvents.createWithAttachment()
