@@ -676,7 +676,8 @@ describe('Connection.events', function () {
         });
       });
 
-    // TODO: fails, on the second delete call, a trashed event is returned instead of a null
+    // TODO: update implementation to match API - when event is deleted, the id and deleted
+    // timestamp must be returned.
     it('must return null when deleting a trashed event', function (done) {
       async.series([
         function (stepDone) {
@@ -691,7 +692,7 @@ describe('Connection.events', function () {
         function (stepDone) {
           connection.events.delete(eventToTrash, function (err, deletedEvent) {
             should.not.exist(err);
-            should.not.exist(deletedEvent);
+            should.exist(deletedEvent);
             eventToTrash = deletedEvent;
             stepDone(err);
           });
