@@ -373,19 +373,20 @@ describe('Connection.events', function () {
   describe('update()', function () {
     var eventToUpdate, eventToUpdate2, arrayOfEventsToUpdate,
       eventSingleActivityToUpdate, eventSingleActivityToUpdate2,
-      streamSingleActivity;
+      singleActivityStream;
 
     before(function (done) {
 
       async.series([
         function (stepDone) {
-          connection.streams.create({
+          singleActivityStream = {
             id: 'singleActivtyTestStream',
             name: 'singleActivtyTestStream',
             type: 'activity/plain',
             singleActivity: true
-          }, function (err, stream) {
-            streamSingleActivity = stream;
+          };
+          connection.streams.create(singleActivityStream, function (err, stream) {
+            singleActivityStream = stream;
             stepDone();
           });
         },
@@ -409,7 +410,7 @@ describe('Connection.events', function () {
         },
         function (stepDone) {
           eventSingleActivityToUpdate = {
-            streamId: 'activity', type: 'activity/plain',
+            streamId: singleActivityStream.id, type: 'activity/plain',
             time: 100, duration: 10
           };
           connection.events.create(eventSingleActivityToUpdate, function (err, event) {
@@ -419,7 +420,7 @@ describe('Connection.events', function () {
         },
         function (stepDone) {
           eventSingleActivityToUpdate2 = {
-            streamId: 'activity', type: 'activity/plain', time: 200,
+            streamId: singleActivityStream.id, type: 'activity/plain', time: 200,
             duration: 10
           };
           connection.events.create(eventSingleActivityToUpdate2, function (err, event) {
@@ -433,45 +434,56 @@ describe('Connection.events', function () {
     after(function (done) {
       async.series([
         function (stepDone) {
-          connection.events.delete(eventToUpdate, function (err, deletedEvent) {
-            eventToUpdate = deletedEvent;
-            return stepDone(err);
+          connection.events.delete(eventToUpdate, function (err, trashedEvent) {
+            eventToUpdate = trashedEvent;
+            stepDone(err);
           });
         },
         function (stepDone) {
           connection.events.delete(eventToUpdate, function (err) {
-            return stepDone(err);
+            stepDone(err);
           });
         },
         function (stepDone) {
-          connection.events.delete(eventToUpdate2, function (err, deletedEvent) {
-            eventToUpdate2 = deletedEvent;
-            return stepDone(err);
+          connection.events.delete(eventToUpdate2, function (err, trashedEvent) {
+            eventToUpdate2 = trashedEvent;
+            stepDone(err);
           });
         },
         function (stepDone) {
           connection.events.delete(eventToUpdate2, function (err) {
-            return stepDone(err);
+            stepDone(err);
           });
         },function (stepDone) {
-          connection.events.delete(eventSingleActivityToUpdate, function (err, deletedEvent) {
-            eventSingleActivityToUpdate = deletedEvent;
-            return stepDone(err);
+          connection.events.delete(eventSingleActivityToUpdate, function (err, trashedEvent) {
+            eventSingleActivityToUpdate = trashedEvent;
+            stepDone(err);
           });
         },
         function (stepDone) {
           connection.events.delete(eventSingleActivityToUpdate, function (err) {
-            return stepDone(err);
+            stepDone(err);
           });
         },function (stepDone) {
-          connection.events.delete(eventSingleActivityToUpdate2, function (err, deletedEvent) {
-            eventSingleActivityToUpdate2 = deletedEvent;
-            return stepDone(err);
+          connection.events.delete(eventSingleActivityToUpdate2, function (err, trashedEvent) {
+            eventSingleActivityToUpdate2 = trashedEvent;
+            stepDone(err);
           });
         },
         function (stepDone) {
           connection.events.delete(eventSingleActivityToUpdate2, function (err) {
-            return stepDone(err);
+            stepDone(err);
+          });
+        },
+        function (stepDone) {
+          connection.streams.delete(singleActivityStream, function (err, trashedStream) {
+            singleActivityStream = trashedStream;
+            stepDone(err);
+          });
+        },
+        function (stepDone) {
+          connection.streams.delete(singleActivityStream, function (err) {
+            stepDone(err);
           });
         }
       ], done);
