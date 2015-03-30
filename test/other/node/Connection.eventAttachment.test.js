@@ -7,6 +7,8 @@ var pryv = require('../../../source/main'),
   fs = require('fs');
 
 
+// TODO: remove because covered in acceptance/Connection.events.test.create().
+// it('must accept attachment only with Event object');
 var testEvents = function () {
 
 

@@ -49,6 +49,7 @@ var testEvents = function (preFetchStructure) {
       });
     }
 
+    // TODO remove because covered in acceptance
     describe('get() ' + localEnabledStr, function () {
       it('should get Event objects for request', function (done) {
         nock('https://' + username + '.' + settings.domain)
@@ -92,6 +93,7 @@ var testEvents = function (preFetchStructure) {
       });
     });
 
+    // COMMENT: what is this test with an empty streamIds array filter???
     // TODO: all get() tests should be together
     describe('get( with a DEAD end filter) ' + localEnabledStr, function () {
       it('should get an empty list with no request', function (done) {
@@ -109,6 +111,7 @@ var testEvents = function (preFetchStructure) {
     });
 
 
+    // TODO remove because covered in acceptance
     describe('create( event )' + localEnabledStr, function () {
 
       var eventData = {streamId : 'diary', type : 'note/txt', content: 'hello'},
@@ -134,6 +137,7 @@ var testEvents = function (preFetchStructure) {
 
       });
 
+      // TODO error case handled in acceptance
       it('should handle server errors', function (done) {
         nock('https://' + username + '.' + settings.domain)
             .post('/events')
@@ -154,7 +158,7 @@ var testEvents = function (preFetchStructure) {
 
     });
 
-
+    // TODO remove because covered in acceptance
     describe('create( eventData )' + localEnabledStr, function () {
 
       var eventData = {streamId : 'diary', type : 'note/txt', content: 'hello'};
@@ -177,6 +181,7 @@ var testEvents = function (preFetchStructure) {
 
     });
 
+    // TODO remove because covered in acceptance
     describe('start( eventData )  - stopEvent( event ) 1' + localEnabledStr, function () {
 
       // make sure that testing stream is singleActivity
@@ -202,7 +207,6 @@ var testEvents = function (preFetchStructure) {
       }
 
 
-
       it('should create an event and beeing able to stop it', function (done) {
         nock('https://' + username + '.' + settings.domain)
           .post('/events/start')
@@ -222,6 +226,7 @@ var testEvents = function (preFetchStructure) {
     });
 
 
+    // TODO remove because covered in acceptance
     describe('start( eventData )  - stopStream( stream ) 1' + localEnabledStr, function () {
 
       var eventData = {streamId : 'activity', type : 'activity/plain'};
@@ -307,6 +312,7 @@ var testEvents = function (preFetchStructure) {
 
     });
 
+    // TODO remove because covered in acceptance
     describe('update() ' + localEnabledStr, function () {
       var eventId = 'test-id',
         data = {
