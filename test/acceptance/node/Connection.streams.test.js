@@ -20,6 +20,7 @@ describe('Connection.streams', function () {
   });
 
   describe('get()', function () {
+    // TODO: maybe verify tree structure
     it('must return a tree of non-trashed Stream objects by default', function (done) {
       connection.streams.get(null, function (error, streams) {
         should.not.exist(error);
@@ -42,7 +43,7 @@ describe('Connection.streams', function () {
     });
 
     it('must return streams matching the given filter', function (done) {
-      var filter = { parentId: 'diary', state: 'all' };
+      var filter = {parentId: 'diary', state: 'all'};
       connection.streams.get(filter, function (error, streams) {
         should.exist(streams);
         streams.forEach(function (stream) {
@@ -61,24 +62,112 @@ describe('Connection.streams', function () {
       });
     });
 
+    // TODO: create and delete an stream, then call get() with modifiedSince at the time of the
+    // stream's deletion.
+    it('must return deleted streams when the flag includeDeletions is set');
+
     it('must return an error if the given filter contains invalid parameters', function (done) {
-      var filter = { parentId: 42, state: 'toto' };
+      var filter = {parentId: 42, state: 'toto'};
       connection.streams.get(filter, function (error, streams) {
         should.exist(error);
         should.not.exist(streams);
         done();
       });
     });
+
+    it('must accept a null filter', function (done) {
+      done();
+    });
+
   });
 
   describe('create()', function () {
-    it('must accept a stream-like object and return a Stream object');
+    var streamData, streamData2,
+      minimumStream, minimumStream2;
 
-    it('must accept an array of stream-like objects and return an array of Stream objects');
+    before(function (done) {
+      streamData = {
+        name: 'testStream1'
+      };
+      streamData2 = {
+        name: 'testStream2'
+      };
+      done();
+    });
 
-    it('must return streams with default values for unspecified properties');
+    after(function (done) {
+      async.series([
+        function (stepDone) {
+          connection.streams.delete(minimumStream, function (err, trashedStream) {
+            should.not.exist(err);
+            minimumStream = trashedStream;
+            stepDone();
+          });
+        },
+        function (stepDone) {
+          connection.streams.delete(minimumStream, function(err) {
+            should.not.exist(err);
+            stepDone();
+          });
+        },
+        function (stepDone) {
+          connection.streams.delete(minimumStream2, function (err, trashedStream) {
+            should.not.exist(err);
+            minimumStream = trashedStream;
+            stepDone();
+          });
+        },
+        function (stepDone) {
+          connection.streams.delete(minimumStream2, function(err) {
+            should.not.exist(err);
+            stepDone();
+          });
+        }
+      ]);
+      done();
+    });
 
-    it('must return an error if the given stream data is invalid');
+    it('must accept a stream-like object and return a Stream object', function (done) {
+      connection.streams.create(streamData, function(err, newStream) {
+        should.not.exist(err);
+        should.exist(newStream);
+        newStream.should.be.instanceOf(Pryv.Stream);
+        minimumStream = newStream;
+        done();
+      });
+    });
+
+    // TODO not implemented yet
+    it.skip('must accept an array of stream-like objects and return an array of Stream objects');
+
+    it('must return streams with default values for unspecified properties', function (done) {
+      connection.streams.create(streamData, function(err, newStream) {
+        should.not.exist(err);
+        should.exist(newStream.id);
+        should.exist(newStream.created);
+        should.exist(newStream.createdBy);
+        should.exist(newStream.modified);
+        should.exist(newStream.modifiedBy);
+        minimumStream2 = newStream;
+        done();
+      });
+    });
+
+    it('must return an item-already-exists error if a stream with ' +
+    'the same name exists at the same level', function (done) {
+      connection.streams.create(streamData, function (err) {
+        should.exist(err);
+        done();
+      });
+    });
+
+    it('must return an error if the given stream data is invalid', function (done) {
+      var invalidStream = {};
+      connection.streams.create(invalidStream, function (err) {
+        should.exist(err);
+        done();
+      });
+    });
 
     it('must return an error for each invalid stream (when given multiple items)');
   });
@@ -166,6 +255,10 @@ describe('Connection.streams', function () {
         done();
       }.bind(this));
     });
+
+    it('must return an item-already-exists error if a stream with ' +
+    'the same name exists at the same level');
+
   });
 
   describe('delete()', function () {
