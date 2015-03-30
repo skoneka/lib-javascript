@@ -93,8 +93,7 @@ var testEvents = function (preFetchStructure) {
       });
     });
 
-    // COMMENT: what is this test with an empty streamIds array filter???
-    // TODO: all get() tests should be together
+    // TODO remove because covered in acceptance
     describe('get( with a DEAD end filter) ' + localEnabledStr, function () {
       it('should get an empty list with no request', function (done) {
         var deadEndFilter = new pryv.Filter();
