@@ -647,7 +647,7 @@ describe('Connection.events', function () {
 
     beforeEach(function (done) {
       eventToTrash = {
-        content: 'I am going to be trashed',
+        content: 'I am going to be trashed or event deleted',
         streamId: 'diary',
         type: 'note/txt'
       };
@@ -677,10 +677,12 @@ describe('Connection.events', function () {
       });
 
     // TODO: fails, on the second delete call, a trashed event is returned instead of a null
-    it('must return null when deleting an already-trashed event', function (done) {
+    it('must return null when deleting a trashed event', function (done) {
       async.series([
         function (stepDone) {
           connection.events.delete(eventToTrash, function (err, trashedEvent) {
+            should.not.exist(err);
+            should.exist(trashedEvent);
             trashedEvent.trashed.should.be.equal(true);
             eventToTrash = trashedEvent;
             stepDone(err);
@@ -708,12 +710,11 @@ describe('Connection.events', function () {
       });
     });
 
-    // TODO
+    // TODO: not implemented yet
     it('must accept an array of event ids');
-    // TODO
 
+    // TODO: not implemented yet
     it('must accept an array of Event objects');
-    // TODO
 
     it('must return an error when the specified event does not exist', function (done) {
       connection.events.delete({id: 'unexistant-id-54s65df4'}, function (err, updatedEvent) {
