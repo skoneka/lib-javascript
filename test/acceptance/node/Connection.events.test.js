@@ -130,7 +130,6 @@ describe('Connection.events', function () {
       singleActivityStream = {name: 'singleActivityStream', singleActivity: true};
       connection.streams.create(singleActivityStream, function (err, newStream) {
         should.not.exist(err);
-        console.log('streamd id: ' + newStream.id);
         should.exist(newStream.id);
         singleActivityStream = newStream;
         done(err);
