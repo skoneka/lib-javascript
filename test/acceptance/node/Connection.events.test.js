@@ -3,13 +3,12 @@ var Pryv = require('../../../source/main'),
   should = require('should'),
   config = require('../test-support/config.js'),
   replay = require('replay'),
-  _ = require('underscore'),
   async = require('async'),
   fs = require('fs');
 
 
 describe('Connection.events', function () {
-  this.timeout(20000);
+  this.timeout(10000);
   var connection = new Pryv.Connection(config.connectionSettings);
 
   before(function () {
@@ -125,52 +124,78 @@ describe('Connection.events', function () {
   });
 
   describe('create()', function () {
-    var eventData, eventData2,
-      eventDataSingleActivity, eventsDataArray, pictureData;
+    var eventToDelete, singleActivityStream;
 
     before(function (done) {
-      eventData = {
+      singleActivityStream = {name: 'singleActivityStream', singleActivity: true};
+      connection.streams.create(singleActivityStream, function (err, newStream) {
+        should.not.exist(err);
+        console.log('streamd id: ' + newStream.id);
+        should.exist(newStream.id);
+        singleActivityStream = newStream;
+        done(err);
+      });
+    });
+
+    afterEach(function (done) {
+      if (eventToDelete !== null) {
+        async.series([
+          function (stepDone) {
+            connection.events.delete(eventToDelete, function (err, trashedEvent) {
+              eventToDelete = trashedEvent;
+              stepDone(err);
+            });
+          },
+          function (stepDone) {
+            connection.events.delete(eventToDelete, function (err) {
+              eventToDelete = null;
+              stepDone(err);
+            });
+          }
+        ], done);
+      } else {
+        done();
+      }
+    });
+
+    after(function (done) {
+      async.series([
+        function (stepDone) {
+          connection.streams.delete(singleActivityStream, function (err, trashedStream) {
+            singleActivityStream = trashedStream;
+            stepDone(err);
+          });
+        },
+        function (stepDone) {
+          connection.streams.delete(singleActivityStream, function (err) {
+            stepDone(err);
+          });
+        }
+      ], done);
+    });
+
+    it('must accept an event-like object and return an Event object', function (done) {
+      var eventData = {
         content: 'I am a test from js lib, please kill me',
         type: 'note/txt',
         streamId: 'diary'
       };
-
-      eventData2 = _.clone(eventData);
-      eventData2.content = 'I am the second test from js lib, please kill me too';
-
-      eventDataSingleActivity = {streamId: 'activity', type: 'activity/plain'};
-      eventsDataArray = [eventData, eventData2];
-
-      pictureData = fs.readFileSync(__dirname + '/../test-support/photo.PNG');
-      should.exist(pictureData);
-      done();
-    });
-
-    it('must accept an event-like object and return an Event object', function (done) {
       connection.events.create(eventData, function (err, event) {
         should.not.exist(err);
         should.exist(event);
         event.should.be.instanceOf(Pryv.Event);
+        eventToDelete = event;
         done();
       });
     });
 
     // TODO functionality not yet implemented
-    it.skip('must accept an array of event-like objects and return an array of Event objects',
-      function (done) {
-        connection.events.create(eventsDataArray, function (err, eventsArray) {
-          should.not.exist(err);
-          should.exist(eventsArray);
-          Array.isArray(eventsArray).should.be.true();
-          eventsArray.forEach(function (e) {
-            e.should.be.instanceOf(Pryv.Event);
-          });
-          done();
-        });
-      });
+    it.skip('must accept an array of event-like objects and return an array of Event objects');
 
     // TODO crashes probably because of replay doesn't support this kind of POST
     it.skip('must accept attachment only with Event object', function (done) {
+      var pictureData = fs.readFileSync(__dirname + '/../test-support/photo.PNG');
+      should.exist(pictureData);
 
       var eventData = {
         streamId: config.testStreamId, type: 'picture/attached',
@@ -182,22 +207,28 @@ describe('Connection.events', function () {
         filename: 'attachment0'
       });
 
-      connection.events.createWithAttachment(eventData, formData,
-        function (err, event) {
-          should.not.exist(err);
-          should.exist(event);
-          event.should.be.instanceOf(Pryv.Event);
-          done(err);
-        });
+      connection.events.createWithAttachment(eventData, formData, function (err, event) {
+        should.not.exist(err);
+        should.exist(event);
+        event.should.be.instanceOf(Pryv.Event);
+        eventToDelete = event;
+        done(err);
+      });
     });
 
     it('must return events with default values for unspecified properties', function (done) {
+      var eventData = {
+        content: 'I am a test from js lib, please kill me',
+        type: 'note/txt',
+        streamId: 'diary'
+      };
       connection.events.create(eventData, function (err, event) {
         should.exist(event.id);
         should.exist(event.time);
         should.exist(event.tags);
         should.exist(event.created);
         should.exist(event.createdBy);
+        eventToDelete = event;
         done();
       });
     });
@@ -205,14 +236,39 @@ describe('Connection.events', function () {
     // TODO
     // stoppedId: indicates the id of the previously running period event that was stopped
     // as a consequence of inserting the new event
-    it.skip('must return a stoppedId field when called in a SingleActivity stream',
+    it.skip('must return a stoppedId field when called in a singleActivity stream that' +
+      ' currently has a running event',
       function (done) {
-        connection.events.create(eventDataSingleActivity, function (err, event, stoppedId) {
-          should.not.exist(err);
-          should.exist(event);
-          should.exist(stoppedId);
-          done();
-        });
+        var eventDataSingleActivity = {
+          streamId: singleActivityStream.id, type: 'activity/plain'};
+        var stoppedEventId;
+        async.series([
+          function (stepDone) {
+            connection.events.create(eventDataSingleActivity, function (err, event, stoppedId) {
+              should.not.exist(err);
+              should.exist(event);
+              should.not.exist(stoppedId);
+              stoppedEventId = event.id;
+              stepDone();
+            });
+          },
+          function (stepDone) {
+            connection.events.create(eventDataSingleActivity, function (err, event, stoppedId) {
+              should.not.exist(err);
+              should.exist(event);
+              should.exist(stoppedId);
+              stoppedId.should.eql(stoppedEventId);
+              stepDone();
+            });
+          },
+          function (stepDone) {
+            connection.events.stopStream(
+              {id: singleActivityStream.id}, null, null, function (err) {
+                stepDone(err);
+              });
+          }
+        ], done);
+
       });
 
     // TODO
@@ -230,6 +286,7 @@ describe('Connection.events', function () {
       connection.events.create(invalidData, function (err, event) {
         should.exist(err);
         should.not.exist(event);
+        eventToDelete = null;
         done();
       });
     });
@@ -237,7 +294,7 @@ describe('Connection.events', function () {
     // TODO: decide how to handle errors for batch request
     // when some errors occurs error callback is null and
     // the result array has an error flag (.hasError)
-    it('must return an error for each invalid event (when given multiple items)');
+    it.skip('must return an error for each invalid event (when given multiple items)');
   });
 
 
@@ -302,7 +359,7 @@ describe('Connection.events', function () {
             eventToStop = event;
             should.exist(event);
             should.not.exist(event.duration);
-              eventId = event.id;
+            eventId = event.id;
             stepDone();
           });
         },
@@ -320,28 +377,28 @@ describe('Connection.events', function () {
     // TODO: is stopEvent unusable in a singleActivity stream?
     it.skip('must start an event and stop it using stopEvent() in singleActivity stream',
       function (done) {
-      async.series([
-        function (stepDone) {
-          eventData.streamId = singleActivityStream.id;
-          connection.events.start(eventData, function (err, event) {
-            should.not.exist(err);
-            eventToStop = event;
-            should.exist(event);
-            should.not.exist(event.duration);
-            eventId = event.id;
-            stepDone();
-          });
-        },
-        function (stepDone) {
-          connection.events.stopEvent(eventToStop, null, function (err, stoppedId) {
-            should.not.exist(err);
-            should.exist(stoppedId);
-            stoppedId.should.equal(eventId);
-            stepDone();
-          });
-        }
-      ], done);
-    });
+        async.series([
+          function (stepDone) {
+            eventData.streamId = singleActivityStream.id;
+            connection.events.start(eventData, function (err, event) {
+              should.not.exist(err);
+              eventToStop = event;
+              should.exist(event);
+              should.not.exist(event.duration);
+              eventId = event.id;
+              stepDone();
+            });
+          },
+          function (stepDone) {
+            connection.events.stopEvent(eventToStop, null, function (err, stoppedId) {
+              should.not.exist(err);
+              should.exist(stoppedId);
+              stoppedId.should.equal(eventId);
+              stepDone();
+            });
+          }
+        ], done);
+      });
 
     it('must start an event and stop it using stopStream()', function (done) {
       async.series([
@@ -454,7 +511,7 @@ describe('Connection.events', function () {
           connection.events.delete(eventToUpdate2, function (err) {
             stepDone(err);
           });
-        },function (stepDone) {
+        }, function (stepDone) {
           connection.events.delete(eventSingleActivityToUpdate, function (err, trashedEvent) {
             eventSingleActivityToUpdate = trashedEvent;
             stepDone(err);
@@ -464,7 +521,7 @@ describe('Connection.events', function () {
           connection.events.delete(eventSingleActivityToUpdate, function (err) {
             stepDone(err);
           });
-        },function (stepDone) {
+        }, function (stepDone) {
           connection.events.delete(eventSingleActivityToUpdate2, function (err, trashedEvent) {
             eventSingleActivityToUpdate2 = trashedEvent;
             stepDone(err);
