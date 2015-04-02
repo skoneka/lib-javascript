@@ -9,6 +9,7 @@ var Pryv = require('../../../source/main'),
 // (i.e number of trashed stream/children)
 describe('Connection.streams', function () {
   this.timeout(45000);
+
   var connection = new Pryv.Connection(config.connectionSettings);
 
   before(function () {

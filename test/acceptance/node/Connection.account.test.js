@@ -6,6 +6,7 @@ var Pryv = require('../../../source/main'),
 
 // TODO: need a connection with personal access;
 describe('Connection.account', function () {
+  this.timeout(10000);
   var connection = new Pryv.Connection(config.connectionSettings);
 
   before(function () {

@@ -6,8 +6,8 @@ var Pryv = require('../../../source/main'),
 async = require('async');
 
 describe('Connection.accesses', function () {
+  this.timeout(10000);
 
-  this.timeout(20000);
   var connection = new Pryv.Connection(config.connectionSettings);
 
   before(function () {
