@@ -3,7 +3,8 @@ var Pryv = require('../../../source/main'),
   should = require('should'),
   config = require('../test-support/config.js'),
   replay = require('replay'),
-  utility = require('../../../source/utility/utility.js');
+  utility = require('../../../source/utility/utility.js'),
+  _ = require('underscore');
 
 describe('Connection', function () {
   this.timeout(10000);
@@ -66,8 +67,19 @@ describe('Connection', function () {
         updatedConnection.auth.should.be.eql(tk);
         done();
       });
+    });
 
+    it('must return an error when one of the parameters is missing', function (done) {
+      var offlineCon = new Pryv.Connection(config.connectionSettings);
 
+      var uName = 'user';
+
+      offlineCon.attachCredentials({
+        username: uName
+      }, function (err) {
+        should.exist(err);
+        done();
+      });
     });
   });
 
@@ -92,7 +104,15 @@ describe('Connection', function () {
             done();
           });
         });
+    });
 
+    it('must return an error when the credentials are invalid', function (done) {
+      var errorParams = _.clone(stagingParams);
+      errorParams.password = 'falsePassword';
+      Pryv.Connection.login(errorParams, function (err) {
+        should.exist(err);
+        done();
+      });
     });
 
   });
