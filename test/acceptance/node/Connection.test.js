@@ -8,6 +8,14 @@ var Pryv = require('../../../source/main'),
 describe('Connection', function () {
   this.timeout(10000);
 
+  var stagingParams = {
+    username: 'perkikiki',
+    password: 'poilonez',
+    appId: 'pryv-test-app',
+    domain: utility.urls.domains.server.staging,
+    origin: utility.urls.domains.client.staging
+  };
+
   before(function () {
     replay.mode = process.env.REPLAY || 'replay';
   });
@@ -71,18 +79,11 @@ describe('Connection', function () {
 
   describe('login()', function () {
     it('must return a Connection with an access token of type personal', function (done) {
-      var params = {
-        username: 'perkikiki',
-        password: 'poilonez',
-        appId: 'pryv-test-app',
-        domain: utility.urls.domains.server.staging,
-        origin: utility.urls.domains.client.staging
-      };
 
-      Pryv.Connection.login(params, function (err, newConnection) {
+      Pryv.Connection.login(stagingParams, function (err, newConnection) {
           should.not.exist(err);
           should.exist(newConnection);
-          newConnection.username.should.be.eql(params.username);
+          newConnection.username.should.be.eql(stagingParams.username);
           should.exist(newConnection.auth);
           newConnection.accessInfo(function (err, result) {
             should.not.exist(err);
@@ -140,11 +141,12 @@ describe('Connection', function () {
   describe('privateProfile()', function () {
 
     it('must return this connection\'s private profile', function (done) {
-      var connection = new Pryv.Connection(config.connectionSettings);
-      connection.privateProfile(function (err, result) {
-        should.not.exist(err);
-        should.exist(result);
-        done();
+      Pryv.Connection.login(stagingParams, function (err, newConnection) {
+        newConnection.privateProfile(function (err, result) {
+          should.not.exist(err);
+          should.exist(result);
+          done(err);
+        });
       });
     });
   });
@@ -178,10 +180,6 @@ describe('Connection', function () {
       done();
     });
 
-    it('must instantiate a monitor with null filter', function (done) {
-      connection.monitor(null);
-      done();
-    });
   });
 
   // do tests? do only unit tests? because its usage is already tested in other modules
