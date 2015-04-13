@@ -26,7 +26,7 @@ describe('Connection', function () {
     });
 
     it.skip('must return an error when constructor parameters are invalid', function (done) {
-      var invalidSettings =  null;
+      var invalidSettings = null;
       var caughtError, connection;
       try {
         connection = new Pryv.Connection(invalidSettings);
@@ -56,6 +56,7 @@ describe('Connection', function () {
       should.exist(offlineCon.token);
       offlineCon.username.should.be.eql(uName);
       offlineCon.token.should.be.eql(tk);
+      done();
     });
   });
 
@@ -72,16 +73,17 @@ describe('Connection', function () {
       var appId = 'pryv-test-app';
       var domain = utility.urls.domains.server.staging;
       var origin = utility.urls.domains.client.staging;
-      Pryv.Connection.login(username, password, appId, domain, origin, function (err, newConnection) {
-        should.not.exist(err);
-        should.exist(newConnection);
-        newConnection.accessInfo( function (err, result) {
+      Pryv.Connection.login(username, password, appId, domain, origin,
+        function (err, newConnection) {
           should.not.exist(err);
-          should.exist(result);
-          result.type.should.be.eql('personal');
-          done();
+          should.exist(newConnection);
+          newConnection.accessInfo(function (err, result) {
+            should.not.exist(err);
+            should.exist(result);
+            result.type.should.be.eql('personal');
+            done();
+          });
         });
-      });
 
     });
 
@@ -107,7 +109,7 @@ describe('Connection', function () {
 
     it.skip('must return this connection\'s access info', function (done) {
       var connection = new Pryv.Connection(config.connectionSettings);
-      connection.accessInfo( function (err, result) {
+      connection.accessInfo(function (err, result) {
         should.not.exist(err);
         should.exist(result);
         done();
@@ -121,7 +123,7 @@ describe('Connection', function () {
         staging: true
       };
       var connection = new Pryv.Connection(invalidConnectionSettings);
-      connection.accessInfo( function (err) {
+      connection.accessInfo(function (err) {
         should.exist(err);
         done();
       });
@@ -132,7 +134,7 @@ describe('Connection', function () {
 
     it.skip('must return this connection\'s private profile', function (done) {
       var connection = new Pryv.Connection(config.connectionSettings);
-      connection.privateProfile( function (err, result) {
+      connection.privateProfile(function (err, result) {
         should.not.exist(err);
         should.exist(result);
         done();

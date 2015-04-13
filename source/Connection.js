@@ -379,7 +379,7 @@ Object.defineProperty(Connection.prototype, 'serialId', {
  * @param domain
  * @param callback
  */
-Connection.login = function (username, password, appId, domain, callback) {
+Connection.login = function (username, password, appId, domain, origin, callback) {
 
   var headers = {
     'Content-Type': 'application/json; charset=utf-8',
