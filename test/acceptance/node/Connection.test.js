@@ -2,7 +2,8 @@
 var Pryv = require('../../../source/main'),
   should = require('should'),
   config = require('../test-support/config.js'),
-  replay = require('replay');
+  replay = require('replay'),
+  utility = require('../../../source/utility/utility.js');
 
 describe('Connection', function () {
   this.timeout(10000);
@@ -40,7 +41,22 @@ describe('Connection', function () {
   // TODO: not implemented yet
   describe('attachCredentials()', function () {
 
-    it('must accept username and token credentials');
+    it('must accept username and token credentials', function (done) {
+      var offlineCon = new Pryv.Connection();
+
+      var uName = 'user';
+      var tk = 'token';
+
+      offlineCon.attachCredentials({
+        username: uName,
+        token: tk
+      });
+
+      should.exist(offlineCon.username);
+      should.exist(offlineCon.token);
+      offlineCon.username.should.be.eql(uName);
+      offlineCon.token.should.be.eql(tk);
+    });
   });
 
   // find out if authorize and login need to be combined or left separate
@@ -53,9 +69,10 @@ describe('Connection', function () {
     it('must return a Connection with an access token of type personal', function (done) {
       var username = 'perkikiki';
       var password = 'poilonez';
-      var appId = 'pryv-browser';
-      var domain = 'pryv.in';
-      Pryv.Connection.login(username, password, appId, domain, function (err, newConnection) {
+      var appId = 'pryv-test-app';
+      var domain = utility.urls.domains.server.staging;
+      var origin = utility.urls.domains.client.staging;
+      Pryv.Connection.login(username, password, appId, domain, origin, function (err, newConnection) {
         should.not.exist(err);
         should.exist(newConnection);
         newConnection.accessInfo( function (err, result) {

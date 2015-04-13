@@ -381,7 +381,10 @@ Object.defineProperty(Connection.prototype, 'serialId', {
  */
 Connection.login = function (username, password, appId, domain, callback) {
 
-  var headers = {'Content-Type': 'application/json; charset=utf-8'};
+  var headers = {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Origin': 'https://sw.' + origin
+  };
 
   var pack = {
     method: 'POST',
@@ -390,11 +393,11 @@ Connection.login = function (username, password, appId, domain, callback) {
     host: username + '.' + domain,
     path: '/auth/login',
     payload: JSON.stringify({
-      appId : appId,
-      username : username,
-      password : password
+      appId: appId,
+      username: username,
+      password: password
     }),
-    success: function (result, resultInfo)  {
+    success: function (result, resultInfo) {
       console.log('on a un success jajajajaaja');
       console.log(require('util').inspect(result, {depth: null}));
       console.log('result info:');
@@ -413,10 +416,6 @@ Connection.login = function (username, password, appId, domain, callback) {
       console.log('result info:');
       console.log(info);
       callback(info, jsonError);
-      /*
-      if (typeof(this.settings.callbacks.error) === 'function') {
-        this.settings.callbacks.error(jsonError);
-      }*/
     }.bind(this)
   };
 
