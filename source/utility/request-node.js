@@ -13,7 +13,7 @@ var _ = require('underscore');
  * @param {Number} pack.port : port to use
  * @param {String} pack.path : the request PATH
  * @param {Object} [pack.headers] : key / value map of headers
- * @param {Object} [pack.params] : the payload -- only with POST/PUT
+ * @param {Object} [pack.payload] : the payload -- only with POST/PUT
  * @param {String} [pack.parseResult = 'json'] : 'text' for no parsing
  * @param {Function} pack.success : function (result, resultInfo)
  * @param {Function} pack.error : function (error, resultInfo)
@@ -24,21 +24,24 @@ var _ = require('underscore');
  */
 module.exports = function (pack)  {
 
+  // ------------ request TYPE
+  pack.method = pack.method || 'GET';
+
+  var parseResult = pack.parseResult || 'json';
+  var httpMode = pack.ssl ? 'https' : 'http';
+  var http = require(httpMode);
+  var aborted = false;
+
+  console.log('pack.payload:');
+  console.log(pack.payload);
 
   var httpOptions = {
     host: pack.host,
     port: pack.port,
     path: pack.path,
     method: pack.method,
-    rejectUnauthorized: false,
     headers : pack.headers
   };
-
-
-  var parseResult = pack.parseResult || 'json';
-  var httpMode = pack.ssl ? 'https' : 'http';
-  var http = require(httpMode);
-  var aborted = false;
 
   if (pack.payload instanceof FormData) {
     httpOptions.method = 'post';
@@ -48,6 +51,9 @@ module.exports = function (pack)  {
       pack.headers['Content-Length'] = Buffer.byteLength(pack.payload, 'utf-8');
     }
   }
+
+  console.log('httpOptions:');
+  console.log(httpOptions);
 
   var req = http.request(httpOptions, function (res) {
     var bodyarr = [];
@@ -68,7 +74,11 @@ module.exports = function (pack)  {
           );
         }
       }
-      return pack.success(result, resultInfo);
+      if (res.statusCode >= 400 && res.statusCode < 600) {
+        return pack.error(result, resultInfo);
+      } else {
+        return pack.success(result, resultInfo);
+      }
     });
 
   });
