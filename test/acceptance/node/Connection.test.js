@@ -5,7 +5,7 @@ var Pryv = require('../../../source/main'),
   replay = require('replay');
 
 describe('Connection', function () {
-  this.timeout(20000);
+  this.timeout(10000);
 
   before(function () {
     replay.mode = process.env.REPLAY || 'replay';
@@ -18,13 +18,13 @@ describe('Connection', function () {
   // instantiate Connection
   describe('Connection()', function () {
 
-    it('must construct a Connection object with the provided parameters', function (done) {
+    it.skip('must construct a Connection object with the provided parameters', function (done) {
       var connection = new Pryv.Connection(config.connectionSettings);
       should.exist(connection);
       done();
     });
 
-    it('must return an error when constructor parameters are invalid', function (done) {
+    it.skip('must return an error when constructor parameters are invalid', function (done) {
       var invalidSettings =  null;
       var caughtError, connection;
       try {
@@ -50,10 +50,27 @@ describe('Connection', function () {
   });
 
   describe('login()', function () {
+    it('must return a Connection with an access token of type personal', function (done) {
+      var username = 'perkikiki';
+      var password = 'poilonez';
+      var appId = 'pryv-browser';
+      var domain = 'pryv.in';
+      Pryv.Connection.login(username, password, appId, domain, function (err, newConnection) {
+        should.not.exist(err);
+        should.exist(newConnection);
+        newConnection.accessInfo( function (err, result) {
+          should.not.exist(err);
+          should.exist(result);
+          result.type.should.be.eql('personal');
+          done();
+        });
+      });
+
+    });
 
   });
 
-  describe('fetchStructure()', function () {
+  describe.skip('fetchStructure()', function () {
 
     it('must return the streams structure', function (done) {
       var connection = new Pryv.Connection(config.connectionSettings);
@@ -71,7 +88,7 @@ describe('Connection', function () {
 
   describe('accessInfo()', function () {
 
-    it('must return this connection\'s access info', function (done) {
+    it.skip('must return this connection\'s access info', function (done) {
       var connection = new Pryv.Connection(config.connectionSettings);
       connection.accessInfo( function (err, result) {
         should.not.exist(err);
@@ -80,7 +97,7 @@ describe('Connection', function () {
       });
     });
 
-    it('must return an error if the username/token are invalid', function (done) {
+    it.skip('must return an error if the username/token are invalid', function (done) {
       var invalidConnectionSettings = {
         username: 'fakeUser',
         auth: 'xxxxx',
@@ -96,7 +113,7 @@ describe('Connection', function () {
 
   describe('privateProfile()', function () {
 
-    it('must return this connection\'s private profile', function (done) {
+    it.skip('must return this connection\'s private profile', function (done) {
       var connection = new Pryv.Connection(config.connectionSettings);
       connection.privateProfile( function (err, result) {
         should.not.exist(err);
@@ -108,7 +125,7 @@ describe('Connection', function () {
 
   describe('getLocalTime()', function () {
 
-    it('must return the local time', function (done) {
+    it.skip('must return the local time', function (done) {
       var connection = new Pryv.Connection(config.connectionSettings);
       should.exist(connection.getLocalTime(new Date().getTime() + 1000));
       done();
@@ -117,14 +134,14 @@ describe('Connection', function () {
 
   describe('getServerTime()', function () {
 
-    it('must return the server time', function (done) {
+    it.skip('must return the server time', function (done) {
       var connection = new Pryv.Connection(config.connectionSettings);
       should.exist(connection.getLocalTime(new Date().getTime()));
       done();
     });
   });
 
-  describe('monitor()', function () {
+  describe.skip('monitor()', function () {
 
     var connection = new Pryv.Connection(config.connectionSettings);
 
