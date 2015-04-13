@@ -389,14 +389,21 @@ Object.defineProperty(Connection.prototype, 'serialId', {
  * static method to login, returns a connection object in the callback if the username/password
  * pair is valid for the provided appId.
  *
- * @param username
- * @param password
- * @param appId
- * @param domain
- * @param origin
+ * @param params key / value map containing username, password and appId fields
+ * @param staging boolean specifying if we are in staging mode or not
  * @param callback
  */
-Connection.login = function (username, password, appId, domain, origin, callback) {
+Connection.login = function (params, staging, callback) {
+
+  var domain = '';
+  var origin = 'https://sw.';
+  if (staging) {
+    domain = utility.urls.domains.server.staging;
+    origin += utility.urls.domains.client.staging;
+  } else {
+    domain = utility.urls.domains.server.production;
+    origin += utility.urls.domains.client.production;
+  }
 
   var headers = {
     'Content-Type': 'application/json',
@@ -407,19 +414,21 @@ Connection.login = function (username, password, appId, domain, origin, callback
     method: 'POST',
     headers: headers,
     ssl: true,
-    host: username + '.' + domain,
+    host: params.username + '.' + domain,
     path: '/auth/login/',
     payload: JSON.stringify({
-      appId: appId,
-      username: username,
-      password: password
+      appId: params.appId,
+      username: params.username,
+      password: params.password
     }),
 
     success: function (result) {
       if (result.token) {
         var settings = {
-          username: username,
-          auth: result.token
+          username: params.username,
+          auth: result.token,
+          domain: domain,
+          staging: staging
         };
         callback(null, new Connection(settings));
       }
