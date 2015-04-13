@@ -384,6 +384,7 @@ Connection.login = function (username, password, appId, domain, callback) {
   var headers = {'Content-Type': 'application/json; charset=utf-8'};
 
   var pack = {
+    method: 'POST',
     headers: headers,
     ssl: true,
     host: username + '.' + domain,
