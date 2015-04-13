@@ -74,12 +74,12 @@ describe('Connection', function () {
       var params = {
         username: 'perkikiki',
         password: 'poilonez',
-        appId: 'pryv-test-app'
+        appId: 'pryv-test-app',
+        domain: utility.urls.domains.server.staging,
+        origin: utility.urls.domains.client.staging
       };
 
-      var staging = true;
-
-      Pryv.Connection.login(params, staging, function (err, newConnection) {
+      Pryv.Connection.login(params, function (err, newConnection) {
           should.not.exist(err);
           should.exist(newConnection);
           newConnection.username.should.be.eql(params.username);
