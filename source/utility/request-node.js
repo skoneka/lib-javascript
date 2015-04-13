@@ -22,7 +22,7 @@ var _ = require('underscore');
  * @param {Number} [pack.expectedStatus] : http result code
  * @param {Boolean} [pack.ssl = true]
  */
-module.exports = function (pack)  {
+module.exports = function (pack) {
 
   // ------------ request TYPE
   pack.method = pack.method || 'GET';
@@ -32,16 +32,16 @@ module.exports = function (pack)  {
   var http = require(httpMode);
   var aborted = false;
 
-  console.log('pack.payload:');
-  console.log(pack.payload);
-
   var httpOptions = {
     host: pack.host,
-    port: pack.port,
     path: pack.path,
     method: pack.method,
     headers : pack.headers
   };
+
+  if (pack.port) {
+    httpOptions.port = pack.port;
+  }
 
   if (pack.payload instanceof FormData) {
     httpOptions.method = 'post';
@@ -52,16 +52,15 @@ module.exports = function (pack)  {
     }
   }
 
-  console.log('httpOptions:');
-  console.log(httpOptions);
-
   var req = http.request(httpOptions, function (res) {
     var bodyarr = [];
-    res.on('data', function (chunk) {  bodyarr.push(chunk); });
+    res.on('data', function (chunk) {
+      bodyarr.push(chunk);
+    });
     res.on('end', function () {
       var resultInfo = {
-        code : res.statusCode,
-        headers : res.headers
+        code: res.statusCode,
+        headers: res.headers
       };
       var result = null;
       if (parseResult === 'json') {
@@ -83,10 +82,8 @@ module.exports = function (pack)  {
 
   });
 
-
   var detail = 'Request: ' + httpOptions.method + ' ' +
     httpMode + '://' + httpOptions.host + ':' + httpOptions.port + '' + httpOptions.path;
-
 
 
   var onError = function (reason) {
@@ -97,7 +94,7 @@ module.exports = function (pack)  {
   };
 
   req.on('error', function (e) {
-      return onError('Error: ' + e.message);
+    return onError('Error: ' + e.message);
   });
 
 
@@ -113,7 +110,6 @@ module.exports = function (pack)  {
   if (pack.payload instanceof FormData) {
     pack.payload.pipe(req);
   } else {
-
     if (pack.payload) {
       req.write(pack.payload, 'utf8');
     }

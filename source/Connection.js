@@ -64,7 +64,7 @@ function Connection() {
     extraPath: '',
     staging: false
   }, settings);
-  this.settings.domain = settings.domain ?
+  this.settings.domain   = settings.domain ?
       settings.domain : utility.urls.domains.server[settings.staging ? 'staging' : 'production'];
 
   this.serverInfos = {
@@ -382,8 +382,8 @@ Object.defineProperty(Connection.prototype, 'serialId', {
 Connection.login = function (username, password, appId, domain, origin, callback) {
 
   var headers = {
-    'Content-Type': 'application/json; charset=utf-8',
-    'Origin': 'https://sw.' + origin
+    'Content-Type': 'application/json',
+    Origin: 'https://sw.' + origin
   };
 
   var pack = {
@@ -391,17 +391,14 @@ Connection.login = function (username, password, appId, domain, origin, callback
     headers: headers,
     ssl: true,
     host: username + '.' + domain,
-    path: '/auth/login',
+    path: '/auth/login/',
     payload: JSON.stringify({
       appId: appId,
       username: username,
       password: password
     }),
-    success: function (result, resultInfo) {
-      console.log('on a un success jajajajaaja');
-      console.log(require('util').inspect(result, {depth: null}));
-      console.log('result info:');
-      console.log(resultInfo);
+
+    success: function (result) {
       if (result.token) {
         var settings = {
           username: username,
@@ -410,11 +407,8 @@ Connection.login = function (username, password, appId, domain, origin, callback
         callback(null, new Connection(settings));
       }
     }.bind(this),
+
     error: function (jsonError, info) {
-      console.log('on a une erreur Neineinein');
-      console.log(require('util').inspect(jsonError, {depth: null}));
-      console.log('result info:');
-      console.log(info);
       callback(info, jsonError);
     }.bind(this)
   };

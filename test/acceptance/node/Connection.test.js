@@ -42,7 +42,7 @@ describe('Connection', function () {
   describe('attachCredentials()', function () {
 
     it('must accept username and token credentials', function (done) {
-      var offlineCon = new Pryv.Connection();
+      var offlineCon = new Pryv.Connection(config.connectionSettings);
 
       var uName = 'user';
       var tk = 'token';
@@ -77,6 +77,11 @@ describe('Connection', function () {
         function (err, newConnection) {
           should.not.exist(err);
           should.exist(newConnection);
+          newConnection.username.should.be.eql(username);
+          should.exist(newConnection.auth);
+          // set params to staging
+          newConnection.settings.staging = true;
+          newConnection.settings.domain = 'pryv.in';
           newConnection.accessInfo(function (err, result) {
             should.not.exist(err);
             should.exist(result);
