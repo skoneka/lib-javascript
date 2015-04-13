@@ -138,6 +138,22 @@ Connection.prototype.fetchStructure = function (callback /*, keepItUpToDate*/) {
   return this;
 };
 
+
+/**
+ * Set username / auth to this Connection
+ * @param credentials key / value map containing username and token fields
+ * @param callback
+ */
+Connection.prototype.attachCredentials = function (credentials, callback) {
+  if (!credentials.username || !credentials.auth) {
+    callback('error: incorrect input parameters');
+  } else {
+    this.username = credentials.username;
+    this.auth = credentials.auth;
+    callback(null, this);
+  }
+};
+
 /**
  * Get access information related this connection. This is also the best way to test
  * that the combination username/token is valid.
@@ -377,6 +393,7 @@ Object.defineProperty(Connection.prototype, 'serialId', {
  * @param password
  * @param appId
  * @param domain
+ * @param origin
  * @param callback
  */
 Connection.login = function (username, password, appId, domain, origin, callback) {

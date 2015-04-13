@@ -38,7 +38,6 @@ describe('Connection', function () {
     });
   });
 
-  // TODO: not implemented yet
   describe('attachCredentials()', function () {
 
     it('must accept username and token credentials', function (done) {
@@ -49,14 +48,18 @@ describe('Connection', function () {
 
       offlineCon.attachCredentials({
         username: uName,
-        token: tk
+        auth: tk
+      }, function (err, updatedConnection) {
+        should.not.exist(err);
+        should.exist(updatedConnection);
+        should.exist(offlineCon.username);
+        should.exist(offlineCon.auth);
+        updatedConnection.username.should.be.eql(uName);
+        updatedConnection.auth.should.be.eql(tk);
+        done();
       });
 
-      should.exist(offlineCon.username);
-      should.exist(offlineCon.token);
-      offlineCon.username.should.be.eql(uName);
-      offlineCon.token.should.be.eql(tk);
-      done();
+
     });
   });
 
