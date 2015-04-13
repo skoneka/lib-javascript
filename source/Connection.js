@@ -32,7 +32,8 @@ var _ = require('underscore'),
  * @param {boolean} [settings.ssl = true] Use ssl (https) or no
  * @param {string} [settings.extraPath = ''] append to the connections. Must start with a '/'
  */
-var Connection = module.exports = function Connection() {
+module.exports = Connection;
+function Connection() {
   var settings;
   if (!arguments[0] || typeof arguments[0] === 'string') {
     console.warn('new Connection(username, auth, settings) is deprecated.',
@@ -112,7 +113,7 @@ var Connection = module.exports = function Connection() {
   this.account = new ConnectionAccount(this);
   this.datastore = null;
 
-};
+}
 
 Connection._serialCounter = 0;
 
@@ -364,6 +365,62 @@ Object.defineProperty(Connection.prototype, 'serialId', {
  * @param {Number} resultInfo.code - HTTP result code
  * @param {Object} resultInfo.headers - HTTP result headers by key
  */
+
+// --------- login
+
+
+/**
+ * static method to login, returns a connection object in the callback if the username/password
+ * pair is valid for the provided appId.
+ *
+ * @param username
+ * @param password
+ * @param appId
+ * @param domain
+ * @param callback
+ */
+Connection.login = function (username, password, appId, domain, callback) {
+
+  var headers = {'Content-Type': 'application/json; charset=utf-8'};
+
+  var pack = {
+    headers: headers,
+    ssl: true,
+    host: username + '.' + domain,
+    path: '/auth/login',
+    payload: JSON.stringify({
+      appId : appId,
+      username : username,
+      password : password
+    }),
+    success: function (result, resultInfo)  {
+      console.log('on a un success jajajajaaja');
+      console.log(require('util').inspect(result, {depth: null}));
+      console.log('result info:');
+      console.log(resultInfo);
+      if (result.token) {
+        var settings = {
+          username: username,
+          auth: result.token
+        };
+        callback(null, new Connection(settings));
+      }
+    }.bind(this),
+    error: function (jsonError, info) {
+      console.log('on a une erreur Neineinein');
+      console.log(require('util').inspect(jsonError, {depth: null}));
+      console.log('result info:');
+      console.log(info);
+      callback(info, jsonError);
+      /*
+      if (typeof(this.settings.callbacks.error) === 'function') {
+        this.settings.callbacks.error(jsonError);
+      }*/
+    }.bind(this)
+  };
+
+  utility.request(pack);
+};
 
 
 // --------- private utils
