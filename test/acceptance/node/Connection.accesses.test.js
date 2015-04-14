@@ -189,29 +189,78 @@ describe('Connection.accesses', function () {
       });
     });
 
-    it('must return an error if the updated access\'s parameteres are invalid');
+    it('must return an error if the updated access\'s parameters are invalid');
 
   });
 
-  describe.skip('delete()', function () {
+  describe('delete()', function () {
 
-    var testAccess;
+    var testAccess, testStream, streamConnection;
 
     before(function (done) {
-      testAccess = {
-
+      testStream = {
+        id: 'accessTestStream',
+        name: 'accessTestStream'
       };
-      connection.accesses.create(testAccess, function (err, newAccess) {
-        testAccess = newAccess;
-        done(err);
+      testAccess = {
+        type: 'shared',
+        name: 'testAccess',
+        permissions: [
+          {
+            streamId: testStream.id,
+            level: 'read'
+          }
+        ]};
+
+      streamConnection = new Pryv.Connection(config.connectionSettings);
+
+      async.series([
+        function (stepDone) {
+          streamConnection.streams.create(testStream, function (err, newStream) {
+            testStream = newStream;
+            stepDone(err);
+          });
+        },
+        function (stepDone) {
+          connection.accesses.create(testAccess, function (err, newAccess) {
+            testAccess = newAccess;
+            stepDone(err);
+          });
+        }
+      ], done);
+
+    });
+
+    after(function (done) {
+      async.series([
+        function (stepDone) {
+          streamConnection.streams.delete(testStream, function (err, trashedStream) {
+            testStream = trashedStream;
+            stepDone(err);
+          });
+        },
+        function (stepDone) {
+          streamConnection.streams.delete(testStream, function (err) {
+            stepDone(err);
+          });
+        }
+      ], done);
+    });
+
+    it('must return an item deletion with the deleted access\' id', function (done) {
+      connection.accesses.delete(testAccess.id, function (err, result) {
+        should.not.exist(err);
+        should.exist(result.accessDeletion);
+        testAccess.id.should.be.eql(result.accessDeletion.id);
+        done();
       });
     });
 
-    it('must return ', function (done) {
-      connection.accesses.delete(testAccess.id, function (err, result) {
-        should.not.exist(err);
-        should.exist(result);
-        done(err);
+    it('must return an error if the id of the access to delete doesn\'t exist', function (done) {
+      var fakeAccessId = 'wertzuiosdfghjkcvbnm';
+      connection.accesses.delete(fakeAccessId, function (err) {
+        should.exist(err);
+        done();
       });
     });
 
