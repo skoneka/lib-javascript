@@ -74,7 +74,7 @@ module.exports = function (pack) {
         }
       }
       if (res.statusCode >= 400 && res.statusCode < 600) {
-        return pack.error(result, resultInfo);
+        return pack.error(result);
       } else {
         return pack.success(result, resultInfo);
       }
