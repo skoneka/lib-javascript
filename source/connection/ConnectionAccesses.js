@@ -16,9 +16,13 @@ function Accesses(connection) {
  */
 Accesses.prototype.get = function (callback) {
   this.connection.request('GET', apiPathAccesses, function (err, res) {
-    var accesses = res.accesses || res.access;
     if (typeof(callback) === 'function') {
-      callback(err, accesses);
+      if (res) {
+        var accesses = res.accesses || res.access;
+        callback(err, accesses);
+      } else {
+        callback(err);
+      }
     }
   });
 };
@@ -30,9 +34,13 @@ Accesses.prototype.get = function (callback) {
  */
 Accesses.prototype.create = function (access, callback) {
   this.connection.request('POST', apiPathAccesses, function (err, res) {
-    var access = res.access;
     if (typeof(callback) === 'function') {
-      callback(err, access);
+      if (res) {
+      var access = res.access;
+        callback(err, access);
+      } else {
+        callback(err);
+      }
     }
   }, access);
 };
@@ -43,14 +51,13 @@ Accesses.prototype.create = function (access, callback) {
  * @param callback
  */
 Accesses.prototype.update = function (access, callback) {
-  if (access.id) {
-    this.connection.request('PUT', apiPathAccesses + '/' + access.id, callback,
-      _.pick(access, 'name', 'deviceName', 'permissions'));
-  } else {
-    if (callback && _.isFunction(callback)) {
+  if (typeof(callback) === 'function') {
+    if (access.id) {
+      this.connection.request('PUT', apiPathAccesses + '/' + access.id, callback,
+        _.pick(access, 'name', 'deviceName', 'permissions'));
+    } else {
       return callback('No access id found');
     }
-
   }
 };
 
