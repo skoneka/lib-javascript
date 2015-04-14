@@ -3,19 +3,10 @@ var Pryv = require('../../../source/main'),
   should = require('should'),
   config = require('../test-support/config.js'),
   replay = require('replay'),
-  utility = require('../../../source/utility/utility.js'),
   _ = require('underscore');
 
 describe('Connection', function () {
   this.timeout(10000);
-
-  var stagingParams = {
-    username: 'perkikiki',
-    password: 'poilonez',
-    appId: 'pryv-test-app',
-    domain: utility.urls.domains.server.staging,
-    origin: utility.urls.domains.client.staging
-  };
 
   before(function () {
     replay.mode = process.env.REPLAY || 'replay';
@@ -92,10 +83,10 @@ describe('Connection', function () {
   describe('login()', function () {
     it('must return a Connection with an access token of type personal', function (done) {
 
-      Pryv.Connection.login(stagingParams, function (err, newConnection) {
+      Pryv.Connection.login(config.loginParams, function (err, newConnection) {
           should.not.exist(err);
           should.exist(newConnection);
-          newConnection.username.should.be.eql(stagingParams.username);
+          newConnection.username.should.be.eql(config.loginParams.username);
           should.exist(newConnection.auth);
           newConnection.accessInfo(function (err, result) {
             should.not.exist(err);
@@ -107,7 +98,7 @@ describe('Connection', function () {
     });
 
     it('must return an error when the credentials are invalid', function (done) {
-      var errorParams = _.clone(stagingParams);
+      var errorParams = _.clone(config.loginParams);
       errorParams.password = 'falsePassword';
       Pryv.Connection.login(errorParams, function (err) {
         should.exist(err);
@@ -161,7 +152,7 @@ describe('Connection', function () {
   describe('privateProfile()', function () {
 
     it('must return this connection\'s private profile', function (done) {
-      Pryv.Connection.login(stagingParams, function (err, newConnection) {
+      Pryv.Connection.login(config.loginParams, function (err, newConnection) {
         newConnection.privateProfile(function (err, result) {
           should.not.exist(err);
           should.exist(result);
