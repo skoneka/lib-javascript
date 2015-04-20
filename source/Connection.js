@@ -432,8 +432,8 @@ Connection.login = function (params, callback) {
       }
     }.bind(this),
 
-    error: function (jsonError, info) {
-      callback(info, jsonError);
+    error: function (jsonError) {
+      callback(jsonError);
     }.bind(this)
   };
 

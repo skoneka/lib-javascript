@@ -302,21 +302,24 @@ describe('Connection.events', function () {
     var eventData, eventId, eventToStop, stream, singleActivityStream;
 
     before(function (done) {
-      singleActivityStream = {name: 'singleActivityStream', singleActivity: true};
-      stream = {name: 'startStopTestStream'};
+      singleActivityStream = {
+        id: 'singleActivityStreamId',
+        name: 'singleActivityStreamName',
+        singleActivity: true};
+      stream = {id: 'startStopStreamId', name: 'startStopTestStreamName'};
       eventData = {type: 'activity/plain'};
 
       async.series([
         function (stepDone) {
           connection.streams.create(stream, function (err, newStream) {
             stream = newStream;
-            stepDone();
+            stepDone(err);
           });
         },
         function (stepDone) {
           connection.streams.create(singleActivityStream, function (err, newStream) {
             singleActivityStream = newStream;
-            stepDone();
+            stepDone(err);
           });
         }
       ], done());
@@ -718,6 +721,8 @@ describe('Connection.events', function () {
         connection.events.delete(eventToTrash, function (err) {
           done(err);
         });
+      } else {
+        done();
       }
     });
 
@@ -748,7 +753,7 @@ describe('Connection.events', function () {
         function (stepDone) {
           connection.events.delete(eventToTrash, function (err, deletedEvent) {
             should.not.exist(err);
-            should.exist(deletedEvent);
+            should.not.exist(deletedEvent);
             eventToTrash = deletedEvent;
             stepDone(err);
           });

@@ -36,7 +36,7 @@ Accesses.prototype.create = function (access, callback) {
   this.connection.request('POST', apiPathAccesses, function (err, res) {
     if (typeof(callback) === 'function') {
       if (res) {
-      var access = res.access;
+        var access = res.access;
         callback(err, access);
       } else {
         callback(err);
@@ -51,13 +51,19 @@ Accesses.prototype.create = function (access, callback) {
  * @param callback
  */
 Accesses.prototype.update = function (access, callback) {
-  if (typeof(callback) === 'function') {
-    if (access.id) {
-      this.connection.request('PUT', apiPathAccesses + '/' + access.id, callback,
-        _.pick(access, 'name', 'deviceName', 'permissions'));
-    } else {
-      return callback('No access id found');
-    }
+  if (access.id) {
+    this.connection.request('PUT', apiPathAccesses + '/' + access.id, function (err, result) {
+        if (typeof(callback) === 'function') {
+          if (err) {
+            callback(err);
+          } else {
+            callback(null, result);
+          }
+        }
+      },
+      _.pick(access, 'name', 'deviceName', 'permissions'));
+  } else {
+    return callback('No access id found');
   }
 };
 
