@@ -6,20 +6,21 @@ var FormData = require('form-data');
 var _ = require('underscore');
 
 /**
+ * executes the low-level HTTP request.
  *
  * @param {Object} pack json with
- * @param {Object} [pack.type = 'POST'] : 'GET/DELETE/POST/PUT'
+ * @param {Object} [pack.method = 'GET'] : 'GET/DELETE/POST/PUT'
  * @param {String} pack.host : fully qualified host name
- * @param {Number} pack.port : port to use
+ * @param {Number} [pack.port] : port to use
  * @param {String} pack.path : the request PATH
  * @param {Object} [pack.headers] : key / value map of headers
  * @param {Object} [pack.payload] : the payload -- only with POST/PUT
  * @param {String} [pack.parseResult = 'json'] : 'text' for no parsing
- * @param {Function} pack.success : function (result, resultInfo)
- * @param {Function} pack.error : function (error, resultInfo)
- * @param {String} [pack.info] : a text
- * @param {Boolean} [pack.async = true]
- * @param {Number} [pack.expectedStatus] : http result code
+ * @param {Function} pack.success : function (data, responseInfo), called when no error occurs in
+ * the network or the JSON parsing. data contains the parsed response body, responseInfo contains
+ * the headers and HTTP status code.
+ * @param {Function} pack.error : function (error, [responseInfo]), called when a network error or
+ * JSON parsing error occurs
  * @param {Boolean} [pack.ssl = true]
  */
 module.exports = function (pack) {
@@ -30,23 +31,21 @@ module.exports = function (pack) {
   var parseResult = pack.parseResult || 'json';
   var httpMode = pack.ssl ? 'https' : 'http';
   var http = require(httpMode);
-  var aborted = false;
 
   var httpOptions = {
     host: pack.host,
     path: pack.path,
+    port: pack.port,
     method: pack.method,
-    headers : pack.headers
+    headers: pack.headers
   };
 
-  if (pack.port) {
-    httpOptions.port = pack.port;
-  }
-
+  // When creating an attachment
   if (pack.payload instanceof FormData) {
-    httpOptions.method = 'post';
+    httpOptions.method = 'POST';
     _.extend(httpOptions.headers, pack.payload.getHeaders());
   } else {
+    // if some data is sent to the Back-End, set Content-Length header accordingly
     if (pack.payload) {
       pack.headers['Content-Length'] = Buffer.byteLength(pack.payload, 'utf-8');
     }
@@ -57,52 +56,39 @@ module.exports = function (pack) {
     res.on('data', function (chunk) {
       bodyarr.push(chunk);
     });
+
     res.on('end', function () {
-      var resultInfo = {
+      var responseInfo = {
         code: res.statusCode,
         headers: res.headers
       };
-      var result = null;
+      var data = null;
       if (parseResult === 'json') {
         try {
           var response = bodyarr.join('').trim() === '' ? '{}' : bodyarr.join('').trim();
-          result = JSON.parse(response);
+          data = JSON.parse(response);
         } catch (error) {
-          return onError('request failed to parse JSON in response' +
-            bodyarr.join('')
-          );
+          return pack.error('request failed to parse JSON in response' +
+          bodyarr.join('') + '\n' + HttpRequestDetails, responseInfo);
         }
       }
-      if (res.statusCode >= 400 && res.statusCode < 600) {
-        return pack.error(result);
-      } else {
-        return pack.success(result, resultInfo);
-      }
+      return pack.success(data, responseInfo);
     });
 
   });
 
-  var detail = 'Request: ' + httpOptions.method + ' ' +
+  var HttpRequestDetails = 'Request: ' + httpOptions.method + ' ' +
     httpMode + '://' + httpOptions.host + ':' + httpOptions.port + '' + httpOptions.path;
 
-
-  var onError = function (reason) {
-    if (!aborted) {
-      aborted = true;
-      return pack.error(reason + '\n' + detail, null);
-    }
-  };
-
   req.on('error', function (e) {
-    return onError('Error: ' + e.message);
+    return pack.error(e.message + '\n' + HttpRequestDetails);
   });
-
 
   req.on('socket', function (socket) {
     socket.setTimeout(30000);
     socket.on('timeout', function () {
       req.abort();
-      return onError('Timeout');
+      return pack.error('Timeout' + '\n' + HttpRequestDetails);
     });
   });
 

@@ -281,43 +281,43 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
   /**
    * @this {Connection}
    */
-  function onSuccess(result, resultInfo) {
+  function onSuccess(data, responseInfo) {
     var error = null;
 
-    var apiVersion = resultInfo.headers['API-Version'] || 
-      resultInfo.headers[CC.Api.Headers.ApiVersion];
+    var apiVersion = responseInfo.headers['API-Version'] || 
+      responseInfo.headers[CC.Api.Headers.ApiVersion];
 
     // test if API is reached or if we headed into something else
     if (! apiVersion) {
       error = {
         id : CC.Errors.API_UNREACHEABLE,
         message: 'Cannot find API-Version',
-        details: 'Response code: ' + resultInfo.code +
-          ' Headers: ' + JSON.stringify(resultInfo.headers)
+        details: 'Response code: ' + responseInfo.code +
+          ' Headers: ' + JSON.stringify(responseInfo.headers)
       };
-    } else if (result.message) {  // API < 0.6
-      error = result.message;
+    } else if (data.message) {  // API < 0.6
+      error = data.message;
     } else
-    if (result.error) { // API 0.7
-      error = result.error;
+    if (data.error) { // API 0.7
+      error = data.error;
     } else {
       this.serverInfos.lastSeenLT = (new Date()).getTime();
       this.serverInfos.apiVersion = apiVersion || this.serverInfos.apiVersion;
-      if (_.has(resultInfo.headers, CC.Api.Headers.ServerTime)) {
+      if (_.has(responseInfo.headers, CC.Api.Headers.ServerTime)) {
         this.serverInfos.deltaTime = (this.serverInfos.lastSeenLT / 1000) -
-          resultInfo.headers[CC.Api.Headers.ServerTime];
+          responseInfo.headers[CC.Api.Headers.ServerTime];
       }
     }
-    callback(error, result, resultInfo);
+    callback(error, data, responseInfo);
   }
 
-  function onError(error, resultInfo) {
+  function onError(error, responseInfo) {
     var errorTemp = {
       id : CC.Errors.API_UNREACHEABLE,
       message: 'Error on request ',
       details: 'ERROR: ' + error
     };
-    callback(errorTemp, null, resultInfo);
+    callback(errorTemp, null, responseInfo);
   }
   return request;
 };
