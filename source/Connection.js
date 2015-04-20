@@ -401,9 +401,9 @@ Connection.login = function (params, callback) {
 
   if (!utility.isBrowser()) {
     var origin = 'https://sw.';
-    origin = params.origin ? origin + utility.urls.domains.client.production :
-    origin + utility.urls.domains.client.staging;
-    _.extend(headers, {Origin: 'https://sw.' + origin});
+    origin = params.origin ? origin + params.origin :
+    origin + utility.urls.domains.client.production;
+    _.extend(headers, {Origin: origin});
   }
 
   var domain = params.domain || utility.urls.domains.client.production;
@@ -420,21 +420,22 @@ Connection.login = function (params, callback) {
       password: params.password
     }),
 
-    success: function (result) {
-      if (result.token) {
-        var settings = {
-          username: params.username,
-          auth: result.token,
-          domain: domain
-          // TODO: set staging if in this mode
-        };
-        callback(null, new Connection(settings));
+    success: function (data, responseInfo) {
+      if (data.error) {
+        return callback(data.error, null, responseInfo);
       }
-    }.bind(this),
+      var settings = {
+        username: params.username,
+        auth: data.token,
+        domain: domain
+        // TODO: set staging if in this mode
+      };
+      return callback(null, new Connection(settings), responseInfo);
+    },
 
-    error: function (jsonError) {
-      callback(jsonError);
-    }.bind(this)
+    error: function (jsonError, responseInfo) {
+      callback(jsonError, null, responseInfo);
+    }
   };
 
   utility.request(pack);
