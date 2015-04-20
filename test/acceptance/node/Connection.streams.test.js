@@ -185,15 +185,17 @@ describe('Connection.streams', function () {
 
   describe('update()', function () {
     var streamParent = {
-      id: 'libjs-test-stream-parent-update',
+      id: 'testStreamParentId',
       name: 'libjs-test-stream-parent-update',
       parentId: null
     };
     var streamToUpdate = {
+      id: 'testStreamToUpdateId',
       name: 'libjs-test-stream-update-to-update',
       parentId: streamParent.id
     };
     var streamToMove = {
+      id: 'testStreamToMoveId',
       name: 'libjs-test-stream-update-to-move',
       parentId: streamParent.id
     };
@@ -201,40 +203,59 @@ describe('Connection.streams', function () {
     before(function (done) {
       async.series([
         function (stepDone) {
-          connection.streams.delete(streamParent.id, function () {
-            return stepDone();
-          });
-        },
-        function (stepDone) {
-          connection.streams.delete(streamParent.id, function () {
-            return stepDone();
-          });
-        },
-        function (stepDone) {
-          connection.streams.create(streamParent, function (error, stream) {
-            if (error) {
-              return stepDone(error);
-            }
+          connection.streams.create(streamParent, function (err, stream) {
             streamParent = stream;
-            return stepDone();
+            stepDone(err);
           });
         },
         function (stepDone) {
-          connection.streams.create(streamToUpdate, function (error, stream) {
-            if (error) {
-              return stepDone(error);
-            }
+          connection.streams.create(streamToUpdate, function (err, stream) {
             streamToUpdate = stream;
-            return stepDone();
+            stepDone(err);
           });
         },
         function (stepDone) {
-          connection.streams.create(streamToMove, function (error, stream) {
-            if (error) {
-              return stepDone(error);
-            }
+          connection.streams.create(streamToMove, function (err, stream) {
             streamToMove = stream;
-            return stepDone();
+            stepDone(err);
+          });
+        }
+      ], done);
+    });
+
+    after(function (done) {
+      async.series([
+        function (stepDone) {
+          connection.streams.delete(streamToMove.id, function (err, trashedStream) {
+            streamToMove = trashedStream;
+            stepDone(err);
+          });
+        },
+        function (stepDone) {
+          connection.streams.delete(streamToMove.id, function (err) {
+            stepDone(err);
+          });
+        },
+        function (stepDone) {
+          connection.streams.delete(streamToUpdate.id, function (err, trashedStream) {
+            streamToUpdate = trashedStream;
+            stepDone(err);
+          });
+        },
+        function (stepDone) {
+          connection.streams.delete(streamToUpdate.id, function (err) {
+            stepDone(err);
+          });
+        },
+        function (stepDone) {
+          connection.streams.delete(streamParent.id, function (err, trashedStream) {
+            streamParent = trashedStream;
+            stepDone(err);
+          });
+        },
+        function (stepDone) {
+          connection.streams.delete(streamParent.id, function (err) {
+            stepDone(err);
           });
         }
       ], done);
