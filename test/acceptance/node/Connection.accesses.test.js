@@ -8,13 +8,16 @@ var Pryv = require('../../../source/main'),
 describe('Connection.accesses', function () {
   this.timeout(10000);
 
-  var connection;
+  var accessConnection, streamConnection;
 
 
-  before(function () {
+  before(function (done) {
     replay.mode = process.env.REPLAY || 'replay';
+
+    streamConnection = new Pryv.Connection(config.connectionSettings);
     Pryv.Connection.login(config.loginParams, function (err, newConnection) {
-      connection = newConnection;
+      accessConnection = newConnection;
+      done(err);
     });
   });
 
@@ -24,7 +27,7 @@ describe('Connection.accesses', function () {
 
   describe('get()', function () {
     it('must return the list of connection accesses', function (done) {
-      connection.accesses.get(function (err, res) {
+      streamConnection.accesses.get(function (err, res) {
         should.not.exist(err);
         should.exist(res);
         res.should.be.instanceOf(Array);
@@ -37,24 +40,32 @@ describe('Connection.accesses', function () {
       });
     });
 
-    it('must return an error if...');
+    it('must return an error if an inappropriate token is used', function (done) {
+      var badSettings = {
+        username: 'badName',
+        auth: 'falseToken',
+        staging: true
+      };
+      var con = new Pryv.Connection(badSettings);
+      con.accesses.get(function (err) {
+        should.exist(err);
+        done();
+      });
+    });
 
   });
 
   describe('create()', function () {
 
-    // TODO: find out why it's impossible to create streams with the other connection
-    var accessToDelete, testStream, streamConnection;
+    var testAccess, testStream;
 
     before(function (done) {
       testStream = {
         id: 'accessTestStream',
         name: 'accessTestStream'
       };
-      streamConnection = new Pryv.Connection(config.connectionSettings);
-      streamConnection.streams.create(testStream, function (err, newStream) {
+      accessConnection.streams.create(testStream, function (err, newStream) {
         testStream = newStream;
-        console.log(require('util').inspect(err, {depth: null}));
         done(err);
       });
     });
@@ -62,18 +73,18 @@ describe('Connection.accesses', function () {
     after(function (done) {
       async.series([
         function (stepDone) {
-          connection.accesses.delete(accessToDelete.id, function (err) {
-            stepDone(err);
-          });
-        },
-        function (stepDone) {
-          streamConnection.streams.delete(testStream, function (err, trashedStream) {
+          accessConnection.streams.delete(testStream, function (err, trashedStream) {
             testStream = trashedStream;
             stepDone(err);
           });
         },
         function (stepDone) {
-          streamConnection.streams.delete(testStream, function (err) {
+          accessConnection.streams.delete(testStream, function (err) {
+            stepDone(err);
+          });
+        },
+        function (stepDone) {
+          accessConnection.accesses.delete(testAccess.id, function (err) {
             stepDone(err);
           });
         }
@@ -81,7 +92,7 @@ describe('Connection.accesses', function () {
     });
 
     it('must return the created access', function (done) {
-      var testAccess = {
+      testAccess = {
         type: 'shared',
         name: 'testAccess',
         permissions: [
@@ -90,10 +101,11 @@ describe('Connection.accesses', function () {
             level: 'read'
           }
         ]};
-      connection.accesses.create(testAccess, function (err, newAccess) {
+      accessConnection.accesses.create(testAccess, function (err, newAccess) {
         should.not.exist(err);
         should.exist(newAccess);
-        accessToDelete = newAccess;
+        should.exist(newAccess.id);
+        testAccess = newAccess;
         done();
       });
     });
@@ -108,7 +120,7 @@ describe('Connection.accesses', function () {
             level: 'wrongLevel'
           }
         ]};
-      connection.accesses.create(invalidAccess, function (err) {
+      accessConnection.accesses.create(invalidAccess, function (err) {
         should.exist(err);
         done();
       });
@@ -145,9 +157,8 @@ describe('Connection.accesses', function () {
           });
         },
         function (stepDone) {
-          connection.accesses.create(testAccess, function (err, newAccess) {
+          accessConnection.accesses.create(testAccess, function (err, newAccess) {
             testAccess = newAccess;
-            console.log(newAccess);
             stepDone(err);
           });
         }
@@ -158,7 +169,7 @@ describe('Connection.accesses', function () {
     after(function (done) {
       async.series([
         function (stepDone) {
-          connection.accesses.delete(testAccess.id, function (err) {
+          accessConnection.accesses.delete(testAccess.id, function (err) {
             stepDone(err);
           });
         },
@@ -178,9 +189,7 @@ describe('Connection.accesses', function () {
 
     it('must return the updated access', function (done) {
       testAccess.name = 'myNewAccessName';
-      console.log('gonna update da access');
-      console.log(testAccess);
-      connection.accesses.update(testAccess, function (err, updatedAccess) {
+      accessConnection.accesses.update(testAccess, function (err, updatedAccess) {
         should.not.exist(err);
         should.exist(updatedAccess);
         testAccess.name.should.eql(updatedAccess.name);
@@ -189,7 +198,18 @@ describe('Connection.accesses', function () {
       });
     });
 
-    it('must return an error if the updated access\'s parameters are invalid');
+    it('must return an error if the updated access\'s parameters are invalid', function (done) {
+      testAccess.permissions = [
+          {
+            fakeParam1: 'fghjkvbnm',
+            fakeParam2: 'tzuiogfd'
+          }
+        ];
+      accessConnection.accesses.update(testAccess, function (err) {
+        should.exist(err);
+        done();
+      });
+    });
 
   });
 
@@ -222,7 +242,7 @@ describe('Connection.accesses', function () {
           });
         },
         function (stepDone) {
-          connection.accesses.create(testAccess, function (err, newAccess) {
+          accessConnection.accesses.create(testAccess, function (err, newAccess) {
             testAccess = newAccess;
             stepDone(err);
           });
@@ -248,7 +268,7 @@ describe('Connection.accesses', function () {
     });
 
     it('must return an item deletion with the deleted access\' id', function (done) {
-      connection.accesses.delete(testAccess.id, function (err, result) {
+      accessConnection.accesses.delete(testAccess.id, function (err, result) {
         should.not.exist(err);
         should.exist(result.accessDeletion);
         testAccess.id.should.be.eql(result.accessDeletion.id);
@@ -258,7 +278,7 @@ describe('Connection.accesses', function () {
 
     it('must return an error if the id of the access to delete doesn\'t exist', function (done) {
       var fakeAccessId = 'wertzuiosdfghjkcvbnm';
-      connection.accesses.delete(fakeAccessId, function (err) {
+      accessConnection.accesses.delete(fakeAccessId, function (err) {
         should.exist(err);
         done();
       });

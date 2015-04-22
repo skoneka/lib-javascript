@@ -433,8 +433,8 @@ Connection.login = function (params, callback) {
       return callback(null, new Connection(settings), responseInfo);
     },
 
-    error: function (jsonError, responseInfo) {
-      callback(jsonError, null, responseInfo);
+    error: function (error, responseInfo) {
+      callback(error, null, responseInfo);
     }
   };
 

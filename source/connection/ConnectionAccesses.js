@@ -17,12 +17,11 @@ function Accesses(connection) {
 Accesses.prototype.get = function (callback) {
   this.connection.request('GET', apiPathAccesses, function (err, res) {
     if (typeof(callback) === 'function') {
-      if (res) {
-        var accesses = res.accesses || res.access;
-        callback(err, accesses);
-      } else {
-        callback(err);
+      if (err) {
+        return callback(err);
       }
+      var accesses = res.accesses || res.access;
+      callback(null, accesses);
     }
   });
 };
@@ -35,12 +34,10 @@ Accesses.prototype.get = function (callback) {
 Accesses.prototype.create = function (access, callback) {
   this.connection.request('POST', apiPathAccesses, function (err, res) {
     if (typeof(callback) === 'function') {
-      if (res) {
-        var access = res.access;
-        callback(err, access);
-      } else {
-        callback(err);
+      if (err) {
+        return callback(err);
       }
+      callback(err, res.access);
     }
   }, access);
 };
@@ -52,13 +49,12 @@ Accesses.prototype.create = function (access, callback) {
  */
 Accesses.prototype.update = function (access, callback) {
   if (access.id) {
-    this.connection.request('PUT', apiPathAccesses + '/' + access.id, function (err, result) {
+    this.connection.request('PUT', apiPathAccesses + '/' + access.id, function (err, res) {
         if (typeof(callback) === 'function') {
           if (err) {
-            callback(err);
-          } else {
-            callback(null, result);
+            return callback(err);
           }
+          callback(err, res.access);
         }
       },
       _.pick(access, 'name', 'deviceName', 'permissions'));
@@ -74,11 +70,12 @@ Accesses.prototype.update = function (access, callback) {
  */
 Accesses.prototype.delete = function (sharingId, callback) {
   this.connection.request('DELETE', apiPathAccesses + '/' + sharingId, function (err, result) {
-    var error = err;
-    if (result && result.message) {
-      error = result;
+    if (typeof(callback) === 'function') {
+      if (err) {
+        return callback(err);
+      }
+      callback(null, result);
     }
-    callback(error, result);
   });
 };
 module.exports = Accesses;

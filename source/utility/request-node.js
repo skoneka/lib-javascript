@@ -30,7 +30,7 @@ module.exports = function (pack) {
 
   var parseResult = pack.parseResult || 'json';
   var httpMode = pack.ssl ? 'https' : 'http';
-  var http = require(httpMode);
+  var http = require(httpMode); // choose between HTTP and HTTPS
 
   var httpOptions = {
     host: pack.host,
