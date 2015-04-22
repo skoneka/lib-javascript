@@ -48,28 +48,28 @@ Accesses.prototype.create = function (access, callback) {
  * @param callback
  */
 Accesses.prototype.update = function (access, callback) {
-  if (access.id) {
-    this.connection.request('PUT', apiPathAccesses + '/' + access.id, function (err, res) {
-        if (typeof(callback) === 'function') {
+  if (typeof(callback) === 'function') {
+    if (access.id) {
+      this.connection.request('PUT', apiPathAccesses + '/' + access.id, function (err, res) {
           if (err) {
             return callback(err);
           }
           callback(err, res.access);
-        }
-      },
-      _.pick(access, 'name', 'deviceName', 'permissions'));
-  } else {
-    return callback('No access id found');
+        },
+        _.pick(access, 'name', 'deviceName', 'permissions'));
+    } else {
+      return callback('No access id found');
+    }
   }
 };
 
 /**
  * TODO complete documentation
- * @param access
+ * @param accessId
  * @param callback
  */
-Accesses.prototype.delete = function (sharingId, callback) {
-  this.connection.request('DELETE', apiPathAccesses + '/' + sharingId, function (err, result) {
+Accesses.prototype.delete = function (accessId, callback) {
+  this.connection.request('DELETE', apiPathAccesses + '/' + accessId, function (err, result) {
     if (typeof(callback) === 'function') {
       if (err) {
         return callback(err);
