@@ -341,12 +341,12 @@ ConnectionStreams.Utils = {
   toJSON: function (arrayOfStreams) {
 
     var result = [];
-    if (!arrayOfStreams || !arrayOfStreams instanceof Array) {
+    if (!arrayOfStreams || !(arrayOfStreams instanceof Array)) {
       throw new Error('expected an array for argument :' + arrayOfStreams);
     }
 
     _.each(arrayOfStreams, function (stream) {
-      if (!stream || !stream instanceof Stream) {
+      if (!stream || !(stream instanceof Stream)) {
         throw new Error('expected a Streams array ' + stream);
       }
       result.push({
@@ -407,11 +407,11 @@ ConnectionStreams.Utils = {
    */
   _debugTree: function (arrayOfStreams) {
     var result = [];
-    if (!arrayOfStreams || !arrayOfStreams instanceof Array) {
+    if (!arrayOfStreams || !(arrayOfStreams instanceof Array)) {
       throw new Error('expected an array for argument :' + arrayOfStreams);
     }
     _.each(arrayOfStreams, function (stream) {
-      if (!stream || !stream instanceof Stream) {
+      if (!stream || !(stream instanceof Stream)) {
         throw new Error('expected a Streams array ' + stream);
       }
       result.push({
