@@ -35,7 +35,8 @@ module.exports = function (pack) {
   var httpOptions = {
     host: pack.host,
     path: pack.path,
-    port: pack.port,
+    port: pack.port || (pack.ssl ? 443 : 80), // if no port is specified, choose HTTPS or
+                                              // HTTP default ports
     method: pack.method,
     headers: pack.headers
   };
