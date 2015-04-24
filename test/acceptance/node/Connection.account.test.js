@@ -1,21 +1,13 @@
 /* global describe, it, before, after, afterEach */
 var Pryv = require('../../../source/main'),
   should = require('should'),
-  config = require('../test-support/config.js'),
-  replay = require('replay');
+  config = require('../test-support/config.js');
 
 // TODO: need a connection with personal access;
 describe('Connection.account', function () {
   this.timeout(10000);
+
   var connection = new Pryv.Connection(config.connectionSettings);
-
-  before(function () {
-    replay.mode = process.env.REPLAY || 'replay';
-  });
-
-  after(function () {
-    replay.mode = 'bloody';
-  });
 
   describe('getInfo()', function () {
 

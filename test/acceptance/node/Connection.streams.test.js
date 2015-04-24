@@ -2,7 +2,6 @@
 var Pryv = require('../../../source/main'),
   should = require('should'),
   config = require('../test-support/config.js'),
-  replay = require('replay'),
   async = require('async');
 
 // TODO: wait to have test account with given data to update tests
@@ -11,14 +10,6 @@ describe('Connection.streams', function () {
   this.timeout(45000);
 
   var connection = new Pryv.Connection(config.connectionSettings);
-
-  before(function () {
-    replay.mode = process.env.REPLAY || 'replay';
-  });
-
-  after(function () {
-    replay.mode = 'bloody';
-  });
 
   describe('get()', function () {
     // TODO: maybe verify tree structure

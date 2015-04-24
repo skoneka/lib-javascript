@@ -2,22 +2,14 @@
 var Pryv = require('../../../source/main'),
   should = require('should'),
   config = require('../test-support/config.js'),
-  replay = require('replay'),
   async = require('async'),
   fs = require('fs');
 
 
 describe('Connection.events', function () {
-  this.timeout(10000);
+  this.timeout(20000);
+
   var connection = new Pryv.Connection(config.connectionSettings);
-
-  before(function () {
-    replay.mode = process.env.REPLAY || 'replay';
-  });
-
-  after(function () {
-    replay.mode = 'bloody';
-  });
 
   describe('get()', function () {
 
@@ -46,6 +38,7 @@ describe('Connection.events', function () {
     it('must return the last 20 non-trashed Event objects (sorted descending) by default',
       function (done) {
         connection.events.get({}, function (err, events) {
+          should.not.exist(err);
           should.exist(events);
           events.length.should.equal(20);
           var lastTime = Number.POSITIVE_INFINITY;
@@ -446,7 +439,7 @@ describe('Connection.events', function () {
           };
           connection.streams.create(singleActivityStream, function (err, stream) {
             singleActivityStream = stream;
-            stepDone();
+            stepDone(err);
           });
         },
         function (stepDone) {

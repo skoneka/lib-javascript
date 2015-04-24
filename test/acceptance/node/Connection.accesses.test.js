@@ -2,7 +2,6 @@
 var Pryv = require('../../../source/main'),
   should = require('should'),
   config = require('../test-support/config.js'),
-  replay = require('replay'),
   async = require('async');
 
 describe('Connection.accesses', function () {
@@ -12,17 +11,11 @@ describe('Connection.accesses', function () {
 
 
   before(function (done) {
-    replay.mode = process.env.REPLAY || 'replay';
-
     streamConnection = new Pryv.Connection(config.connectionSettings);
     Pryv.Connection.login(config.loginParams, function (err, newConnection) {
       accessConnection = newConnection;
       done(err);
     });
-  });
-
-  after(function () {
-    replay.mode = 'bloody';
   });
 
   describe('get()', function () {

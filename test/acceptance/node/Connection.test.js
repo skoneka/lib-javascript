@@ -2,19 +2,10 @@
 var Pryv = require('../../../source/main'),
   should = require('should'),
   config = require('../test-support/config.js'),
-  replay = require('replay'),
   _ = require('underscore');
 
 describe('Connection', function () {
   this.timeout(10000);
-
-  before(function () {
-    replay.mode = process.env.REPLAY || 'replay';
-  });
-
-  after(function () {
-    replay.mode = 'bloody';
-  });
 
   // instantiate Connection
   describe('Connection()', function () {
