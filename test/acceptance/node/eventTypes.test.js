@@ -1,24 +1,14 @@
-/* global describe, it, before, after */
+/* global describe, it */
 var should = require('should'),
-    eventTypes = require('../../../source/eventTypes.js'),
-    replay = require('replay');
+    eventTypes = require('../../../source/eventTypes.js');
 
 describe('eventTypes', function () {
 
-  // TODO: enable replay
-  before(function () {
-    replay.mode = 'bloody';
-  });
-  after(function () {
-    replay.mode = process.env.REPLAY || 'replay';
-  });
-
   describe('flat()', function () {
-    it('should return the content schema for the given type', function (done) {
+    it('should return the content schema for the given type', function () {
       var schema = eventTypes.flat('mass/kg');
       should.exist(schema);
       schema.type.should.equal('number');
-      done();
     });
   });
 
@@ -34,11 +24,10 @@ describe('eventTypes', function () {
   });
 
   describe('extras()', function () {
-    it('should return extra info for the given type', function (done) {
+    it('should return extra info for the given type', function () {
       var info = eventTypes.extras('mass/kg');
       should.exist(info);
       info.symbol.should.equal('Kg');
-      done();
     });
   });
 
@@ -47,26 +36,23 @@ describe('eventTypes', function () {
       eventTypes.loadExtras(function (err, result) {
         should.not.exist(err);
         should.exist(result.extras);
-        result.extras['mass/kg'].symbol.should.equal('Kg');
+        result.extras.mass.formats.kg.symbol.should.equal('Kg');
         done();
       });
     });
   });
 
   describe('isNumerical()', function () {
-    it('should work for event-like data', function (done) {
+    it('should work for event-like data', function () {
       eventTypes.isNumerical({type: 'time/h'}).should.equal(true);
-      done();
     });
 
-    it('should work for events type strings', function (done) {
+    it('should work for events type strings', function () {
       eventTypes.isNumerical('mass/kg').should.equal(true);
-      done();
     });
 
-    it('should tell non-numerical types', function (done) {
+    it('should tell non-numerical types', function () {
       eventTypes.isNumerical('note/txt').should.equal(false);
-      done();
     });
   });
 

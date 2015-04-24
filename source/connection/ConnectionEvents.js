@@ -427,9 +427,7 @@ ConnectionEvents.prototype._updateWithIdAndData = function (eventId, data, callb
     } else {
       result = null;
     }
-    if (callback && typeof(callback) === 'function') {
-      callback(error, result);
-    }
+    callback(error, result);
   }.bind(this), data);
 };
 

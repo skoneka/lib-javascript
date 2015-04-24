@@ -1,5 +1,6 @@
 var utility = require('./utility/utility'),
-    _ = require('lodash');
+    _ = require('lodash'),
+    CC = require('./connection/ConnectionConstants.js');
 
 /**
  * Event types directory data.
@@ -28,8 +29,8 @@ extras.isDefault = true;
  * @param {Function} callback
  */
 eventTypes.loadFlat = function (callback) {
-  if (! callback || typeof(callback) !== 'function') {
-    callback = function () {};
+  if (!_.isFunction(callback)) {
+    throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
   requestFile(FLATFILE, function (err, result) {
     if (err) { return callback(err); }
@@ -37,7 +38,7 @@ eventTypes.loadFlat = function (callback) {
       return callback(new Error('Missing or corrupt types file: "' +
                                 HOSTNAME + PATH + FLATFILE + '"'));
     }
-    _.extend_.extend(types, result);
+    _.extend(types, result);
     types.isDefault = false;
     callback(null, types);
   });
@@ -60,8 +61,8 @@ eventTypes.flat = function (eventType) {
  * @param {Function} callback
  */
 eventTypes.loadExtras = function (callback) {
-  if (! callback || typeof(callback) !== 'function') {
-    callback = function () {};
+  if (!_.isFunction(callback)) {
+    throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
   requestFile(EXTRASFILE, function (err, result) {
     if (err) { return callback(err); }
@@ -69,7 +70,7 @@ eventTypes.loadExtras = function (callback) {
       return callback(new Error('Missing or corrupt extras file: "' +
                                 HOSTNAME + PATH + EXTRASFILE + '"'));
     }
-    _.extend_.extend(extras, result);
+    _.extend(extras, result);
     extras.isDefault = false;
     callback(null, extras);
   });
@@ -106,8 +107,8 @@ eventTypes.isNumerical = function (eventOrEventType) {
  * @param {Function} callback
  */
 eventTypes.loadHierarchical = function (callback) {
-  if (! callback || typeof(callback) !== 'function') {
-    callback = function () {};
+  if (!_.isFunction(callback)) {
+    throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
   requestFile(HIERARCHICALFILE, function (err, result) {
     if (err) { return callback(err); }
@@ -130,6 +131,9 @@ eventTypes.hierarchical = function () {
  * @param callback
  */
 function requestFile(fileName, callback) {
+  if (!_.isFunction(callback)) {
+    throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
+  }
   utility.request({
     method : 'GET',
     host : HOSTNAME,
