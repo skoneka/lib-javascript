@@ -1,6 +1,7 @@
 var apiPathBookmarks = '/followed-slices',
   Connection = require('../Connection.js'),
-  _ = require('lodash');
+  _ = require('lodash'),
+  CC = require('./ConnectionConstants.js');
 
 /**
  * @class Bookmarks
@@ -16,6 +17,9 @@ function Bookmarks(connection, Conn) {
  * @param {Connection~requestCallback} callback
  */
 Bookmarks.prototype.get = function (callback) {
+  if (!_.isFunction(callback)) {
+    throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
+  }
   this.connection.request('GET', apiPathBookmarks, function (error, res) {
     var result = [],
       bookmarks = res.followedSlices || res.followedSlice;
@@ -41,6 +45,9 @@ Bookmarks.prototype.get = function (callback) {
  * @returns {*}
  */
 Bookmarks.prototype.create = function (bookmark, callback) {
+  if (!_.isFunction(callback)) {
+    throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
+  }
   if (bookmark.name && bookmark.url && bookmark.accessToken) {
     this.connection.request('POST', apiPathBookmarks, function (err, result) {
       var error = err;
@@ -65,6 +72,9 @@ Bookmarks.prototype.create = function (bookmark, callback) {
  * @param callback
  */
 Bookmarks.prototype.delete = function (bookmarkId, callback) {
+  if (!_.isFunction(callback)) {
+    throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
+  }
   this.connection.request('DELETE', apiPathBookmarks + '/' + bookmarkId, function (err, result) {
     var error = err;
     if (result && result.message) {

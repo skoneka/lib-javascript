@@ -1,6 +1,7 @@
 var _ = require('lodash'),
   utility = require('../utility/utility.js'),
-  Stream = require('../Stream.js');
+  Stream = require('../Stream.js'),
+  CC = require('./ConnectionConstants.js');
 
 /**
  * @class ConnectionStreams
@@ -35,6 +36,9 @@ function ConnectionStreams(connection) {
  * @param {ConnectionStreams~getCallback} callback - handles the response
  */
 ConnectionStreams.prototype.get = function (options, callback) {
+  if (!_.isFunction(callback)) {
+    throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
+  }
   if (this.connection.datastore) {
     var resultTree = [];
     if (options && _.has(options, 'parentId')) {
@@ -60,6 +64,9 @@ ConnectionStreams.prototype.get = function (options, callback) {
  * @param callback
  */
 ConnectionStreams.prototype.create = function (streamData, callback) {
+  if (!_.isFunction(callback)) {
+    throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
+  }
   streamData = _.pick(streamData, 'id', 'name', 'parentId', 'singleActivity',
     'clientData', 'trashed');
   return this._createWithData(streamData, callback);
@@ -67,6 +74,9 @@ ConnectionStreams.prototype.create = function (streamData, callback) {
 
 
 ConnectionStreams.prototype.update = function (streamData, callback) {
+  if (!_.isFunction(callback)) {
+    throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
+  }
 
   if (typeof streamData === 'object') {
     streamData = [ streamData ];
@@ -94,15 +104,13 @@ ConnectionStreams.prototype.update = function (streamData, callback) {
             result = null;
           }
 
-          if (callback && typeof(callback) === 'function') {
             callback(err, result);
-          }
         }.bind(this));
 
       } else {
         result = null;
       }
-      if (error && callback && typeof(callback) === 'function') {
+      if (error) {
         callback(error, null);
       }
     }.bind(this), s);
@@ -117,28 +125,29 @@ ConnectionStreams.prototype.update = function (streamData, callback) {
  */
 ConnectionStreams.prototype.delete = ConnectionStreams.prototype.trash =
     function (streamData, callback, mergeEventsWithParent) {
-  var id;
-  if (streamData && streamData.id) {
-    id = streamData.id;
-  } else {
-    id = streamData;
-  }
-
-  mergeEventsWithParent = mergeEventsWithParent ? true : false;
-  var url = '/streams/' + id + '?mergeEventsWithParent=' + mergeEventsWithParent;
-  this.connection.request('DELETE', url, function (error, resultData) {
-    var stream = null;
-    if (!error && resultData && resultData.stream) {
-      streamData.id = resultData.stream.id;
-      stream = new Stream(this.connection, resultData.stream);
-      if (this.connection.datastore) {
-        this.connection.datastore.indexStream(stream);
+      if (!_.isFunction(callback)) {
+        throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
       }
-    }
-    if (_.isFunction(callback)) {
-      return callback(error, error ? null : resultData.stream);
-    }
-  }.bind(this));
+      var id;
+      if (streamData && streamData.id) {
+        id = streamData.id;
+      } else {
+        id = streamData;
+      }
+
+      mergeEventsWithParent = mergeEventsWithParent ? true : false;
+      var url = '/streams/' + id + '?mergeEventsWithParent=' + mergeEventsWithParent;
+      this.connection.request('DELETE', url, function (error, resultData) {
+        var stream = null;
+        if (!error && resultData && resultData.stream) {
+          streamData.id = resultData.stream.id;
+          stream = new Stream(this.connection, resultData.stream);
+          if (this.connection.datastore) {
+            this.connection.datastore.indexStream(stream);
+          }
+        }
+        return callback(error, error ? null : resultData.stream);
+      }.bind(this));
 };
 
 
@@ -148,6 +157,9 @@ ConnectionStreams.prototype.delete = ConnectionStreams.prototype.trash =
  * @param {ConnectionStreams~getCallback} callback - handles the response
  */
 ConnectionStreams.prototype.updateProperties = function (stream, properties, options, callback) {
+  if (!_.isFunction(callback)) {
+    throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
+  }
   if (this.connection.datastore) {
     var resultTree = [];
     if (options && _.has(options, 'parentId')) {
@@ -299,6 +311,9 @@ ConnectionStreams.prototype.walkTree = function (options, eachStream, done) {
  * @param {ConnectionStreams~getFlatenedObjectsDone} done
  */
 ConnectionStreams.prototype.getFlatenedObjects = function (options, callback) {
+  if (!_.isFunction(callback)) {
+    throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
+  }
   var result = [];
   this.walkTree(options,
     function (stream) { // each stream
@@ -385,6 +400,9 @@ ConnectionStreams.Utils = {
    * @param callback function(streamData, subTree)  subTree is the descendance tree
    */
   walkDataTree: function (streamTree, callback) {
+    if (!_.isFunction(callback)) {
+      throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
+    }
     _.each(streamTree, function (streamStruct) {
       var stream = _.omit(streamStruct, 'children');
       stream.childrenIds = [];

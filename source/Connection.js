@@ -129,6 +129,9 @@ Connection._serialCounter = 0;
  * @returns {Connection} this
  */
 Connection.prototype.fetchStructure = function (callback /*, keepItUpToDate*/) {
+  if (! _.isFunction(callback)) {
+    throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
+  }
   if (this.datastore) { return this.datastore.init(callback); }
   this.datastore = new Datastore(this);
   this.accessInfo(function (error) {
@@ -145,6 +148,9 @@ Connection.prototype.fetchStructure = function (callback /*, keepItUpToDate*/) {
  * @param callback
  */
 Connection.prototype.attachCredentials = function (credentials, callback) {
+  if (! _.isFunction(callback)) {
+    throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
+  }
   if (!credentials.username || !credentials.auth) {
     callback('error: incorrect input parameters');
   } else {
@@ -161,15 +167,19 @@ Connection.prototype.attachCredentials = function (credentials, callback) {
  * @returns {Connection} this
  */
 Connection.prototype.accessInfo = function (callback) {
-  if (this._accessInfo) { return this._accessInfo; }
+  if (!_.isFunction(callback)) {
+    throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
+  }
+  if (this._accessInfo) {
+    return this._accessInfo;
+  }
   var url = '/access-info';
   this.request('GET', url, function (error, result) {
-    if (! error) {
+    if (!error) {
       this._accessInfo = result;
     }
-    if (typeof(callback) === 'function') {
-      return callback(error, result);
-    }
+    return callback(error, result);
+
   }.bind(this));
   return this;
 };
@@ -180,17 +190,21 @@ Connection.prototype.accessInfo = function (callback) {
  * @returns {Connection} this
  */
 Connection.prototype.privateProfile = function (callback) {
-  if (this._privateProfile) { return this._privateProfile; }
+  if (! _.isFunction(callback)) {
+    throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
+  }
+
+  if (this._privateProfile) {
+    return this._privateProfile;
+  }
   this.profile.getPrivate(null, function (error, result) {
     if (result && result.message) {
       error = result;
     }
-    if (! error) {
+    if (!error) {
       this._privateProfile = result;
     }
-    if (typeof(callback) === 'function') {
-      return callback(error, result);
-    }
+    return callback(error, result);
   }.bind(this));
   return this;
 };
@@ -245,9 +259,8 @@ Connection.prototype.monitor = function (filter) {
 Connection.prototype.request = function (method, path, callback, jsonData, isFile,
                                          progressCallback) {
 
-
-  if (! callback || ! _.isFunction(callback)) {
-    throw new Error('request\'s callback must be a function');
+  if (! _.isFunction(callback)) {
+    throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
   var headers =  { 'authorization': this.auth };
   var withoutCredentials = false;
@@ -391,6 +404,10 @@ Object.defineProperty(Connection.prototype, 'serialId', {
  * @param callback
  */
 Connection.login = function (params, callback) {
+
+  if (! _.isFunction(callback)) {
+    throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
+  }
 
   var headers = {
     'Content-Type': 'application/json'

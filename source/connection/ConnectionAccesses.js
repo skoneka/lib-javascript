@@ -1,5 +1,6 @@
 var apiPathAccesses = '/accesses';
-var _ = require('lodash');
+var _ = require('lodash'),
+  CC = require('./ConnectionConstants.js');
 
 /**
  * @class Accesses
@@ -16,13 +17,14 @@ function Accesses(connection) {
  */
 Accesses.prototype.get = function (callback) {
   this.connection.request('GET', apiPathAccesses, function (err, res) {
-    if (typeof(callback) === 'function') {
-      if (err) {
-        return callback(err);
-      }
-      var accesses = res.accesses || res.access;
-      callback(null, accesses);
+    if (!_.isFunction(callback)) {
+      throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
     }
+    if (err) {
+      return callback(err);
+    }
+    var accesses = res.accesses || res.access;
+    callback(null, accesses);
   });
 };
 
@@ -33,12 +35,13 @@ Accesses.prototype.get = function (callback) {
  */
 Accesses.prototype.create = function (access, callback) {
   this.connection.request('POST', apiPathAccesses, function (err, res) {
-    if (typeof(callback) === 'function') {
-      if (err) {
-        return callback(err);
-      }
-      callback(err, res.access);
+    if (!_.isFunction(callback)) {
+      throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
     }
+    if (err) {
+      return callback(err);
+    }
+    callback(err, res.access);
   }, access);
 };
 
@@ -48,18 +51,19 @@ Accesses.prototype.create = function (access, callback) {
  * @param callback
  */
 Accesses.prototype.update = function (access, callback) {
-  if (typeof(callback) === 'function') {
-    if (access.id) {
-      this.connection.request('PUT', apiPathAccesses + '/' + access.id, function (err, res) {
-          if (err) {
-            return callback(err);
-          }
-          callback(err, res.access);
-        },
-        _.pick(access, 'name', 'deviceName', 'permissions'));
-    } else {
-      return callback('No access id found');
-    }
+  if (!_.isFunction(callback)) {
+    throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
+  }
+  if (access.id) {
+    this.connection.request('PUT', apiPathAccesses + '/' + access.id, function (err, res) {
+        if (err) {
+          return callback(err);
+        }
+        callback(err, res.access);
+      },
+      _.pick(access, 'name', 'deviceName', 'permissions'));
+  } else {
+    return callback('No access id found');
   }
 };
 
@@ -70,12 +74,13 @@ Accesses.prototype.update = function (access, callback) {
  */
 Accesses.prototype.delete = function (accessId, callback) {
   this.connection.request('DELETE', apiPathAccesses + '/' + accessId, function (err, result) {
-    if (typeof(callback) === 'function') {
-      if (err) {
-        return callback(err);
-      }
-      callback(null, result);
+    if (!_.isFunction(callback)) {
+      throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
     }
+    if (err) {
+      return callback(err);
+    }
+    callback(null, result);
   });
 };
 module.exports = Accesses;

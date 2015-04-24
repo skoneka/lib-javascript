@@ -1,5 +1,6 @@
 var apiPathPrivateProfile = '/profile/private';
 var apiPathPublicProfile = '/profile/app';
+var CC = require('./ConnectionConstants.js');
 
 
 /**
@@ -25,6 +26,9 @@ function Profile(connection) {
  * @param {Connection~requestCallback} callback - handles the response
  */
 Profile.prototype.getPrivate = function (key, callback) {
+  if (!_.isFunction(callback)) {
+    throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
+  }
   this._get(apiPathPrivateProfile, key, callback);
 };
 /**
@@ -32,6 +36,9 @@ Profile.prototype.getPrivate = function (key, callback) {
  * @param {Connection~requestCallback} callback - handles the response
  */
 Profile.prototype.getPublic = function (key, callback) {
+  if (!_.isFunction(callback)) {
+    throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
+  }
   this._get(apiPathPublicProfile, key, callback);
 };
 
@@ -45,6 +52,9 @@ Profile.prototype.getPublic = function (key, callback) {
  * @param {Connection~requestCallback} callback - handles the response
  */
 Profile.prototype.setPrivate = function (keyValuePairs, callback) {
+  if (!_.isFunction(callback)) {
+    throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
+  }
   this._set(apiPathPrivateProfile, keyValuePairs, callback);
 };
 /**
@@ -56,6 +66,9 @@ Profile.prototype.setPrivate = function (keyValuePairs, callback) {
  * @param {Connection~requestCallback} callback - handles the response
  */
 Profile.prototype.setPublic = function (keyValuePairs, callback) {
+  if (!_.isFunction(callback)) {
+    throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
+  }
   this._set(apiPathPublicProfile, keyValuePairs, callback);
 };
 
@@ -63,10 +76,11 @@ Profile.prototype.setPublic = function (keyValuePairs, callback) {
  * TODO write documentation
  */
 Profile.prototype.getTimeLimits = function (force, callback) {
+  if (!_.isFunction(callback)) {
+    throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
+  }
   if (!force && this.timeLimits) {
-    if (callback && typeof(callback) === 'function') {
       callback(this.timeLimits);
-    }
   } else {
     var i = 2;
     this.timeLimits = {
@@ -86,9 +100,7 @@ Profile.prototype.getTimeLimits = function (force, callback) {
       }
       i--;
       if (i === 0) {
-        if (callback && typeof(callback) === 'function') {
           callback(this.timeLimits);
-        }
       }
     }.bind(this));
     this.connection.events.get({
@@ -104,9 +116,7 @@ Profile.prototype.getTimeLimits = function (force, callback) {
       }
       i--;
       if (i === 0) {
-        if (callback && typeof(callback) === 'function') {
           callback(this.timeLimits);
-        }
       }
     }.bind(this));
   }
