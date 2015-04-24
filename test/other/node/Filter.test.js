@@ -1,7 +1,7 @@
 /* global describe, it */
 
 var pryv = require('../../../source/main'),
-  _ = require('underscore'),
+  _ = require('lodash'),
   should = require('should');
 
 

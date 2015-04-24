@@ -2,7 +2,7 @@
 
 var utility = require('../utility/utility.js');
 var Connection = require('../Connection.js');
-var _ = require('underscore');
+var _ = require('lodash');
 
 
 //--------------------- access ----------//

@@ -3,7 +3,7 @@
 //TODO: sort out the callback convention
 
 var FormData = require('form-data');
-var _ = require('underscore');
+var _ = require('lodash');
 
 /**
  * executes the low-level HTTP request.
@@ -25,12 +25,14 @@ var _ = require('underscore');
  */
 module.exports = function (pack) {
 
-  // ------------ request TYPE
+  // request TYPE
   pack.method = pack.method || 'GET';
 
   var parseResult = pack.parseResult || 'json';
+
+  // // choose between HTTP and HTTPS
   var httpMode = pack.ssl ? 'https' : 'http';
-  var http = require(httpMode); // choose between HTTP and HTTPS
+  var http = require(httpMode);
 
   var httpOptions = {
     host: pack.host,
@@ -75,7 +77,6 @@ module.exports = function (pack) {
       }
       return pack.success(data, responseInfo);
     });
-
   });
 
   var HttpRequestDetails = 'Request: ' + httpOptions.method + ' ' +

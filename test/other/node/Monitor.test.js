@@ -3,7 +3,7 @@
 var pryv = require('../../../source/main'),
   should = require('should'),
   nock = require('nock'),
-  _ = require('underscore'),
+  _ = require('lodash'),
   responses = require('../test-support/responses.js');
 
 // !! Monitor tests are made online

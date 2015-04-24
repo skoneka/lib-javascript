@@ -3,7 +3,7 @@ var pryv = require('../../../source/main'),
   utility = require('../../../source/utility/utility'),
   nock = require('nock'),
   should = require('should'),
-  _ = require('underscore'),
+  _ = require('lodash'),
   responses = require('../test-support/responses.js');
 
 

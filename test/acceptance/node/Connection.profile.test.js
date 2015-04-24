@@ -1,4 +1,4 @@
-/* global describe, it, before, after */
+/* global describe, it, before */
 var Pryv = require('../../../source/main'),
   should = require('should'),
   config = require('../test-support/config.js');

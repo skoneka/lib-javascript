@@ -1,5 +1,5 @@
 var socketIO = require('socket.io-client'),
-    _ = require('underscore');
+    _ = require('lodash');
 
 var utility = module.exports = {};
 

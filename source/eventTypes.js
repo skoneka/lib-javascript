@@ -1,5 +1,5 @@
 var utility = require('./utility/utility'),
-    _ = require('underscore');
+    _ = require('lodash');
 
 /**
  * Event types directory data.

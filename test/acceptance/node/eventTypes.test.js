@@ -1,5 +1,4 @@
 /* global describe, it, before, after */
-
 var should = require('should'),
     eventTypes = require('../../../source/eventTypes.js'),
     replay = require('replay');
