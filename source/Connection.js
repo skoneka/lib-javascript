@@ -1,5 +1,4 @@
-var _ = require('underscore'),
-    utility = require('./utility/utility.js'),
+var utility = require('./utility/utility.js'),
     ConnectionEvents = require('./connection/ConnectionEvents.js'),
     ConnectionStreams = require('./connection/ConnectionStreams.js'),
     ConnectionProfile = require('./connection/ConnectionProfile.js'),
@@ -8,7 +7,8 @@ var _ = require('underscore'),
     ConnectionMonitors = require('./connection/ConnectionMonitors.js'),
     ConnectionAccount = require('./connection/ConnectionAccount.js'),
     CC = require('./connection/ConnectionConstants.js'),
-    Datastore = require('./Datastore.js');
+    Datastore = require('./Datastore.js'),
+    _ = require('lodash');
 
 /**
  * @class Connection
@@ -282,33 +282,30 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
    * @this {Connection}
    */
   function onSuccess(data, responseInfo) {
-    var error = null;
 
-    var apiVersion = responseInfo.headers['API-Version'] || 
+    var apiVersion = responseInfo.headers['API-Version'] ||
       responseInfo.headers[CC.Api.Headers.ApiVersion];
 
     // test if API is reached or if we headed into something else
-    if (! apiVersion) {
-      error = {
-        id : CC.Errors.API_UNREACHEABLE,
+    if (!apiVersion) {
+      var error = {
+        id: CC.Errors.API_UNREACHEABLE,
         message: 'Cannot find API-Version',
         details: 'Response code: ' + responseInfo.code +
-          ' Headers: ' + JSON.stringify(responseInfo.headers)
+        ' Headers: ' + JSON.stringify(responseInfo.headers)
       };
-    } else if (data.message) {  // API < 0.6
-      error = data.message;
-    } else
-    if (data.error) { // API 0.7
-      error = data.error;
-    } else {
-      this.serverInfos.lastSeenLT = (new Date()).getTime();
-      this.serverInfos.apiVersion = apiVersion || this.serverInfos.apiVersion;
-      if (_.has(responseInfo.headers, CC.Api.Headers.ServerTime)) {
-        this.serverInfos.deltaTime = (this.serverInfos.lastSeenLT / 1000) -
-          responseInfo.headers[CC.Api.Headers.ServerTime];
-      }
+      return callback(error, null, responseInfo);
+    } else if (data.error) {
+      return callback(data.error, null, responseInfo);
     }
-    callback(error, data, responseInfo);
+    this.serverInfos.lastSeenLT = (new Date()).getTime();
+    this.serverInfos.apiVersion = apiVersion || this.serverInfos.apiVersion;
+    if (_.has(responseInfo.headers, CC.Api.Headers.ServerTime)) {
+      this.serverInfos.deltaTime = (this.serverInfos.lastSeenLT / 1000) -
+      responseInfo.headers[CC.Api.Headers.ServerTime];
+    }
+
+    callback(null, data, responseInfo);
   }
 
   function onError(error, responseInfo) {
