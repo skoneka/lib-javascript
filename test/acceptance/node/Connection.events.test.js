@@ -10,7 +10,35 @@ var Pryv = require('../../../source/main'),
 describe('Connection.events', function () {
   this.timeout(20000);
 
-  var connection = new Pryv.Connection(config.connectionSettings);
+  var connection, testStream;
+
+  before(function (done) {
+    testStream = {
+      id: 'ConnectionEventsTestStream',
+      name: 'ConnectionEventsTestStream'
+    };
+    connection = new Pryv.Connection(config.connectionSettings);
+    connection.streams.create(testStream, function (err, newStream) {
+      testStream = newStream;
+      done(err);
+    });
+  });
+
+  after(function (done) {
+    async.series([
+      function (stepDone) {
+        connection.streams.delete(testStream, function (err, trashedStream) {
+          testStream = trashedStream;
+          stepDone(err);
+        });
+      },
+      function (stepDone) {
+        connection.streams.delete(testStream, function (err) {
+          stepDone(err);
+        });
+      }
+    ], done);
+  });
 
   describe('get()', function () {
 
@@ -22,7 +50,7 @@ describe('Connection.events', function () {
       var eventDeleted = {
         content: 'I am a deleted test event from js lib, please kill me',
         type: 'note/txt',
-        streamId: 'diary'
+        streamId: testStream.id
       };
 
       async.series([
@@ -66,7 +94,7 @@ describe('Connection.events', function () {
 
 
     it('must return deleted events when the flag includeDeletions is set', function (done) {
-      var filter = {limit: 10, includeDeletions: true, modifiedSince: testStartTime};
+      var filter = {includeDeletions: true, modifiedSince: testStartTime};
       connection.events.get(filter, function (err, events) {
         should.not.exist(err);
         should.exist(events.eventDeletions);
@@ -187,7 +215,7 @@ describe('Connection.events', function () {
       var eventData = {
         content: 'I am a test from js lib, please kill me',
         type: 'note/txt',
-        streamId: 'diary'
+        streamId: testStream.id
       };
       connection.events.create(eventData, function (err, event) {
         should.not.exist(err);
@@ -207,7 +235,7 @@ describe('Connection.events', function () {
       should.exist(pictureData);
 
       var eventData = {
-        streamId: config.testStreamId, type: 'picture/attached',
+        streamId: testStream.testStreamId, type: 'picture/attached',
         description: 'test'
       };
 
@@ -229,7 +257,7 @@ describe('Connection.events', function () {
       var eventData = {
         content: 'I am a test from js lib, please kill me',
         type: 'note/txt',
-        streamId: 'diary'
+        streamId: testStream.id
       };
       connection.events.create(eventData, function (err, event) {
         should.exist(event.id);
@@ -461,7 +489,7 @@ describe('Connection.events', function () {
         },
         function (stepDone) {
           eventToUpdate =
-          {content: 'I am going to be updated', streamId: 'diary', type: 'note/txt'};
+          {content: 'I am going to be updated', streamId: testStream.id, type: 'note/txt'};
           connection.events.create(eventToUpdate, function (err, event) {
             eventToUpdate = event;
             return stepDone(err);
@@ -469,7 +497,7 @@ describe('Connection.events', function () {
         },
         function (stepDone) {
           eventToUpdate2 = {
-            content: 'I am also going to be updated', streamId: 'diary',
+            content: 'I am also going to be updated', streamId: testStream.id,
             type: 'note/txt'
           };
           connection.events.create(eventToUpdate2, function (err, event) {
@@ -717,7 +745,7 @@ describe('Connection.events', function () {
     beforeEach(function (done) {
       eventToTrash = {
         content: 'I am going to be trashed or event deleted',
-        streamId: 'diary',
+        streamId: testStream.id,
         type: 'note/txt'
       };
       connection.events.create(eventToTrash, function (err, event) {
