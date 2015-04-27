@@ -204,6 +204,14 @@ describe('Connection.accesses', function () {
       });
     });
 
+    it('must return an error if the access to update doesn\'t have an id field', function (done) {
+      var unexistingAccess = {};
+      accessConnection.accesses.update(unexistingAccess, function (err) {
+        should.exist(err);
+        done();
+      });
+    });
+
   });
 
   describe('delete()', function () {
