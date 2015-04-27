@@ -229,30 +229,6 @@ describe('Connection.events', function () {
     // TODO functionality not yet implemented
     it.skip('must accept an array of event-like objects and return an array of Event objects');
 
-    // TODO crashes probably because of replay doesn't support this kind of POST
-    it.skip('must accept attachment only with Event object', function (done) {
-      var pictureData = fs.readFileSync(__dirname + '/../test-support/photo.PNG');
-      should.exist(pictureData);
-
-      var eventData = {
-        streamId: testStream.testStreamId, type: 'picture/attached',
-        description: 'test'
-      };
-
-      var formData = Pryv.utility.forgeFormData('attachment0', pictureData, {
-        type: 'image/png',
-        filename: 'attachment0'
-      });
-
-      connection.events.createWithAttachment(eventData, formData, function (err, event) {
-        should.not.exist(err);
-        should.exist(event);
-        event.should.be.instanceOf(Pryv.Event);
-        eventToDelete = event;
-        done(err);
-      });
-    });
-
     it('must return events with default values for unspecified properties', function (done) {
       var eventData = {
         content: 'I am a test from js lib, please kill me',
@@ -335,7 +311,51 @@ describe('Connection.events', function () {
   });
 
 
-  describe('start() - stopEvent() - stopStream()', function () {
+  describe('createWithAttachment()', function () {
+
+    var eventWithAttachment;
+
+    after(function (done) {
+      async.series([
+        function (stepDone) {
+          connection.events.delete(eventWithAttachment, function (err, trashedEvent) {
+            eventWithAttachment = trashedEvent;
+            stepDone(err);
+          });
+        },
+        function (stepDone) {
+          connection.events.delete(eventWithAttachment, function (err) {
+            stepDone(err);
+          });
+        }
+      ], done);
+    });
+
+    it('must accept attachment only with Event object', function (done) {
+      var pictureData = fs.readFileSync(__dirname + '/../test-support/photo.PNG');
+      should.exist(pictureData);
+
+      eventWithAttachment = {
+        streamId: testStream.id, type: 'picture/attached',
+        description: 'test'
+      };
+
+      var formData = Pryv.utility.forgeFormData('attachment0', pictureData, {
+        type: 'image/png',
+        filename: 'attachment0'
+      });
+
+      connection.events.createWithAttachment(eventWithAttachment, formData, function (err, event) {
+        should.not.exist(err);
+        should.exist(event);
+        event.should.be.instanceOf(Pryv.Event);
+        eventWithAttachment = event;
+        done(err);
+      });
+    });
+  });
+
+  describe.skip('start() - stopEvent() - stopStream()', function () {
 
     var eventData, eventId, eventToStop, stream, singleActivityStream;
 
