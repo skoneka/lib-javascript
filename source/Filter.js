@@ -184,9 +184,9 @@ Filter.prototype.cloneWithDelta = function (properties) {
 };
 
 /**
- *
+ * returns a dictionary containing all the settings of this filter.
  * @param ignoreNulls (optional) boolean
- * @param withDelta (optional) apply this differences on the data
+ * @param withDelta (optional) adds this differences on the data
  * @returns {*}
  */
 Filter.prototype.getData = function (ignoreNulls, withDelta) {
@@ -195,9 +195,13 @@ Filter.prototype.getData = function (ignoreNulls, withDelta) {
   if (withDelta)  {
     _.extend(result, withDelta);
   }
-  _.each(_.keys(result), function (key) {
-    if ((result[key] === null)) { delete result[key]; }
-  });
+  if (ignoreNulls) {
+    _.each(_.keys(result), function (key) {
+      if ((result[key] === null)) {
+        delete result[key];
+      }
+    });
+  }
   return result;
 };
 
