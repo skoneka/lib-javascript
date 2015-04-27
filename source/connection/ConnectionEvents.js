@@ -63,6 +63,9 @@ ConnectionEvents.prototype.get = function (filter, doneCallback, partialResultCa
         result.push(event);
 
       }.bind(this));
+      if (res.eventDeletions) {
+        result.eventDeletions = res.eventDeletions;
+      }
     }
     doneCallback(error, result);
 

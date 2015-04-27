@@ -3,7 +3,8 @@ var Pryv = require('../../../source/main'),
   should = require('should'),
   config = require('../test-support/config.js'),
   async = require('async'),
-  fs = require('fs');
+  fs = require('fs'),
+  _ = require('lodash');
 
 
 describe('Connection.events', function () {
@@ -13,7 +14,11 @@ describe('Connection.events', function () {
 
   describe('get()', function () {
 
+    var deletedEventId, testStartTime;
+
     before(function (done) {
+      testStartTime = new Date().getTime() / 1000;
+
       var eventDeleted = {
         content: 'I am a deleted test event from js lib, please kill me',
         type: 'note/txt',
@@ -24,7 +29,13 @@ describe('Connection.events', function () {
         function (stepDone) {
           connection.events.create(eventDeleted, function (err, event) {
             eventDeleted = event;
+            deletedEventId = event.id;
             return stepDone(err);
+          });
+        },
+        function (stepDone) {
+          connection.events.delete(eventDeleted, function (err) {
+            stepDone(err);
           });
         },
         function (stepDone) {
@@ -54,12 +65,18 @@ describe('Connection.events', function () {
       });
 
 
-    // TODO
-    it.skip('must return deleted events when the flag includeDeletions is set', function (done) {
-      var filter = {limit: 100000, includeDeletions: true};
+    it('must return deleted events when the flag includeDeletions is set', function (done) {
+      var filter = {limit: 10, includeDeletions: true, modifiedSince: testStartTime};
       connection.events.get(filter, function (err, events) {
         should.not.exist(err);
         should.exist(events.eventDeletions);
+        var found = false;
+        _.forEach(events.eventDeletions, function (deletedEvent) {
+          if (deletedEvent.id === deletedEventId) {
+            found = true;
+          }
+        });
+        found.should.be.eql(true);
         done();
       });
     });
