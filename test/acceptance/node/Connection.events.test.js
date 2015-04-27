@@ -246,21 +246,17 @@ describe('Connection.events', function () {
       });
     });
 
-    // TODO
-    // stoppedId: indicates the id of the previously running period event that was stopped
-    // as a consequence of inserting the new event
-    it.skip('must return a stoppedId field when called in a singleActivity stream that' +
+    it('must return a stoppedId field when called in a singleActivity stream that' +
       ' currently has a running event',
       function (done) {
         var eventDataSingleActivity = {
-          streamId: singleActivityStream.id, type: 'activity/plain'};
+          streamId: singleActivityStream.id, type: 'activity/plain', duration: null};
         var stoppedEventId;
         async.series([
           function (stepDone) {
-            connection.events.create(eventDataSingleActivity, function (err, event, stoppedId) {
+            connection.events.start(eventDataSingleActivity, function (err, event) {
               should.not.exist(err);
               should.exist(event);
-              should.not.exist(stoppedId);
               stoppedEventId = event.id;
               stepDone();
             });
@@ -284,13 +280,6 @@ describe('Connection.events', function () {
 
       });
 
-    // TODO
-    it.skip('must return a periods-overlap error when called in a singleActivity stream ' +
-      'and durations overlap',
-      function (done) {
-        done();
-      });
-
     it('must return an error if the given event data is invalid', function (done) {
       var invalidData = {
         content: 'I am a devil event which is missing streamId',
@@ -304,7 +293,36 @@ describe('Connection.events', function () {
       });
     });
 
-    // TODO: decide how to handle errors for batch request
+    it('must return a periods-overlap error when called in a singleActivity stream ' +
+      'and durations overlap',
+      function (done) {
+        var time = 1000,
+            duration = 500;
+        async.series([
+          function (stepDone) {
+            eventToDelete = {
+              streamId: singleActivityStream.id, type: 'activity/plain',
+              time: time, duration: duration
+            };
+            connection.events.create(eventToDelete, function (err, event) {
+              eventToDelete = event;
+              stepDone(err);
+            });
+          },
+          function (stepDone) {
+            var overlappingEvent = {
+              streamId: singleActivityStream.id, type: 'activity/plain', time: time + duration/2,
+              duration: duration
+            };
+            connection.events.create(overlappingEvent, function (err) {
+              should.exist(err);
+              stepDone();
+            });
+          }
+        ], done);
+      });
+
+    // TODO: not implement yet
     // when some errors occurs error callback is null and
     // the result array has an error flag (.hasError)
     it.skip('must return an error for each invalid event (when given multiple items)');
@@ -497,8 +515,8 @@ describe('Connection.events', function () {
       async.series([
         function (stepDone) {
           singleActivityStream = {
-            id: 'singleActivtyTestStream',
-            name: 'singleActivtyTestStream',
+            id: 'singleActivityTestStream',
+            name: 'singleActivityTestStream',
             type: 'activity/plain',
             singleActivity: true
           };

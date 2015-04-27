@@ -195,10 +195,7 @@ function _create(newEventlike, callback, start) {
         this.connection.datastore.addEvent(event);
       }
     }
-    if (_.isFunction(callback)) {
-
-      callback(err, err ? null : event);
-    }
+    callback(err, err ? null : event, err ? null : result.stoppedId);
   }.bind(this), event.getData());
   return event;
 }
