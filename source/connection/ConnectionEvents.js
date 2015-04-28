@@ -307,18 +307,38 @@ ConnectionEvents.prototype.createWithAttachment =
         if (this.connection.datastore) {  // if datastore is activated register new event
           this.connection.datastore.addEvent(event);
         }
-
       }
       callback(err, event);
     }.bind(this), formData, true, progressCallback);
   };
-ConnectionEvents.prototype.addAttachment = function (eventId, file, callback, progressCallback) {
+
+/**
+ * @param {String} eventId
+ * @param {ConnectionEvents~eventCreatedOnTheAPI} callback
+ * @param {FormData} the formData to post for fileUpload. On node.js
+ * refers to pryv.utility.forgeFormData
+ * @return {Event} event
+ */
+ConnectionEvents.prototype.addAttachment =
+  function (eventId, formData, callback, progressCallback) {
   if (!_.isFunction(callback)) {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
   var url = '/events/' + eventId;
-  this.connection.request('POST', url, callback, file, true, progressCallback);
+  this.connection.request('POST', url, function (err, result) {
+    if (err) {
+      return callback(err);
+    }
+    callback(null, result.event);
+  }, formData, true, progressCallback);
 };
+
+/**
+ * @param {String} eventId
+ * @param {ConnectionEvents~eventCreatedOnTheAPI} callback
+ * @param {String} fileName
+ * @return {Event} event
+ */
 ConnectionEvents.prototype.removeAttachment = function (eventId, fileName, callback) {
   if (!_.isFunction(callback)) {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);

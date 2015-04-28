@@ -452,8 +452,7 @@ describe('Connection.events', function () {
       ], done);
     });
 
-    // TODO: is stopEvent unusable in a singleActivity stream?
-    it.skip('must start an event and stop it using stopEvent() in singleActivity stream',
+    it('must start an event and stop it using stopEvent() in singleActivity stream',
       function (done) {
         async.series([
           function (stepDone) {
@@ -706,13 +705,29 @@ describe('Connection.events', function () {
 
   });
 
-  // TODO: maybe also create addAttachmentS() method
-  describe.skip('addAttachment()', function () {
-    var event, attachment;
+
+  describe('addAttachment()', function () {
+    var event, formData, filename;
 
     before(function (done) {
-      attachment = 'I am a file attachment.';
+      var pictureData = fs.readFileSync(__dirname + '/../test-support/photo.PNG');
+      should.exist(pictureData);
 
+      event = {
+        streamId: testStream.id, type: 'picture/attached',
+        description: 'test'
+      };
+      filename = 'testPicture';
+
+      formData = Pryv.utility.forgeFormData('attachment0', pictureData, {
+        type: 'image/png',
+        filename: filename
+      });
+
+      event = {
+        streamId: testStream.id,
+        type: 'picture/attached'
+      };
       connection.events.create(event, function (err, newEvent) {
         event = newEvent;
         done(err);
@@ -735,22 +750,24 @@ describe('Connection.events', function () {
       ], done);
     });
 
-    // TODO: to be implemented based on ConnectionEvents.createWithAttachment()
-    it.skip('must accept an Attachment and return the event with the right attachment property',
+    it('must accept an Attachment and return the event with the right attachment property',
       function (done) {
-        event.addAttachment(attachment, function (err, event) {
+        connection.events.addAttachment(event.id, formData, function (err, event) {
           should.not.exist(err);
           should.exist(event);
+          should.exist(event.attachments);
+          event.attachments[0].fileName.should.be.eql(filename);
+          done();
         });
-        done();
       });
 
-    // TODO
     it('must return an error in case of invalid parameters', function (done) {
-      done();
+      connection.events.addAttachment('dontcare', 'dontcar', function (err) {
+        should.exist(err);
+        done();
+      });
     });
   });
-
 
   // TODO see if useful or not, since the URL is used directly to get an Attachment content
   describe('getAttachment()', function () {
