@@ -772,9 +772,88 @@ describe('Connection.events', function () {
   // TODO see if useful or not, since the URL is used directly to get an Attachment content
   describe('getAttachment()', function () {
 
+    var event, formData, attachment, data;
+
+    before(function (done) {
+      var pictureData = fs.readFileSync(__dirname + '/../test-support/photo.PNG');
+      should.exist(pictureData);
+
+      event = {
+        streamId: testStream.id, type: 'picture/attached',
+        description: 'testing getAttachment() method'
+      };
+      var filename = 'testGetAttachmentPicture';
+
+      formData = Pryv.utility.forgeFormData('attachment0', pictureData, {
+        type: 'image/png',
+        filename: filename
+      });
+
+      event = {
+        streamId: testStream.id,
+        type: 'picture/attached'
+      };
+      async.series([
+        function (stepDone) {
+          connection.events.create(event, function (err, newEvent) {
+            event = newEvent;
+            stepDone(err);
+          });
+        },
+        function (stepDone) {
+          connection.events.addAttachment(event.id, formData, function (err, eventWithAttachment) {
+            event = eventWithAttachment;
+            console.log('event with attachment: ', event);
+            attachment = event.attachments[0];
+            stepDone(err);
+          });
+        }
+      ], done);
+    });
+
+    after(function (done) {
+      async.series([
+        function (stepDone) {
+          connection.events.delete(event, function (err, trashedEvent) {
+            event = trashedEvent;
+            return stepDone(err);
+          });
+        },
+        function (stepDone) {
+          connection.events.delete(event, function (err) {
+            return stepDone(err);
+          });
+        }
+      ], done);
+    });
+
     // TODO
     it('must accept an attachment\'s and its event\'s parameters and ' +
-    'return the binary file contents');
+    'return the binary file contents', function (done) {
+      console.log('attachment: ', attachment);
+      var pack = {};
+      pack.readToken = attachment.readToken;
+      pack.fileId = attachment.id;
+      pack.eventId = event.id;
+      var testFileName = 'test-delete_me_please.PNG';
+      async.series([
+        function (stepDone) {
+          connection.events.getAttachment(pack, function (err, res) {
+            should.not.exist(err);
+            should.exist(res);
+            data = res;
+            stepDone();
+          });
+        },
+        function (stepDone) {
+          fs.writeFile(testFileName, data, function (err) {
+            should.not.exist(err);
+
+            stepDone();
+          });
+        }
+      ], done);
+    });
 
     // TODO
     it('must return an error in case of invalid parameters');

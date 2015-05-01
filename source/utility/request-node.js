@@ -61,6 +61,9 @@ module.exports = function (pack) {
     });
 
     res.on('end', function () {
+      if (parseResult === 'binary') {
+        console.log('request-node on.end: ', 'we re here');
+      }
       var responseInfo = {
         code: res.statusCode,
         headers: res.headers
@@ -74,6 +77,8 @@ module.exports = function (pack) {
           return pack.error('request failed to parse JSON in response' +
           bodyarr.join('') + '\n' + HttpRequestDetails, responseInfo);
         }
+      } else if (parseResult === 'binary') {
+        data = res;
       }
       return pack.success(data, responseInfo);
     });

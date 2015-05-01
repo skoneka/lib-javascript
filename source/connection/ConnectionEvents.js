@@ -336,6 +336,29 @@ ConnectionEvents.prototype.addAttachment =
 /**
  * @param {String} eventId
  * @param {ConnectionEvents~eventCreatedOnTheAPI} callback
+ * @param {FormData} the formData to post for fileUpload. On node.js
+ * refers to pryv.utility.forgeFormData
+ * @return {Event} event
+ */
+ConnectionEvents.prototype.getAttachment =
+  function (params, callback, progressCallback) {
+    if (!_.isFunction(callback)) {
+      throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
+    }
+    console.log('executing getAttachment with this: ', params);
+    var url = '/events/' + params.eventId + '/' + params.fileId;
+    this.connection.request('GET', url, function (err, result) {
+      if (err) {
+        return callback(err);
+      }
+      console.log(result);
+      callback(null, result);
+    }, null, null, progressCallback, 'binary');
+  };
+
+/**
+ * @param {String} eventId
+ * @param {ConnectionEvents~eventCreatedOnTheAPI} callback
  * @param {String} fileName
  * @return {Event} event
  */
