@@ -16,16 +16,21 @@ function Accesses(connection) {
  * @param {Connection~requestCallback} callback
  */
 Accesses.prototype.get = function (callback) {
-  this.connection.request('GET', apiPathAccesses, function (err, res) {
-    if (!_.isFunction(callback)) {
-      throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
+  var params = {
+    method: 'GET',
+    path: apiPathAccesses,
+    callback: function (err, res) {
+      if (!_.isFunction(callback)) {
+        throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
+      }
+      if (err) {
+        return callback(err);
+      }
+      var accesses = res.accesses || res.access;
+      callback(null, accesses);
     }
-    if (err) {
-      return callback(err);
-    }
-    var accesses = res.accesses || res.access;
-    callback(null, accesses);
-  });
+  };
+  this.connection.request(params);
 };
 
 /**
@@ -34,15 +39,21 @@ Accesses.prototype.get = function (callback) {
  * @param callback
  */
 Accesses.prototype.create = function (access, callback) {
-  this.connection.request('POST', apiPathAccesses, function (err, res) {
-    if (!_.isFunction(callback)) {
-      throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
-    }
-    if (err) {
-      return callback(err);
-    }
-    callback(err, res.access);
-  }, access);
+  var params = {
+    method: 'POST',
+    path: apiPathAccesses,
+    callback: function (err, res) {
+      if (!_.isFunction(callback)) {
+        throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
+      }
+      if (err) {
+        return callback(err);
+      }
+      callback(err, res.access);
+    },
+    jsonData: access
+  };
+  this.connection.request(params);
 };
 
 /**

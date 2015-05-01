@@ -173,14 +173,18 @@ Connection.prototype.accessInfo = function (callback) {
   if (this._accessInfo) {
     return this._accessInfo;
   }
-  var url = '/access-info';
-  this.request('GET', url, function (error, result) {
-    if (!error) {
-      this._accessInfo = result;
-    }
-    return callback(error, result);
+  var params = {
+    method: 'GET',
+    path: '/access-info',
+    callback: function (error, result) {
+      if (!error) {
+        this._accessInfo = result;
+      }
+      return callback(error, result);
 
-  }.bind(this));
+    }.bind(this)
+  }
+  this.request(params);
   return this;
 };
 
@@ -251,44 +255,48 @@ Connection.prototype.monitor = function (filter) {
 /**
  * Do a direct request to Pryv's API.
  * Even if exposed there must be an abstraction for every API call in this library.
- * @param {string} method - GET | POST | PUT | DELETE
- * @param {string} path - to resource, starting with '/' like '/events'
- * @param {Connection~requestCallback} callback
- * @param {Object} jsonData - data to POST or PUT
+ * @param {Object} params object with
+ * @param {string} params.method - GET | POST | PUT | DELETE
+ * @param {string} params.path - to resource, starting with '/' like '/events'
+ * @param {Object} params.jsonData - data to POST or PUT
+ * @params {string} [params.parseResult = 'json'] : 'json/binary'
+ * @param {Connection~requestCallback} params.callback called when the request is finished
+ * @param {Connection~requestCallback} params.progressCallback called when the request gives
+ * progress updates
  */
-Connection.prototype.request = function (method, path, callback, jsonData, isFile,
-                                         progressCallback) {
+Connection.prototype.request = function (params) {
 
-  if (! _.isFunction(callback)) {
+  if (! _.isFunction(params.callback)) {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
   var headers =  { 'authorization': this.auth };
   var withoutCredentials = false;
   var payload = JSON.stringify({});
-  if (jsonData && !isFile) {
-    payload = JSON.stringify(jsonData);
+  if (params.jsonData && !params.isFile) {
+    payload = JSON.stringify(params.jsonData);
     headers['Content-Type'] = 'application/json; charset=utf-8';
   }
-  if (isFile) {
-    payload = jsonData;
+  if (params.isFile) {
+    payload = params.jsonData;
     headers['Content-Type'] = 'multipart/form-data';
     headers['X-Requested-With'] = 'XMLHttpRequest';
     withoutCredentials = true;
   }
 
   var request = utility.request({
-    method : method,
+    method : params.method,
     host : getHostname(this),
     port : this.settings.port,
     ssl : this.settings.ssl,
-    path : this.settings.extraPath + path,
+    path : this.settings.extraPath + params.path,
     headers : headers,
     payload : payload,
-    progressCallback: progressCallback,
+    progressCallback: params.progressCallback,
     //TODO: decide what callback convention to use (Node or jQuery)
     success : onSuccess.bind(this),
     error : onError.bind(this),
-    withoutCredentials: withoutCredentials
+    withoutCredentials: withoutCredentials,
+    parseResult: params.parseResult
   });
 
   /**
@@ -307,9 +315,9 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
         details: 'Response code: ' + responseInfo.code +
         ' Headers: ' + JSON.stringify(responseInfo.headers)
       };
-      return callback(error, null, responseInfo);
+      return params.callback(error, null, responseInfo);
     } else if (data.error) {
-      return callback(data.error, null, responseInfo);
+      return params.callback(data.error, null, responseInfo);
     }
     this.serverInfos.lastSeenLT = (new Date()).getTime();
     this.serverInfos.apiVersion = apiVersion || this.serverInfos.apiVersion;
@@ -318,7 +326,7 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
       responseInfo.headers[CC.Api.Headers.ServerTime];
     }
 
-    callback(null, data, responseInfo);
+    params.callback(null, data, responseInfo);
   }
 
   function onError(error, responseInfo) {
@@ -327,7 +335,7 @@ Connection.prototype.request = function (method, path, callback, jsonData, isFil
       message: 'Error on request ',
       details: 'ERROR: ' + error
     };
-    callback(errorTemp, null, responseInfo);
+    params.callback(errorTemp, null, responseInfo);
   }
   return request;
 };
