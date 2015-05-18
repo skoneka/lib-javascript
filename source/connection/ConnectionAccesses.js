@@ -16,7 +16,7 @@ function Accesses(connection) {
  * @param {Connection~requestCallback} callback
  */
 Accesses.prototype.get = function (callback) {
-  var params = {
+  this.connection.request({
     method: 'GET',
     path: apiPathAccesses,
     callback: function (err, res) {
@@ -29,8 +29,7 @@ Accesses.prototype.get = function (callback) {
       var accesses = res.accesses || res.access;
       callback(null, accesses);
     }
-  };
-  this.connection.request(params);
+  });
 };
 
 /**
@@ -39,7 +38,7 @@ Accesses.prototype.get = function (callback) {
  * @param callback
  */
 Accesses.prototype.create = function (access, callback) {
-  var params = {
+  this.connection.request({
     method: 'POST',
     path: apiPathAccesses,
     callback: function (err, res) {
@@ -52,8 +51,7 @@ Accesses.prototype.create = function (access, callback) {
       callback(err, res.access);
     },
     jsonData: access
-  };
-  this.connection.request(params);
+  });
 };
 
 /**
@@ -62,17 +60,19 @@ Accesses.prototype.create = function (access, callback) {
  * @param callback
  */
 Accesses.prototype.update = function (access, callback) {
-  if (!_.isFunction(callback)) {
-    throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
-  }
+
   if (access.id) {
-    this.connection.request('PUT', apiPathAccesses + '/' + access.id, function (err, res) {
+    this.connection.request({
+      method: 'PUT',
+      path: apiPathAccesses + '/' + access.id,
+      jsonData: _.pick(access, 'name', 'deviceName', 'permissions'),
+      callback: function (err, res) {
         if (err) {
           return callback(err);
         }
         callback(err, res.access);
-      },
-      _.pick(access, 'name', 'deviceName', 'permissions'));
+      }
+    });
   } else {
     return callback('No access id found');
   }
@@ -84,14 +84,21 @@ Accesses.prototype.update = function (access, callback) {
  * @param callback
  */
 Accesses.prototype.delete = function (accessId, callback) {
-  this.connection.request('DELETE', apiPathAccesses + '/' + accessId, function (err, result) {
-    if (!_.isFunction(callback)) {
-      throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
+  if (!_.isFunction(callback)) {
+    throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
+  }
+  this.connection.request({
+    method: 'DELETE',
+    path: apiPathAccesses + '/' + accessId,
+    callback: function (err, result) {
+      if (!_.isFunction(callback)) {
+        throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
+      }
+      if (err) {
+        return callback(err);
+      }
+      callback(null, result);
     }
-    if (err) {
-      return callback(err);
-    }
-    callback(null, result);
   });
 };
 module.exports = Accesses;

@@ -20,21 +20,25 @@ Bookmarks.prototype.get = function (callback) {
   if (!_.isFunction(callback)) {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
-  this.connection.request('GET', apiPathBookmarks, function (error, res) {
-    var result = [],
-      bookmarks = res.followedSlices || res.followedSlice;
-    _.each(bookmarks, function (bookmark) {
-      bookmark.url = bookmark.url.replace(/\.li/, '.in');
-      bookmark.url = bookmark.url.replace(/\.me/, '.io');
-      var conn =  new Connection({
-        auth: bookmark.accessToken,
-        url: bookmark.url,
-        name: bookmark.name,
-        bookmarkId: bookmark.id
+  this.connection.request({
+    method: 'GET',
+    path: apiPathBookmarks,
+    callback: function (error, res) {
+      var result = [],
+        bookmarks = res.followedSlices || res.followedSlice;
+      _.each(bookmarks, function (bookmark) {
+        bookmark.url = bookmark.url.replace(/\.li/, '.in');
+        bookmark.url = bookmark.url.replace(/\.me/, '.io');
+        var conn =  new Connection({
+          auth: bookmark.accessToken,
+          url: bookmark.url,
+          name: bookmark.name,
+          bookmarkId: bookmark.id
+        });
+        result.push(conn);
       });
-      result.push(conn);
-    });
-    callback(error, result);
+      callback(error, result);
+    }
   });
 };
 
@@ -49,19 +53,24 @@ Bookmarks.prototype.create = function (bookmark, callback) {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
   if (bookmark.name && bookmark.url && bookmark.accessToken) {
-    this.connection.request('POST', apiPathBookmarks, function (err, result) {
-      var error = err;
-      if (!error) {
-        var conn =  new Connection({
-          auth: bookmark.accessToken,
-          url: bookmark.url,
-          name: bookmark.name,
-          bookmarkId: result.followedSlice.id
-        });
-        bookmark = conn;
+    this.connection.request({
+      method: 'POST',
+      path: apiPathBookmarks,
+      jsonData: bookmark,
+      callback: function (err, result) {
+        var error = err;
+        if (!error) {
+          var conn =  new Connection({
+            auth: bookmark.accessToken,
+            url: bookmark.url,
+            name: bookmark.name,
+            bookmarkId: result.followedSlice.id
+          });
+          bookmark = conn;
+        }
+        callback(error, bookmark);
       }
-      callback(error, bookmark);
-    }, bookmark);
+    });
     return bookmark;
   }
 };
@@ -75,12 +84,16 @@ Bookmarks.prototype.delete = function (bookmarkId, callback) {
   if (!_.isFunction(callback)) {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
-  this.connection.request('DELETE', apiPathBookmarks + '/' + bookmarkId, function (err, result) {
-    var error = err;
-    if (result && result.message) {
-      error = result;
+  this.connection.request({
+    method: 'DELETE',
+    path: apiPathBookmarks + '/' + bookmarkId,
+    callback: function (err, result) {
+      var error = err;
+      if (result && result.message) {
+        error = result;
+      }
+      callback(error, result);
     }
-    callback(error, result);
   });
 };
 

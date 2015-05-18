@@ -72,11 +72,15 @@ describe('Connection', function () {
         .get('/whatever')
         .reply(200, responses.accessInfo, ['invalid headers']);
 
-      connection.request('GET', '/whatever', function (error, result) {
-        should.exist(error);
-        error.id.should.eql('API_UNREACHEABLE');
-        should.exist(result);
-        done();
+      connection.request({
+        method: 'GET',
+        path: '/whatever',
+        callback: function (error, result) {
+          should.exist(error);
+          error.id.should.eql('API_UNREACHEABLE');
+          should.exist(result);
+          done();
+        }
       });
     });
   });
@@ -103,11 +107,15 @@ describe('Connection', function () {
         .get('/whatever')
         .reply(400, {error: {id: 'invalid-parameters-format', message: 'Test message'}}, headers);
 
-      connection.request('GET', '/whatever', function (error, result, resultInfo) {
-        should.exists(result);
-        should.exists(error);
-        testResultInfo(resultInfo, 400);
-        done();
+      connection.request({
+        method: 'GET',
+        path: '/whatever',
+        callback: function (error, result, resultInfo) {
+          should.exists(result);
+          should.exists(error);
+          testResultInfo(resultInfo, 400);
+          done();
+        }
       });
     });
 
@@ -117,11 +125,15 @@ describe('Connection', function () {
         .get('/whatever')
         .reply(200, responses.accessInfo, headers);
 
-      connection.request('GET', '/whatever', function (error, result, resultInfo) {
-        should.exists(result);
-        should.not.exists(error);
-        testResultInfo(resultInfo, 200);
-        done();
+      connection.request({
+        method: 'GET',
+        path: '/whatever',
+        callback: function (error, result, resultInfo) {
+          should.exists(result);
+          should.not.exists(error);
+          testResultInfo(resultInfo, 200);
+          done();
+        }
       });
     });
 

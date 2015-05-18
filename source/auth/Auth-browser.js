@@ -366,16 +366,19 @@ Auth.prototype.login = function (settings) {
 
 // TODO: must be an instance member of Connection instead
 Auth.prototype.trustedLogout = function () {
-  var path = '/auth/logout';
   if (this.connection) {
-    this.connection.request('POST', path, function (error) {
-      if (error && typeof(this.settings.callbacks.error) === 'function') {
-        return this.settings.callbacks.error(error);
-      }
-      if (!error && typeof(this.settings.callbacks.signedOut) === 'function') {
-        return this.settings.callbacks.signedOut(this.connection);
-      }
-    }.bind(this));
+    this.connection.request({
+      method: 'POST',
+      path: '/auth/logout',
+      callback: function (error) {
+        if (error && typeof(this.settings.callbacks.error) === 'function') {
+          return this.settings.callbacks.error(error);
+        }
+        if (!error && typeof(this.settings.callbacks.signedOut) === 'function') {
+          return this.settings.callbacks.signedOut(this.connection);
+        }
+      }.bind(this)
+    });
   }
 };
 

@@ -3,6 +3,7 @@ var should = require('should'),
     eventTypes = require('../../../source/eventTypes.js');
 
 describe('eventTypes', function () {
+  this.timeout(10000);
 
   describe('flat()', function () {
     it('should return the content schema for the given type', function () {

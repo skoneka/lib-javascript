@@ -85,35 +85,39 @@ ConnectionStreams.prototype.update = function (streamData, callback) {
   _.each(streamData, function (e) {
     var s = _.pick(e, 'id', 'name', 'parentId', 'singleActivity',
       'clientData', 'trashed');
-    var url = '/streams/' + s.id;
-    this.connection.request('PUT', url, function (error, result) {
-      if (!error && result && result.stream) {
+    this.connection.request({
+      method: 'PUT',
+      path: '/streams/' + s.id,
+      callback: function (error, result) {
+        if (!error && result && result.stream) {
 
-        this._getObjects(null, function (err, res) {
-          if (!err && res) {
-            if (!this.connection.datastore) {
-              result = new Stream(this.connection, result.stream);
-            } else {
-              result = this.connection.datastore.createOrReuseStream(result.stream);
-              if (result.parent &&
-                _.indexOf(result.parent.childrenIds, result.id) === -1) {
-                result.parent.childrenIds.push(result.id);
+          this._getObjects(null, function (err, res) {
+            if (!err && res) {
+              if (!this.connection.datastore) {
+                result = new Stream(this.connection, result.stream);
+              } else {
+                result = this.connection.datastore.createOrReuseStream(result.stream);
+                if (result.parent &&
+                  _.indexOf(result.parent.childrenIds, result.id) === -1) {
+                  result.parent.childrenIds.push(result.id);
+                }
               }
+            } else {
+              result = null;
             }
-          } else {
-            result = null;
-          }
 
             callback(err, result);
-        }.bind(this));
+          }.bind(this));
 
-      } else {
-        result = null;
-      }
-      if (error) {
-        callback(error, null);
-      }
-    }.bind(this), s);
+        } else {
+          result = null;
+        }
+        if (error) {
+          callback(error, null);
+        }
+      }.bind(this),
+      jsonData: s
+    });
   }.bind(this));
 };
 
@@ -136,18 +140,21 @@ ConnectionStreams.prototype.delete = ConnectionStreams.prototype.trash =
       }
 
       mergeEventsWithParent = mergeEventsWithParent ? true : false;
-      var url = '/streams/' + id + '?mergeEventsWithParent=' + mergeEventsWithParent;
-      this.connection.request('DELETE', url, function (error, resultData) {
-        var stream = null;
-        if (!error && resultData && resultData.stream) {
-          streamData.id = resultData.stream.id;
-          stream = new Stream(this.connection, resultData.stream);
-          if (this.connection.datastore) {
-            this.connection.datastore.indexStream(stream);
+      this.connection.request({
+        method: 'DELETE',
+        path: '/streams/' + id + '?mergeEventsWithParent=' + mergeEventsWithParent,
+        callback: function (error, resultData) {
+          var stream = null;
+          if (!error && resultData && resultData.stream) {
+            streamData.id = resultData.stream.id;
+            stream = new Stream(this.connection, resultData.stream);
+            if (this.connection.datastore) {
+              this.connection.datastore.indexStream(stream);
+            }
           }
-        }
-        return callback(error, error ? null : resultData.stream);
-      }.bind(this));
+          return callback(error, error ? null : resultData.stream);
+        }.bind(this)
+      });
 };
 
 
@@ -198,8 +205,11 @@ ConnectionStreams.prototype.getById = function (streamId) {
  * @param callback
  */
 ConnectionStreams.prototype._getData = function (opts, callback) {
-  var url = opts ? '/streams?' + utility.getQueryParametersString(opts) : '/streams';
-  this.connection.request('GET', url, callback, null);
+  this.connection.request({
+    method: 'GET',
+    path: opts ? '/streams?' + utility.getQueryParametersString(opts) : '/streams',
+    callback: callback
+  });
 };
 
 
@@ -213,20 +223,24 @@ ConnectionStreams.prototype._getData = function (opts, callback) {
  * @param callback
  */
 ConnectionStreams.prototype._createWithData = function (streamData, callback) {
-  var url = '/streams';
-  this.connection.request('POST', url, function (err, resultData) {
-    var stream = null;
-    if (!err && resultData) {
-      streamData.id = resultData.stream.id;
-      stream = new Stream(this.connection, resultData.stream);
-      if (this.connection.datastore) {
-        this.connection.datastore.indexStream(stream);
+  this.connection.request({
+    method: 'POST',
+    path: '/streams',
+    jsonData: streamData,
+    callback: function (err, resultData) {
+      var stream = null;
+      if (!err && resultData) {
+        streamData.id = resultData.stream.id;
+        stream = new Stream(this.connection, resultData.stream);
+        if (this.connection.datastore) {
+          this.connection.datastore.indexStream(stream);
+        }
       }
-    }
-    if (_.isFunction(callback)) {
-      return callback(err, err ? null : stream);
-    }
-  }.bind(this), streamData);
+      if (_.isFunction(callback)) {
+        return callback(err, err ? null : stream);
+      }
+    }.bind(this)
+  });
 };
 
 /**
@@ -237,8 +251,12 @@ ConnectionStreams.prototype._createWithData = function (streamData, callback) {
  * @param callback
  */
 ConnectionStreams.prototype._updateWithData = function (streamData, callback) {
-  var url = '/streams/' + streamData.id;
-  this.connection.request('PUT', url, callback, streamData);
+  this.connection.request({
+    method: 'PUT',
+    path: '/streams/' + streamData.id,
+    jsonData: streamData,
+    callback: callback
+  });
 };
 
 // -- helper for get --- //

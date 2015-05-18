@@ -104,21 +104,24 @@ ConnectionEvents.prototype.trashWithId = function (eventId, callback) {
   if (!_.isFunction(callback)) {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
-  var url = '/events/' + eventId;
-  this.connection.request('DELETE', url, function (error, result) {
-    // assume there is only one event (no batch for now)
-    if (result && result.event) {
-      if (!this.connection.datastore) { // no datastore   break
-        result = new Event(this.connection, result.event);
+  this.connection.request({
+    method: 'DELETE',
+    path: '/events/' + eventId,
+    callback: function (error, result) {
+      // assume there is only one event (no batch for now)
+      if (result && result.event) {
+        if (!this.connection.datastore) { // no datastore   break
+          result = new Event(this.connection, result.event);
+        } else {
+          result = this.connection.datastore.createOrReuseEvent(result.event);
+        }
       } else {
-        result = this.connection.datastore.createOrReuseEvent(result.event);
+        result = null;
       }
-    } else {
-      result = null;
-    }
-    callback(error, result);
+      callback(error, result);
 
-  }.bind(this), null);
+    }.bind(this)
+  });
 };
 
 /**
@@ -174,29 +177,34 @@ function _create(newEventlike, callback, start) {
   if (start) { url = '/events/start'; }
 
 
-  this.connection.request('POST', url, function (err, result, resultInfo) {
-    if (! err && resultInfo.code !== 201) {
-      err = {id : CC.Errors.INVALID_RESULT_CODE};
-    }
-    /**
-     * Change will happend with offline caching...
-     *
-     * An error may hapend 400.. or other if app is behind an non-opened gateway. Thus making
-     * difficult to detect if the error is a real bad request.
-     * The first step would be to consider only bad request if the response can be identified
-     * as coming from a valid api-server. If not, we should cache the event for later synch
-     * then remove the error and send the cached version of the event.
-     *
-     */
-    // TODO if err === API_UNREACHABLE then save event in cache
-    if (result && ! err) {
-      _.extend(event, result.event);
-      if (this.connection.datastore) {  // if datastore is activated register new event
-        this.connection.datastore.addEvent(event);
+  this.connection.request({
+    method: 'POST',
+    path: url,
+    jsonData: event.getData(),
+    callback: function (err, result, resultInfo) {
+      if (!err && resultInfo.code !== 201) {
+        err = {id: CC.Errors.INVALID_RESULT_CODE};
       }
-    }
-    callback(err, err ? null : event, err ? null : result.stoppedId);
-  }.bind(this), event.getData());
+      /**
+       * Change will happend with offline caching...
+       *
+       * An error may hapend 400.. or other if app is behind an non-opened gateway. Thus making
+       * difficult to detect if the error is a real bad request.
+       * The first step would be to consider only bad request if the response can be identified
+       * as coming from a valid api-server. If not, we should cache the event for later synch
+       * then remove the error and send the cached version of the event.
+       *
+       */
+      // TODO if err === API_UNREACHABLE then save event in cache
+      if (result && !err) {
+        _.extend(event, result.event);
+        if (this.connection.datastore) {  // if datastore is activated register new event
+          this.connection.datastore.addEvent(event);
+        }
+      }
+      callback(err, err ? null : event, err ? null : result.stoppedId);
+    }.bind(this)
+  });
   return event;
 }
 
@@ -215,28 +223,31 @@ ConnectionEvents.prototype.stopEvent = function (eventlike, date, callback) {
   if (!_.isFunction(callback)) {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
-  var url = '/events/stop';
 
   var data = {id: eventlike.id};
   if (date) {
     data.time = date.getTime() / 1000;
   }
 
-  this.connection.request('POST', url, function (err, result, resultInfo) {
-    if (!err && resultInfo.code !== 200) {
-      err = {id: CC.Errors.INVALID_RESULT_CODE};
-    }
+  this.connection.request({
+    method: 'POST',
+    path: '/events/stop',
+    jsonData: data,
+    callback: function (err, result, resultInfo) {
+      if (!err && resultInfo.code !== 200) {
+        err = {id: CC.Errors.INVALID_RESULT_CODE};
+      }
 
-    // TODO if err === API_UNREACHABLE then save event in cache
-    /*
-     if (result && ! err) {
-     if (this.connection.datastore) {  // if datastore is activated register new event
+      // TODO if err === API_UNREACHABLE then save event in cache
+      /*
+       if (result && ! err) {
+       if (this.connection.datastore) {  // if datastore is activated register new event
 
-     }
-     } */
-    callback(err, err ? null : result.stoppedId);
-
-  }.bind(this), data);
+       }
+       } */
+      callback(err, err ? null : result.stoppedId);
+    }.bind(this)
+  });
 };
 
 
@@ -254,22 +265,26 @@ ConnectionEvents.prototype.stopStream = function (streamLike, date, type, callba
   if (!_.isFunction(callback)) {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
-  var url = '/events/stop';
 
   var data = {streamId : streamLike.id };
   if (date) { data.time = date.getTime() / 1000; }
   if (type) { data.type = type; }
 
 
-  this.connection.request('POST', url, function (err, result, resultInfo) {
-    if (! err && resultInfo.code !== 200) {
-      err = {id : CC.Errors.INVALID_RESULT_CODE};
-    }
+  this.connection.request({
+    method: 'POST',
+    path: '/events/stop',
+    jsonData: data,
+    callback: function (err, result, resultInfo) {
+      if (!err && resultInfo.code !== 200) {
+        err = {id: CC.Errors.INVALID_RESULT_CODE};
+      }
 
-    // TODO if err === API_UNREACHABLE then cache the stop instruction for later synch
+      // TODO if err === API_UNREACHABLE then cache the stop instruction for later synch
 
-    callback(err, err ? null : result.stoppedId);
-  }.bind(this), data);
+      callback(err, err ? null : result.stoppedId);
+    }.bind(this)
+  });
 };
 
 
@@ -299,17 +314,23 @@ ConnectionEvents.prototype.createWithAttachment =
       event = new Event(this.connection, newEventLike);
     }
     formData.append('event', JSON.stringify(event.getData()));
-    var url = '/events';
-    this.connection.request('POST', url, function (err, result) {
-      if (result) {
-        _.extend(event, result.event);
+    this.connection.request({
+      method: 'POST',
+      path: '/events',
+      jsonData: formData,
+      isFile: true,
+      progressCallback: progressCallback,
+      callback: function (err, result) {
+        if (result) {
+          _.extend(event, result.event);
 
-        if (this.connection.datastore) {  // if datastore is activated register new event
-          this.connection.datastore.addEvent(event);
+          if (this.connection.datastore) {  // if datastore is activated register new event
+            this.connection.datastore.addEvent(event);
+          }
         }
-      }
-      callback(err, event);
-    }.bind(this), formData, true, progressCallback);
+        callback(err, event);
+      }.bind(this)
+    });
   };
 
 /**
@@ -324,13 +345,19 @@ ConnectionEvents.prototype.addAttachment =
   if (!_.isFunction(callback)) {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
-  var url = '/events/' + eventId;
-  this.connection.request('POST', url, function (err, result) {
-    if (err) {
-      return callback(err);
+  this.connection.request({
+    method: 'POST',
+    path: '/events/' + eventId,
+    jsonData: formData,
+    isFile: true,
+    progressCallback: progressCallback,
+    callback: function (err, result) {
+      if (err) {
+        return callback(err);
+      }
+      callback(null, result.event);
     }
-    callback(null, result.event);
-  }, formData, true, progressCallback);
+  });
 };
 
 /**
@@ -346,14 +373,19 @@ ConnectionEvents.prototype.getAttachment =
       throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
     }
     console.log('executing getAttachment with this: ', params);
-    var url = '/events/' + params.eventId + '/' + params.fileId;
-    this.connection.request('GET', url, function (err, result) {
-      if (err) {
-        return callback(err);
+    this.connection.request({
+      method: 'GET',
+      path: '/events/' + params.eventId + '/' + params.fileId,
+      progressCallback: progressCallback,
+      parseResult: 'binary',
+      callback: function (err, result) {
+        if (err) {
+          return callback(err);
+        }
+        console.log(result);
+        callback(null, result);
       }
-      console.log(result);
-      callback(null, result);
-    }, null, null, progressCallback, 'binary');
+    });
   };
 
 /**
@@ -366,8 +398,11 @@ ConnectionEvents.prototype.removeAttachment = function (eventId, fileName, callb
   if (!_.isFunction(callback)) {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
-  var url = '/events/' + eventId + '/' + fileName;
-  this.connection.request('DELETE', url, callback);
+  this.connection.request({
+    method: 'DELETE',
+    path: '/events/' + eventId + '/' + fileName,
+    callback: callback
+  });
 };
 /**
  * //TODO rename to batch
@@ -391,7 +426,6 @@ ConnectionEvents.prototype.batchWithData =
     var createdEvents = [];
     var eventMap = {};
 
-    var url = '/';
     // use the serialId as a temporary Id for the batch
     _.each(eventsData, function (eventData, i) {
 
@@ -414,20 +448,25 @@ ConnectionEvents.prototype.batchWithData =
       });
     };
 
-    this.connection.request('POST', url, function (err, result) {
-      if (!err && result) {
-        _.each(result.results, function (eventData, i) {
-          _.extend(eventMap[i], eventData.event); // add the data to the event
+    this.connection.request({
+      method: 'POST',
+      path: '/',
+      jsonData: mapBeforePush(eventsData),
+      callback: function (err, result) {
+        if (!err && result) {
+          _.each(result.results, function (eventData, i) {
+            _.extend(eventMap[i], eventData.event); // add the data to the event
 
-          if (this.connection.datastore) {  // if datastore is activated register new event
-            this.connection.datastore.addEvent(eventMap[i]);
-          }
+            if (this.connection.datastore) {  // if datastore is activated register new event
+              this.connection.datastore.addEvent(eventMap[i]);
+            }
 
 
-        }.bind(this));
-      }
-      callback(err, createdEvents);
-    }.bind(this), mapBeforePush(eventsData));
+          }.bind(this));
+        }
+        callback(err, createdEvents);
+      }.bind(this)
+    });
 
     return createdEvents;
   };
@@ -446,8 +485,11 @@ ConnectionEvents.prototype._get = function (filter, callback) {
   if (_.has(tParams, 'streams') && tParams.streams.length === 0) { // dead end filter..
     return callback(null, []);
   }
-  var url = '/events?' + utility.getQueryParametersString(tParams);
-  this.connection.request('GET', url, callback, null);
+  this.connection.request({
+    method: 'GET',
+    path: '/events?' + utility.getQueryParametersString(tParams),
+    callback: callback
+  });
 };
 
 
@@ -459,19 +501,23 @@ ConnectionEvents.prototype._get = function (filter, callback) {
  * @private
  */
 ConnectionEvents.prototype._updateWithIdAndData = function (eventId, data, callback) {
-  var url = '/events/' + eventId;
-  this.connection.request('PUT', url, function (error, result) {
-    if (!error && result && result.event) {
-      if (!this.connection.datastore) {
-        result = new Event(this.connection, result.event);
+  this.connection.request({
+    method: 'PUT',
+    path: '/events/' + eventId,
+    jsonData: data,
+    callback: function (error, result) {
+      if (!error && result && result.event) {
+        if (!this.connection.datastore) {
+          result = new Event(this.connection, result.event);
+        } else {
+          result = this.connection.datastore.createOrReuseEvent(result.event);
+        }
       } else {
-        result = this.connection.datastore.createOrReuseEvent(result.event);
+        result = null;
       }
-    } else {
-      result = null;
-    }
-    callback(error, result);
-  }.bind(this), data);
+      callback(error, result);
+    }.bind(this)
+  });
 };
 
 

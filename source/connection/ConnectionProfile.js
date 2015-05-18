@@ -141,7 +141,11 @@ Profile.prototype._get = function (path, key, callback) {
     }
     callback(error, result);
   }
-  this.connection.request('GET', path, myCallBack);
+  this.connection.request({
+    method: 'GET',
+    path: path,
+    callback: myCallBack
+  });
 };
 
 /**
@@ -154,7 +158,12 @@ Profile.prototype._get = function (path, key, callback) {
  * @param {Connection~requestCallback} callback - handles the response
  */
 Profile.prototype._set = function (path, keyValuePairs, callback) {
-  this.connection.request('PUT', path, callback, keyValuePairs);
+  this.connection.request({
+    method: 'PUT',
+    path: path,
+    callback: callback,
+    jsonData: keyValuePairs
+  });
 };
 
 module.exports = Profile;

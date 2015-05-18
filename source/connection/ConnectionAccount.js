@@ -10,19 +10,28 @@ Account.prototype.changePassword = function (oldPassword, newPassword, callback)
   if (!_.isFunction(callback)) {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
-  this.connection.request('POST', apiPathAccount + '/change-password', function (err) {
-    callback(err);
-  }, {'oldPassword': oldPassword, 'newPassword': newPassword});
+  this.connection.request({
+    method: 'POST',
+    path: apiPathAccount + '/change-password',
+    jsonData: {'oldPassword': oldPassword, 'newPassword': newPassword},
+    callback: function (err) {
+      callback(err);
+    }
+  });
 };
 Account.prototype.getInfo = function (callback) {
   if (!_.isFunction(callback)) {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
-  this.connection.request('GET', apiPathAccount, function (error, result) {
-    if (result && result.account) {
-      result = result.account;
+  this.connection.request({
+    method: 'GET',
+    path: apiPathAccount,
+    callback: function (error, result) {
+      if (result && result.account) {
+        result = result.account;
+      }
+      callback(error, result);
     }
-    callback(error, result);
   });
 };
 

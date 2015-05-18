@@ -803,7 +803,6 @@ describe('Connection.events', function () {
         function (stepDone) {
           connection.events.addAttachment(event.id, formData, function (err, eventWithAttachment) {
             event = eventWithAttachment;
-            console.log('event with attachment: ', event);
             attachment = event.attachments[0];
             stepDone(err);
           });
@@ -830,7 +829,6 @@ describe('Connection.events', function () {
     // TODO
     it('must accept an attachment\'s and its event\'s parameters and ' +
     'return the binary file contents', function (done) {
-      console.log('attachment: ', attachment);
       var pack = {};
       pack.readToken = attachment.readToken;
       pack.fileId = attachment.id;
