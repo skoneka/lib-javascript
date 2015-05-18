@@ -173,7 +173,7 @@ Connection.prototype.accessInfo = function (callback) {
   if (this._accessInfo) {
     return this._accessInfo;
   }
-  var params = {
+  this.request({
     method: 'GET',
     path: '/access-info',
     callback: function (error, result) {
@@ -183,8 +183,7 @@ Connection.prototype.accessInfo = function (callback) {
       return callback(error, result);
 
     }.bind(this)
-  }
-  this.request(params);
+  });
   return this;
 };
 
@@ -259,12 +258,26 @@ Connection.prototype.monitor = function (filter) {
  * @param {string} params.method - GET | POST | PUT | DELETE
  * @param {string} params.path - to resource, starting with '/' like '/events'
  * @param {Object} params.jsonData - data to POST or PUT
- * @params {string} [params.parseResult = 'json'] : 'json/binary'
+ * @param {Boolean} params.isFile indicates if the data is a binary file.
+ * @params {string} [params.parseResult = 'json'] - 'json|binary'
  * @param {Connection~requestCallback} params.callback called when the request is finished
  * @param {Connection~requestCallback} params.progressCallback called when the request gives
  * progress updates
  */
 Connection.prototype.request = function (params) {
+
+  // method, path, callback, jsonData, isFile, progressCallback)
+  if (arguments.length > 1) {
+    console.warn('Connection.request(method, path, callback, jsonData, isFile, progressCallback)' +
+    ' is deprecated. Please use Connection.request(params).', arguments);
+    params = {};
+    params.method = arguments[0];
+    params.path = arguments[1];
+    params.callback = arguments[2];
+    params.jsonData = arguments[3];
+    params.isFile = arguments[4];
+    params.progressCallback = arguments[5];
+  }
 
   if (! _.isFunction(params.callback)) {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
