@@ -372,7 +372,6 @@ ConnectionEvents.prototype.getAttachment =
     if (!_.isFunction(callback)) {
       throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
     }
-    console.log('executing getAttachment with this: ', params);
     this.connection.request({
       method: 'GET',
       path: '/events/' + params.eventId + '/' + params.fileId,
@@ -382,7 +381,6 @@ ConnectionEvents.prototype.getAttachment =
         if (err) {
           return callback(err);
         }
-        console.log(result);
         callback(null, result);
       }
     });

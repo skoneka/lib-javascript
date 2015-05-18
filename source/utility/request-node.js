@@ -61,9 +61,6 @@ module.exports = function (pack) {
     });
 
     res.on('end', function () {
-      if (parseResult === 'binary') {
-        console.log('request-node on.end: ', 'we re here');
-      }
       var responseInfo = {
         code: res.statusCode,
         headers: res.headers

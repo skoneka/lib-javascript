@@ -266,7 +266,6 @@ Connection.prototype.monitor = function (filter) {
  */
 Connection.prototype.request = function (params) {
 
-  // method, path, callback, jsonData, isFile, progressCallback)
   if (arguments.length > 1) {
     console.warn('Connection.request(method, path, callback, jsonData, isFile, progressCallback)' +
     ' is deprecated. Please use Connection.request(params).', arguments);
