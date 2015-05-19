@@ -79,7 +79,7 @@ ConnectionEvents.prototype.get = function (filter, doneCallback, partialResultCa
  * @param {Connection~requestCallback} callback
  */
 ConnectionEvents.prototype.update = function (event, callback) {
-  if (!_.isFunction(callback)) {
+  if (typeof(callback) !== 'function') {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
   this._updateWithIdAndData(event.id, event.getData(), callback);
@@ -90,7 +90,7 @@ ConnectionEvents.prototype.update = function (event, callback) {
  * @param {Connection~requestCallback} callback
  */
 ConnectionEvents.prototype.delete = ConnectionEvents.prototype.trash = function (event, callback) {
-  if (!_.isFunction(callback)) {
+  if (typeof(callback) !== 'function') {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
   this.trashWithId(event.id, callback);
@@ -101,7 +101,7 @@ ConnectionEvents.prototype.delete = ConnectionEvents.prototype.trash = function 
  * @param {Connection~requestCallback} callback
  */
 ConnectionEvents.prototype.trashWithId = function (eventId, callback) {
-  if (!_.isFunction(callback)) {
+  if (typeof(callback) !== 'function') {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
   this.connection.request({
@@ -134,7 +134,7 @@ ConnectionEvents.prototype.trashWithId = function (eventId, callback) {
  * @return {Event} event
  */
 ConnectionEvents.prototype.create = function (newEventlike, callback) {
-  if (!_.isFunction(callback)) {
+  if (typeof(callback) !== 'function') {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
   _create.call(this, newEventlike, callback, false);
@@ -151,7 +151,7 @@ ConnectionEvents.prototype.create = function (newEventlike, callback) {
  * @return {Event} event
  */
 ConnectionEvents.prototype.start = function (newEventlike, callback) {
-  if (!_.isFunction(callback)) {
+  if (typeof(callback) !== 'function') {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
   _create.call(this, newEventlike, callback, true);
@@ -220,7 +220,7 @@ function _create(newEventlike, callback, start) {
  * @return {Event} event
  */
 ConnectionEvents.prototype.stopEvent = function (eventlike, date, callback) {
-  if (!_.isFunction(callback)) {
+  if (typeof(callback) !== 'function') {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
 
@@ -262,7 +262,7 @@ ConnectionEvents.prototype.stopEvent = function (eventlike, date, callback) {
  * @return {Event} event
  */
 ConnectionEvents.prototype.stopStream = function (streamLike, date, type, callback) {
-  if (!_.isFunction(callback)) {
+  if (typeof(callback) !== 'function') {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
 
@@ -298,7 +298,7 @@ ConnectionEvents.prototype.stopStream = function (streamLike, date, type, callba
  */
 ConnectionEvents.prototype.createWithAttachment =
   function (newEventLike, formData, callback, progressCallback) {
-    if (!_.isFunction(callback)) {
+    if (typeof(callback) !== 'function') {
       throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
     }
     var event = null;
@@ -342,9 +342,9 @@ ConnectionEvents.prototype.createWithAttachment =
  */
 ConnectionEvents.prototype.addAttachment =
   function (eventId, formData, callback, progressCallback) {
-  if (!_.isFunction(callback)) {
-    throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
-  }
+    if (typeof(callback) !== 'function') {
+      throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
+    }
   this.connection.request({
     method: 'POST',
     path: '/events/' + eventId,
@@ -369,7 +369,7 @@ ConnectionEvents.prototype.addAttachment =
  */
 ConnectionEvents.prototype.getAttachment =
   function (params, callback, progressCallback) {
-    if (!_.isFunction(callback)) {
+    if (typeof(callback) !== 'function') {
       throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
     }
     this.connection.request({
@@ -393,7 +393,7 @@ ConnectionEvents.prototype.getAttachment =
  * @return {Event} event
  */
 ConnectionEvents.prototype.removeAttachment = function (eventId, fileName, callback) {
-  if (!_.isFunction(callback)) {
+  if (typeof(callback) !== 'function') {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
   this.connection.request({
@@ -416,7 +416,7 @@ ConnectionEvents.prototype.removeAttachment = function (eventId, fileName, callb
  */
 ConnectionEvents.prototype.batchWithData =
   function (eventsData, callback, callBackWithEventsBeforeRequest) {
-    if (!_.isFunction(callback)) {
+    if (typeof(callback) !== 'function') {
       throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
     }
     if (!_.isArray(eventsData)) { eventsData = [eventsData]; }

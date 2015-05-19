@@ -36,7 +36,7 @@ function ConnectionStreams(connection) {
  * @param {ConnectionStreams~getCallback} callback - handles the response
  */
 ConnectionStreams.prototype.get = function (options, callback) {
-  if (!_.isFunction(callback)) {
+  if (typeof(callback) !== 'function') {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
   if (this.connection.datastore) {
@@ -64,7 +64,7 @@ ConnectionStreams.prototype.get = function (options, callback) {
  * @param callback
  */
 ConnectionStreams.prototype.create = function (streamData, callback) {
-  if (!_.isFunction(callback)) {
+  if (typeof(callback) !== 'function') {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
   streamData = _.pick(streamData, 'id', 'name', 'parentId', 'singleActivity',
@@ -74,7 +74,7 @@ ConnectionStreams.prototype.create = function (streamData, callback) {
 
 
 ConnectionStreams.prototype.update = function (streamData, callback) {
-  if (!_.isFunction(callback)) {
+  if (typeof(callback) !== 'function') {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
 
@@ -129,7 +129,7 @@ ConnectionStreams.prototype.update = function (streamData, callback) {
  */
 ConnectionStreams.prototype.delete = ConnectionStreams.prototype.trash =
     function (streamData, callback, mergeEventsWithParent) {
-      if (!_.isFunction(callback)) {
+      if (typeof(callback) !== 'function') {
         throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
       }
       var id;
@@ -164,7 +164,7 @@ ConnectionStreams.prototype.delete = ConnectionStreams.prototype.trash =
  * @param {ConnectionStreams~getCallback} callback - handles the response
  */
 ConnectionStreams.prototype.updateProperties = function (stream, properties, options, callback) {
-  if (!_.isFunction(callback)) {
+  if (typeof(callback) !== 'function') {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
   if (this.connection.datastore) {
@@ -329,7 +329,7 @@ ConnectionStreams.prototype.walkTree = function (options, eachStream, done) {
  * @param {ConnectionStreams~getFlatenedObjectsDone} done
  */
 ConnectionStreams.prototype.getFlatenedObjects = function (options, callback) {
-  if (!_.isFunction(callback)) {
+  if (typeof(callback) !== 'function') {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
   var result = [];
@@ -418,7 +418,7 @@ ConnectionStreams.Utils = {
    * @param callback function(streamData, subTree)  subTree is the descendance tree
    */
   walkDataTree: function (streamTree, callback) {
-    if (!_.isFunction(callback)) {
+    if (typeof(callback) !== 'function') {
       throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
     }
     _.each(streamTree, function (streamStruct) {

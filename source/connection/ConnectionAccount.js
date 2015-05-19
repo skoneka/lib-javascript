@@ -7,7 +7,7 @@ function Account(connection) {
 }
 
 Account.prototype.changePassword = function (oldPassword, newPassword, callback) {
-  if (!_.isFunction(callback)) {
+  if (typeof(callback) !== 'function') {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
   this.connection.request({
@@ -20,7 +20,7 @@ Account.prototype.changePassword = function (oldPassword, newPassword, callback)
   });
 };
 Account.prototype.getInfo = function (callback) {
-  if (!_.isFunction(callback)) {
+  if (typeof(callback) !== 'function') {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
   this.connection.request({

@@ -16,13 +16,13 @@ function Accesses(connection) {
  * @param {Connection~requestCallback} callback
  */
 Accesses.prototype.get = function (callback) {
+  if (typeof(callback) !== 'function') {
+    throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
+  }
   this.connection.request({
     method: 'GET',
     path: apiPathAccesses,
     callback: function (err, res) {
-      if (!_.isFunction(callback)) {
-        throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
-      }
       if (err) {
         return callback(err);
       }
@@ -38,13 +38,13 @@ Accesses.prototype.get = function (callback) {
  * @param callback
  */
 Accesses.prototype.create = function (access, callback) {
+  if (typeof(callback) !== 'function') {
+    throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
+  }
   this.connection.request({
     method: 'POST',
     path: apiPathAccesses,
     callback: function (err, res) {
-      if (!_.isFunction(callback)) {
-        throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
-      }
       if (err) {
         return callback(err);
       }
@@ -60,7 +60,9 @@ Accesses.prototype.create = function (access, callback) {
  * @param callback
  */
 Accesses.prototype.update = function (access, callback) {
-
+  if (typeof(callback) !== 'function') {
+    throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
+  }
   if (access.id) {
     this.connection.request({
       method: 'PUT',
@@ -84,16 +86,13 @@ Accesses.prototype.update = function (access, callback) {
  * @param callback
  */
 Accesses.prototype.delete = function (accessId, callback) {
-  if (!_.isFunction(callback)) {
+  if (typeof(callback) !== 'function') {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
   this.connection.request({
     method: 'DELETE',
     path: apiPathAccesses + '/' + accessId,
     callback: function (err, result) {
-      if (!_.isFunction(callback)) {
-        throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
-      }
       if (err) {
         return callback(err);
       }

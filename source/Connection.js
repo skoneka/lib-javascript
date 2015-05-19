@@ -129,7 +129,7 @@ Connection._serialCounter = 0;
  * @returns {Connection} this
  */
 Connection.prototype.fetchStructure = function (callback /*, keepItUpToDate*/) {
-  if (! _.isFunction(callback)) {
+  if (typeof(callback) !== 'function') {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
   if (this.datastore) { return this.datastore.init(callback); }
@@ -148,7 +148,7 @@ Connection.prototype.fetchStructure = function (callback /*, keepItUpToDate*/) {
  * @param callback
  */
 Connection.prototype.attachCredentials = function (credentials, callback) {
-  if (! _.isFunction(callback)) {
+  if (typeof(callback) !== 'function') {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
   if (!credentials.username || !credentials.auth) {
@@ -167,9 +167,6 @@ Connection.prototype.attachCredentials = function (credentials, callback) {
  * @returns {Connection} this
  */
 Connection.prototype.accessInfo = function (callback) {
-  if (!_.isFunction(callback)) {
-    throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
-  }
   if (this._accessInfo) {
     return this._accessInfo;
   }
@@ -180,8 +177,9 @@ Connection.prototype.accessInfo = function (callback) {
       if (!error) {
         this._accessInfo = result;
       }
-      return callback(error, result);
-
+      if (typeof(callback) === 'function') {
+        return callback(error, result);
+      }
     }.bind(this)
   });
   return this;
@@ -193,10 +191,6 @@ Connection.prototype.accessInfo = function (callback) {
  * @returns {Connection} this
  */
 Connection.prototype.privateProfile = function (callback) {
-  if (! _.isFunction(callback)) {
-    throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
-  }
-
   if (this._privateProfile) {
     return this._privateProfile;
   }
@@ -207,7 +201,9 @@ Connection.prototype.privateProfile = function (callback) {
     if (!error) {
       this._privateProfile = result;
     }
-    return callback(error, result);
+    if (typeof(callback) === 'function') {
+      return callback(error, result);
+    }
   }.bind(this));
   return this;
 };
@@ -278,7 +274,7 @@ Connection.prototype.request = function (params) {
     params.progressCallback = arguments[5];
   }
 
-  if (! _.isFunction(params.callback)) {
+  if (typeof(callback) !== 'function') {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
   var headers =  { 'authorization': this.auth };
@@ -425,7 +421,7 @@ Object.defineProperty(Connection.prototype, 'serialId', {
  */
 Connection.login = function (params, callback) {
 
-  if (! _.isFunction(callback)) {
+  if (typeof(callback) !== 'function') {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
 

@@ -17,7 +17,7 @@ function Bookmarks(connection, Conn) {
  * @param {Connection~requestCallback} callback
  */
 Bookmarks.prototype.get = function (callback) {
-  if (!_.isFunction(callback)) {
+  if (typeof(callback) !== 'function') {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
   this.connection.request({
@@ -49,7 +49,7 @@ Bookmarks.prototype.get = function (callback) {
  * @returns {*}
  */
 Bookmarks.prototype.create = function (bookmark, callback) {
-  if (!_.isFunction(callback)) {
+  if (typeof(callback) !== 'function') {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
   if (bookmark.name && bookmark.url && bookmark.accessToken) {
@@ -81,7 +81,7 @@ Bookmarks.prototype.create = function (bookmark, callback) {
  * @param callback
  */
 Bookmarks.prototype.delete = function (bookmarkId, callback) {
-  if (!_.isFunction(callback)) {
+  if (typeof(callback) !== 'function') {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
   this.connection.request({

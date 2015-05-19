@@ -29,10 +29,10 @@ extras.isDefault = true;
  * @param {Function} callback
  */
 eventTypes.loadFlat = function (callback) {
-  if (!_.isFunction(callback)) {
+  if (typeof(callback) !== 'function') {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
-  requestFile(FLATFILE, function (err, result) {
+  _requestFile(FLATFILE, function (err, result) {
     if (err) { return callback(err); }
     if (! isValidTypesFile(result)) {
       return callback(new Error('Missing or corrupt types file: "' +
@@ -61,10 +61,10 @@ eventTypes.flat = function (eventType) {
  * @param {Function} callback
  */
 eventTypes.loadExtras = function (callback) {
-  if (!_.isFunction(callback)) {
+  if (typeof(callback) !== 'function') {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
-  requestFile(EXTRASFILE, function (err, result) {
+  _requestFile(EXTRASFILE, function (err, result) {
     if (err) { return callback(err); }
     if (! isValidExtrasFile(result)) {
       return callback(new Error('Missing or corrupt extras file: "' +
@@ -107,10 +107,10 @@ eventTypes.isNumerical = function (eventOrEventType) {
  * @param {Function} callback
  */
 eventTypes.loadHierarchical = function (callback) {
-  if (!_.isFunction(callback)) {
+  if (typeof(callback) !== 'function') {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
-  requestFile(HIERARCHICALFILE, function (err, result) {
+  _requestFile(HIERARCHICALFILE, function (err, result) {
     if (err) { return callback(err); }
     hierarchical = result;
     hierarchical.isDefault = false;
@@ -130,7 +130,7 @@ eventTypes.hierarchical = function () {
  * @param fileName
  * @param callback
  */
-function requestFile(fileName, callback) {
+function _requestFile(fileName, callback) {
   if (!_.isFunction(callback)) {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
