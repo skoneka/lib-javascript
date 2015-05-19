@@ -19,7 +19,7 @@ var HOSTNAME = 'd1kp76srklnnah.cloudfront.net',
 // load default data (fallback)
 var types = require('./event-types.default.json'),
     extras = require('./event-extras.default.json'),
-    hierarchical = null;
+    hierarchical = require('./event-hierarchical.default.json');
 types.isDefault = true;
 extras.isDefault = true;
 
