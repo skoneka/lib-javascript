@@ -58,7 +58,7 @@ describe('eventTypes', function () {
   });
 
   describe('hierarchical() + loading', function () {
-    it('hierarchical() should not return default data', function (done) {
+    it.skip('hierarchical() should not return default data', function (done) {
       var expectedErr = null;
       try {
         eventTypes.hierarchical();
