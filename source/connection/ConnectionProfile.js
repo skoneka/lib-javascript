@@ -132,19 +132,19 @@ Profile.prototype.getTimeLimits = function (force, callback) {
  * @param {Connection~requestCallback} callback - handles the response
  */
 Profile.prototype._get = function (path, key, callback) {
-
-  function myCallBack(error, result) {
-    console.warn(result);
-    result = result.profile || null;
-    if (key !== null && result) {
-      result = result[key];
-    }
-    callback(error, result);
-  }
   this.connection.request({
     method: 'GET',
     path: path,
-    callback: myCallBack
+    callback: function(error, result) {
+      if (error) {
+        return callback(error);
+      }
+      result = result.profile || null;
+      if (key !== null && result) {
+        result = result[key];
+      }
+      callback(null, result);
+    }
   });
 };
 
