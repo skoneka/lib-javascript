@@ -274,7 +274,7 @@ Connection.prototype.request = function (params) {
     params.progressCallback = arguments[5];
   }
 
-  if (typeof(callback) !== 'function') {
+  if (typeof(params.callback) !== 'function') {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
   var headers =  { 'authorization': this.auth };
