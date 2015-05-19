@@ -5,10 +5,12 @@ var Pryv = require('../../../source/main'),
 
 describe('Connection.profile', function () {
   this.timeout(10000);
-  var connection;
+  var connection, errorConnection;
 
   before(function (done) {
-      Pryv.Connection.login(config.loginParams, function (err, newConnection) {
+    errorConnection = new Pryv.Connection(config.connectionSettings);
+
+    Pryv.Connection.login(config.loginParams, function (err, newConnection) {
         connection = newConnection;
         done(err);
       });
@@ -20,8 +22,14 @@ describe('Connection.profile', function () {
       connection.profile.getPrivate(null, function (err, res) {
         should.not.exist(err);
         should.exist(res);
-        console.log('privateProfile: ', res);
         done(err);
+      });
+    });
+
+    it('must return an error', function (done) {
+      errorConnection.profile.getPrivate(null, function (err) {
+        should.exist(err);
+        done();
       });
     });
   });
@@ -33,7 +41,13 @@ describe('Connection.profile', function () {
       connection.profile.getPublic(null, function (err, res) {
         should.not.exist(err);
         should.exist(res);
-        console.log('public profile: ', res);
+        done();
+      });
+    });
+
+    it('must return an error', function (done) {
+      errorConnection.profile.getPublic(null, function (err) {
+        should.exist(err);
         done();
       });
     });
