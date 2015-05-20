@@ -1,8 +1,6 @@
 var apiPathPrivateProfile = '/profile/private';
 var apiPathPublicProfile = '/profile/app';
-var CC = require('./ConnectionConstants.js'),
-    _ = require('lodash');
-
+var CC = require('./ConnectionConstants.js');
 
 /**
  * @class Profile

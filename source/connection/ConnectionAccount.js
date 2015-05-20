@@ -1,6 +1,5 @@
 var apiPathAccount = '/account';
-var CC = require('./ConnectionConstants.js'),
-    _ = require('lodash');
+var CC = require('./ConnectionConstants.js');
 
 function Account(connection) {
   this.connection = connection;
