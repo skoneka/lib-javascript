@@ -9,8 +9,10 @@ var eventTypes = module.exports = {};
 
 // staging cloudfront: https://d1kp76srklnnah.cloudfront.net/dist/data-types/event-extras.json
 // staging direct: https://sw.pryv.li/dist/data-types/event-extras.json
-var HOSTNAME = 'd1kp76srklnnah.cloudfront.net',
-    PATH = '/dist/data-types/',
+var HOSTNAME = 'api.pryv.com',
+    PORT = 443,
+    SSL = true,
+    PATH = '/event-types/',
     FLATFILE = 'flat.json',
     EXTRASFILE = 'extras.json',
     // TODO: discuss if hierarchical data is really needed (apparently not); remove all that if not
@@ -134,8 +136,8 @@ function requestFile(fileName, callback) {
     method : 'GET',
     host : HOSTNAME,
     path : PATH + fileName,
-    port : 443,
-    ssl : true,
+    port : PORT,
+    ssl : SSL,
     withoutCredentials: true,
     success : function (result) { callback(null, result); },
     error : function (error) { callback(error, null); }
