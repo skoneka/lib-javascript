@@ -37,7 +37,7 @@ eventTypes.loadFlat = function (callback) {
       return callback(new Error('Missing or corrupt types file: "' +
                                 HOSTNAME + PATH + FLATFILE + '"'));
     }
-    _.extend_.extend(types, result);
+    _.extend(types, result);
     types.isDefault = false;
     callback(null, types);
   });
@@ -69,7 +69,7 @@ eventTypes.loadExtras = function (callback) {
       return callback(new Error('Missing or corrupt extras file: "' +
                                 HOSTNAME + PATH + EXTRASFILE + '"'));
     }
-    _.extend_.extend(extras, result);
+    _.extend(extras, result);
     extras.isDefault = false;
     callback(null, extras);
   });
