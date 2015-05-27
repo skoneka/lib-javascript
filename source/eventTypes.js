@@ -119,13 +119,6 @@ eventTypes.loadHierarchical = function (callback) {
   });
 };
 
-eventTypes.hierarchical = function () {
-  if (! hierarchical) {
-    throw new Error('Load data via loadHierarchical() first');
-  }
-  return hierarchical;
-};
-
 /**
  * @private
  * @param fileName
