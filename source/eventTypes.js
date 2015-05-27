@@ -133,9 +133,6 @@ eventTypes.hierarchical = function () {
  * @param callback
  */
 function _requestFile(fileName, callback) {
-  if (!_.isFunction(callback)) {
-    throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
-  }
   utility.request({
     method : 'GET',
     host : HOSTNAME,

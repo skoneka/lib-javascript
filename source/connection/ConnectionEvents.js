@@ -40,7 +40,7 @@ function ConnectionEvents(connection) {
  * @param {ConnectionEvents~partialResultCallback} partialResultCallback
  */
 ConnectionEvents.prototype.get = function (filter, doneCallback, partialResultCallback) {
-  if (!_.isFunction(doneCallback)) {
+  if (typeof(doneCallback) !== 'function') {
     throw new Error(CC.Errors.CALLBACK_IS_NOT_A_FUNCTION);
   }
   //TODO handle caching
