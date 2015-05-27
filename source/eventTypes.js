@@ -85,6 +85,10 @@ function isValidExtrasFile(data) {
   return data && data.version && data.extras && data.extras.count && data.extras.count.formats;
 }
 
+eventTypes.hierarchical = function () {
+  return hierarchical;
+};
+
 eventTypes.extras = function (eventType) {
   var parts = eventType.split('/');
   return extras.extras[parts[0]] && extras.extras[parts[0]].formats[parts[1]] ?
