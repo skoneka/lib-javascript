@@ -86,6 +86,10 @@ function isValidExtrasFile(data) {
   return data && data.version && data.extras && data.extras.count && data.extras.count.formats;
 }
 
+eventTypes.hierarchical = function () {
+  return hierarchical;
+};
+
 eventTypes.extras = function (eventType) {
   var parts = eventType.split('/');
   return extras.extras[parts[0]] && extras.extras[parts[0]].formats[parts[1]] ?
@@ -118,13 +122,6 @@ eventTypes.loadHierarchical = function (callback) {
     hierarchical.isDefault = false;
     callback(null, hierarchical);
   });
-};
-
-eventTypes.hierarchical = function () {
-  if (! hierarchical) {
-    throw new Error('Load data via loadHierarchical() first');
-  }
-  return hierarchical;
 };
 
 /**
