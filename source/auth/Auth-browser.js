@@ -540,13 +540,13 @@ Auth.prototype.setup = function (settings) {
   };
 
   if (this.config.localDevel) {
-    // return url will be forced to https://l.pryv.in:4443/Auth.html
+    // return url will be forced to https://l.pryv.li:4443/Auth.html
     params.localDevel = this.config.localDevel;
   }
 
   this.stateInitialization();
   // TODO: clean up this hard-coded mess and rely on the one and only Pryv URL domains reference
-  var domain = (this.config.registerURL.host === 'reg.pryv.io') ? 'pryv.io' : 'pryv.in';
+  var domain = (this.config.registerURL.host === 'reg.pryv.me') ? 'pryv.me' : 'pryv.li';
 
   this.connection = new Connection(null, null, {ssl: this.config.registerURL.ssl, domain: domain});
   // look if we have a returning user (document.cookie)

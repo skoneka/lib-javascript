@@ -28,7 +28,7 @@ var utility = require('./utility/utility.js'),
  * @param {boolean} [settings.staging = false] use Pryv's staging servers
  * @param {number} [settings.port = 443]
  * @param {string} [settings.domain = 'pryv.io'] change the domain. use "settings.staging = true" to
- * activate 'pryv.in' staging domain.
+ * activate 'pryv.li' staging domain.
  * @param {boolean} [settings.ssl = true] Use ssl (https) or no
  * @param {string} [settings.extraPath = ''] append to the connections. Must start with a '/'
  */
