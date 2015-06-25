@@ -86,7 +86,7 @@ module.exports = function (grunt) {
         }
       },
       other: {
-        src: ['test/other/**/*.test.js'],
+        src: ['test/xother/**/*.test.js'],
         options: {
           reporter: 'spec'
         }

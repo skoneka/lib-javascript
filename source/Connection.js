@@ -46,12 +46,13 @@ function Connection() {
     this.username = settings.username;
     this.auth = settings.auth;
     if (settings.url) {
+
       var urlInfo = utility.urls.parseServerURL(settings.url);
       this.username = urlInfo.username;
       settings.hostname = urlInfo.hostname;
-      settings.domain = urlInfo.domain;
+      settings.domainsmain = urlInfo.domain;
       settings.port = urlInfo.port;
-      settings.extraPath = urlInfo.path === '/' ? '' : urlInfo.path;
+      settings.extraPath = urlInfo.path === '/' ? '/api' : urlInfo.path;
       settings.ssl = urlInfo.isSSL();
       settings.staging = urlInfo.environment !== 'production';
     }
@@ -61,7 +62,7 @@ function Connection() {
   this.settings = _.extend({
     port: 443,
     ssl: true,
-    extraPath: '',
+    extraPath: '/api',
     staging: false
   }, settings);
   this.settings.domain   = settings.domain ?
