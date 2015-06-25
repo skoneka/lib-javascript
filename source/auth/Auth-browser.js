@@ -17,8 +17,7 @@ _.extend(Auth.prototype, {
   connection: null, // actual connection managed by Auth
   config: {
     // TODO: clean up this hard-coded mess and rely on the one and only Pryv URL domains reference
-    registerURL: {ssl: true, host: 'reg.pryv.io'},
-    registerStagingURL: {ssl: true, host: 'reg.pryv.in'},
+    registerURL: {ssl: true, host: utility.urls.domains.register['production']},
     localDevel : false,
     sdkFullPath: 'https://dlw0lofo79is5.cloudfront.net/lib-javascript/latest'
   },
@@ -54,8 +53,9 @@ Auth._init = function (i) {
 
   var urlInfo = utility.urls.parseClientURL();
   console.log('detected environment: ' + urlInfo.environment);
+  
   if (urlInfo.environment === 'staging') {
-    Auth.prototype.config.registerURL = Auth.prototype.config.registerStagingURL;
+    Auth.prototype.config.registerURL.host = utility.urls.domains.register[utility.urls.parseClientURL().environment];
   }
 
   console.log('init done');
