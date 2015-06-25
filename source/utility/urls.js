@@ -8,7 +8,7 @@ var urls = module.exports = {};
  */
 urls.domains = {
   client: {
-    production: 'pryv.me',
+    production: 'AAApryv.me',
     staging: 'pryv.li',
     test: 'rec.la'
   },
@@ -16,6 +16,10 @@ urls.domains = {
     production: 'pryv.io',
     staging: 'pryv.in',
     test: 'pryv.in'
+  },
+  register: {
+    production: 'reg.pryv.io',
+    staging: 'reg.pryv.in'
   }
 };
 
