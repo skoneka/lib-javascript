@@ -17,8 +17,7 @@ _.extend(Auth.prototype, {
   connection: null, // actual connection managed by Auth
   config: {
     // TODO: clean up this hard-coded mess and rely on the one and only Pryv URL domains reference
-    registerURL: {ssl: true, host: 'reg.pryv.io'},
-    registerStagingURL: {ssl: true, host: 'reg.pryv.in'},
+    registerURL: {ssl: true, host: utility.urls.domains.register['production']},
     localDevel : false,
     sdkFullPath: 'https://dlw0lofo79is5.cloudfront.net/lib-javascript/latest'
   },
@@ -54,8 +53,9 @@ Auth._init = function (i) {
 
   var urlInfo = utility.urls.parseClientURL();
   console.log('detected environment: ' + urlInfo.environment);
+  
   if (urlInfo.environment === 'staging') {
-    Auth.prototype.config.registerURL = Auth.prototype.config.registerStagingURL;
+    Auth.prototype.config.registerURL.host = utility.urls.domains.register[utility.urls.parseClientURL().environment];
   }
 
   console.log('init done');
@@ -540,13 +540,13 @@ Auth.prototype.setup = function (settings) {
   };
 
   if (this.config.localDevel) {
-    // return url will be forced to https://l.pryv.in:4443/Auth.html
+    // return url will be forced to https://l.pryv.li:4443/Auth.html
     params.localDevel = this.config.localDevel;
   }
 
   this.stateInitialization();
   // TODO: clean up this hard-coded mess and rely on the one and only Pryv URL domains reference
-  var domain = (this.config.registerURL.host === 'reg.pryv.io') ? 'pryv.io' : 'pryv.in';
+  var domain = (this.config.registerURL.host === 'reg.pryv.me') ? 'pryv.me' : 'pryv.li';
 
   this.connection = new Connection(null, null, {ssl: this.config.registerURL.ssl, domain: domain});
   // look if we have a returning user (document.cookie)

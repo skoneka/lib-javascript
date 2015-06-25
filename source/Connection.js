@@ -28,7 +28,7 @@ var utility = require('./utility/utility.js'),
  * @param {boolean} [settings.staging = false] use Pryv's staging servers
  * @param {number} [settings.port = 443]
  * @param {string} [settings.domain = 'pryv.io'] change the domain. use "settings.staging = true" to
- * activate 'pryv.in' staging domain.
+ * activate 'pryv.li' staging domain.
  * @param {boolean} [settings.ssl = true] Use ssl (https) or no
  * @param {string} [settings.extraPath = ''] append to the connections. Must start with a '/'
  */
@@ -46,12 +46,13 @@ function Connection() {
     this.username = settings.username;
     this.auth = settings.auth;
     if (settings.url) {
+
       var urlInfo = utility.urls.parseServerURL(settings.url);
       this.username = urlInfo.username;
       settings.hostname = urlInfo.hostname;
-      settings.domain = urlInfo.domain;
+      settings.domainsmain = urlInfo.domain;
       settings.port = urlInfo.port;
-      settings.extraPath = urlInfo.path === '/' ? '' : urlInfo.path;
+      settings.extraPath = urlInfo.path === '/' ? '/api' : urlInfo.path;
       settings.ssl = urlInfo.isSSL();
       settings.staging = urlInfo.environment !== 'production';
     }
@@ -61,7 +62,7 @@ function Connection() {
   this.settings = _.extend({
     port: 443,
     ssl: true,
-    extraPath: '',
+    extraPath: '/api',
     staging: false
   }, settings);
   this.settings.domain   = settings.domain ?

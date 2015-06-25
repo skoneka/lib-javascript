@@ -6,6 +6,7 @@ var urls = module.exports = {};
  * The one and only reference for Pryv domain names.
  * TODO: client and server will merge
  */
+
 urls.domains = {
   client: {
     production: 'pryv.me',
@@ -13,9 +14,14 @@ urls.domains = {
     test: 'rec.la'
   },
   server: {
-    production: 'pryv.io',
-    staging: 'pryv.in',
-    test: 'pryv.in'
+    production: 'pryv.me',
+    staging: 'pryv.li',
+    test: 'pryv.li'
+  },
+  register: {
+    production: 'reg.pryv.me',
+    staging: 'reg.pryv.li',
+    test: 'reg.pryv.li'
   }
 };
 
