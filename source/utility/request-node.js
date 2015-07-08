@@ -55,11 +55,6 @@ module.exports = function (pack) {
     }
   }
 
-//process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-  console.log(httpOptions);
-  console.log(httpOptions.host);
-  console.log(httpOptions.path);
-  debugger;
   var req = http.request(httpOptions, function (res) {
     var bodyarr = [];
     res.on('data', function (chunk) {
@@ -77,9 +72,7 @@ module.exports = function (pack) {
         try {
           var response = bodyarr.join('').trim() === '' ? '{}' : bodyarr.join('').trim();
           data = JSON.parse(response);
-          debugger;
         } catch (error) {
-          debugger;
           return pack.error('request failed to parse JSON in response' +
           bodyarr.join('') + '\n' + HttpRequestDetails, responseInfo);
         }
@@ -89,13 +82,11 @@ module.exports = function (pack) {
       return pack.success(data, responseInfo);
     });
   });
-  //debugger;
 
   var HttpRequestDetails = 'Request: ' + httpOptions.method + ' ' +
     httpMode + '://' + httpOptions.host + ':' + httpOptions.port + '' + httpOptions.path;
 
   req.on('error', function (e) {
-    debugger;
     return pack.error(e.message + '\n' + HttpRequestDetails);
   });
 
