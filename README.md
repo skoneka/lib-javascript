@@ -40,6 +40,10 @@ Also: `grunt test` & `grunt watch` (runs tests on changes)
 
 `./scripts/update-event-types.bash` updates the default event types and extras by fetching the latest master versions online.
 
+Now you can open URL
+https://perkikiki.rec.la:4443/
+and login with poilonez
+
 ### Publish
 
 After building, just commit and push changes from `dist` (working copy of `gh-pages` branch).
