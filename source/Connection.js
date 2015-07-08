@@ -52,7 +52,7 @@ function Connection() {
       settings.hostname = urlInfo.hostname;
       settings.domain = urlInfo.domain;
       settings.port = urlInfo.port;
-      settings.extraPath = urlInfo.path === '/' ? '/api' : urlInfo.path;
+      settings.extraPath = urlInfo.path === '/api/' ? '/api' : urlInfo.path;
       settings.ssl = urlInfo.isSSL();
       settings.staging = urlInfo.environment !== 'production';
     }
