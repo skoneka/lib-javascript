@@ -50,7 +50,7 @@ function Connection() {
       var urlInfo = utility.urls.parseServerURL(settings.url);
       this.username = urlInfo.username;
       settings.hostname = urlInfo.hostname;
-      settings.domainsmain = urlInfo.domain;
+      settings.domain = urlInfo.domain;
       settings.port = urlInfo.port;
       settings.extraPath = urlInfo.path === '/' ? '/api' : urlInfo.path;
       settings.ssl = urlInfo.isSSL();
